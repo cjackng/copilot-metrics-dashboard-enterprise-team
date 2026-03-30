@@ -86,21 +86,8 @@ export interface CopilotUsage {
     total_code_lines_accepted: number;
     total_chat_engaged_users: number;
     total_chats: number;
-    total_chat_insertion_events: number;
-    total_chat_copy_events: number;
+    total_accepted_chats: number;
     day: string;
-    breakdown: Breakdown[];
-  }
-  
-  export interface Breakdown {
-    language: string;
-    editor: string;
-    model: string;
-    suggestions_count: number;
-    acceptances_count: number;
-    lines_suggested: number;
-    lines_accepted: number;
-    active_users: number;
   }
 
   export interface CopilotUsageOutput extends CopilotUsage {
@@ -177,3 +164,152 @@ export interface CopilotUsage {
     copilot_dotcom_chat: CopilotDotcomChatMetrics;
     copilot_dotcom_pull_requests: CopilotDotcomPullRequestsMetrics;
   }
+
+export interface CopilotMetricsReportResponse {
+  download_links: string[];
+  report_start_day: string;
+  report_end_day: string;
+}
+
+export interface CopilotMetricsReportWrapper {
+  report_start_day: string;
+  report_end_day: string;
+  enterprise_id: string;
+  created_at: string;
+  day_totals: CopilotMetricsReportData[];
+}
+
+  export interface CopilotMetricsReportData {
+    day: string;
+    enterprise_id: string;
+    daily_active_users: number;
+    daily_active_cli_users: number;
+    weekly_active_users: number;
+    monthly_active_users: number;
+    monthly_active_chat_users: number;
+    monthly_active_agent_users: number;
+    user_initiated_interaction_count: number;
+    code_generation_activity_count: number;
+    code_acceptance_activity_count: number;
+    totals_by_ide: TotalsByIde[];
+    totals_by_feature: TotalsByFeature[];
+    totals_by_language_feature: TotalsByLanguageFeature[];
+    totals_by_language_model: TotalsByLanguageModel[];
+    totals_by_model_feature: TotalsByModelFeature[];
+    loc_suggested_to_add_sum: number;
+    loc_suggested_to_delete_sum: number;
+    loc_added_sum: number;
+    loc_deleted_sum: number;
+    pull_requests: PullRequests;
+    totals_by_cli: TotalsByCli;
+  }
+
+  export interface TotalsByIde {
+    ide: string;
+    user_initiated_interaction_count: number;
+    code_generation_activity_count: number;
+    code_acceptance_activity_count: number;
+    loc_suggested_to_add_sum: number;
+    loc_suggested_to_delete_sum: number;
+    loc_added_sum: number;
+    loc_deleted_sum: number;
+  }
+
+  export interface TotalsByFeature {
+    feature: string;
+    user_initiated_interaction_count: number;
+    code_generation_activity_count: number;
+    code_acceptance_activity_count: number;
+    loc_suggested_to_add_sum: number;
+    loc_suggested_to_delete_sum: number;
+    loc_added_sum: number;
+    loc_deleted_sum: number;
+  }
+
+  export interface TotalsByLanguageFeature {
+    language: string;
+    feature: string;
+    code_generation_activity_count: number;
+    code_acceptance_activity_count: number;
+    loc_suggested_to_add_sum: number;
+    loc_suggested_to_delete_sum: number;
+    loc_added_sum: number;
+    loc_deleted_sum: number;
+  }
+
+  export interface TotalsByLanguageModel {
+    language: string;
+    model: string;
+    code_generation_activity_count: number;
+    code_acceptance_activity_count: number;
+    loc_suggested_to_add_sum: number;
+    loc_suggested_to_delete_sum: number;
+    loc_added_sum: number;
+    loc_deleted_sum: number;
+  }
+
+  export interface TotalsByModelFeature {
+    model: string;
+    feature: string;
+    user_initiated_interaction_count: number;
+    code_generation_activity_count: number;
+    code_acceptance_activity_count: number;
+    loc_suggested_to_add_sum: number;
+    loc_suggested_to_delete_sum: number;
+    loc_added_sum: number;
+    loc_deleted_sum: number;
+  }
+
+  export interface PullRequests {
+    total_reviewed: number;
+    total_created: number;
+    total_created_by_copilot: number;
+    total_reviewed_by_copilot: number;
+    total_merged: number;
+    total_suggestions: number;
+    total_applied_suggestions: number;
+    total_merged_created_by_copilot: number;
+    total_copilot_suggestions: number;
+    total_copilot_applied_suggestions: number;
+  }
+
+  export interface TotalsByCli {
+    session_count: number;
+    request_count: number;
+    token_usage: TokenUsage;
+    prompt_count: number;
+  }
+
+  export interface TokenUsage {
+    output_tokens_sum: number;
+    prompt_tokens_sum: number;
+    avg_tokens_per_request: number;
+  }
+
+export interface PremiumRequestUsage {
+  timePeriod: PremiumRequestTimePeriod;
+  enterprise: string;
+  user?: string;
+  usageItems: PremiumRequestUsageItem[];
+}
+
+  export interface PremiumRequestTimePeriod {
+    year: number;
+    month?: number;
+    day?: number;
+  }
+
+  export interface PremiumRequestUsageItem {
+    product: string;
+    sku: string;
+    model: string;
+    unitType: string;
+    pricePerUnit: number;
+    grossQuantity: number;
+    grossAmount: number;
+    discountQuantity: number;
+    discountAmount: number;
+    netQuantity: number;
+    netAmount: number;
+  }
+

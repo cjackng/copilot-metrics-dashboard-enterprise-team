@@ -1,19 +1,19 @@
 import { formatResponseError, unknownResponseError } from "@/features/common/response-error";
-import { CopilotMetrics, CopilotUsageOutput } from "@/features/common/models";
+import { CopilotMetrics, CopilotUsageOutput, CopilotMetricsReportResponse, CopilotMetricsReportData, CopilotMetricsReportWrapper } from "@/features/common/models";
 import { ServerActionResponse } from "@/features/common/server-action-response";
 import { SqlQuerySpec } from "@azure/cosmos";
 import { format } from "date-fns";
 import { cosmosClient, cosmosConfiguration } from "./cosmos-db-service";
 import { ensureGitHubEnvConfig } from "./env-service";
-import { stringIsNullOrEmpty, applyTimeFrameLabel } from "../utils/helpers";
+import { stringIsNullOrEmpty, applyTimeFrameLabel, transformCopilotMetricsReportData } from "../utils/helpers";
 import { sampleData } from "./sample-data";
 
 export interface IFilter {
   startDate?: Date;
   endDate?: Date;
   enterprise: string;
-  organization: string;
-  team: string[];
+  organization?: string;
+  team?: string[];
 }
 
 export const getCopilotMetrics = async (
@@ -26,27 +26,15 @@ export const getCopilotMetrics = async (
     return env;
   }
 
-  const { enterprise, organization } = env.response;
+  const { enterprise } = env.response;
 
   try {
-    switch (process.env.GITHUB_API_SCOPE) {
-      case "enterprise":
-        if (stringIsNullOrEmpty(filter.enterprise)) {
-          filter.enterprise = enterprise;
-        }
-        break;
-      default:
-        if (stringIsNullOrEmpty(filter.organization)) {
-          filter.organization = organization;
-        }
-        break;
-    }    if (isCosmosConfig) {
-      return getCopilotMetricsFromDatabase(filter);
+    if (stringIsNullOrEmpty(filter.enterprise)) {
+      filter.enterprise = enterprise;
     }
-    
-    // If teams are specified, use the teams-specific API function
-    if (filter.team && filter.team.length > 0) {
-      return getCopilotTeamsMetricsFromApi(filter);
+
+    if (isCosmosConfig) {
+      return getCopilotMetricsFromDatabase(filter);
     }
     
     return getCopilotMetricsFromApi(filter);
@@ -54,34 +42,7 @@ export const getCopilotMetrics = async (
     return unknownResponseError(e);
   }
 };
-
-const fetchCopilotMetrics = async (
-  url: string,
-  token: string,
-  version: string,
-  entityName: string
-): Promise<ServerActionResponse<CopilotUsageOutput[]>> => {
-  const response = await fetch(url, {
-    cache: "no-store",
-    headers: {
-      Accept: `application/vnd.github+json`,
-      Authorization: `Bearer ${token}`,
-      "X-GitHub-Api-Version": version,
-    },
-  });
-
-  if (!response.ok) {
-    return formatResponseError(entityName, response);
-  }
-
-  const data = await response.json();
-  const dataWithTimeFrame = applyTimeFrameLabel(data);
-  return {
-    status: "OK",
-    response: dataWithTimeFrame,
-  };
-};
-
+// To-Do: add filter with different time frame
 export const getCopilotMetricsFromApi = async (
   filter: IFilter
 ): Promise<ServerActionResponse<CopilotUsageOutput[]>> => {
@@ -90,116 +51,61 @@ export const getCopilotMetricsFromApi = async (
   if (env.status !== "OK") {
     return env;
   }
-  
-  if (filter.team && filter.team.length > 0) {
-    return getCopilotTeamsMetricsFromApi(filter);
-  }
 
   const { token, version } = env.response;
 
   try {
-    const queryParams = new URLSearchParams();
+    const reportUrl = `https://api.github.com/enterprises/${filter.enterprise}/copilot/metrics/reports/enterprise-28-day/latest`;
+    
+    const reportResponse = await fetch(reportUrl, {
+      cache: "no-store",
+      headers: {
+        Accept: `application/vnd.github+json`,
+        Authorization: `Bearer ${token}`,
+        "X-GitHub-Api-Version": version,
+      },
+    });
 
-    if (filter.startDate) {
-      queryParams.append("since", format(filter.startDate, "yyyy-MM-dd"));
+    if (!reportResponse.ok) {
+      return formatResponseError(filter.enterprise, reportResponse);
     }
-    if (filter.endDate) {
-      queryParams.append("until", format(filter.endDate, "yyyy-MM-dd"));
-    }
 
-    const queryString = queryParams.toString()
-      ? `?${queryParams.toString()}`
-      : "";
-
-    if (filter.enterprise) {
-      const url = `https://api.github.com/enterprises/${filter.enterprise}/copilot/metrics${queryString}`;
-      return fetchCopilotMetrics(url, token, version, filter.enterprise);
-    } else {
-      const url = `https://api.github.com/orgs/${filter.organization}/copilot/metrics${queryString}`;
-      return fetchCopilotMetrics(url, token, version, filter.organization);
-    }
-  } catch (e) {
-    return unknownResponseError(e);
-  }
-};
-
-/**
- * Fetches Copilot metrics for specific teams from the GitHub API
- * @param filter - Filter containing team names and date range
- * @returns Promise with combined metrics for all specified teams
- */
-export const getCopilotTeamsMetricsFromApi = async (
-  filter: IFilter
-): Promise<ServerActionResponse<CopilotUsageOutput[]>> => {
-  const env = ensureGitHubEnvConfig();
-
-  if (env.status !== "OK") {
-    return env;
-  }
-
-  const { token, version } = env.response;
-  try {
-    // If no teams specified, return empty array
-    if (!filter.team || filter.team.length === 0) {
+    const reportData: CopilotMetricsReportResponse = await reportResponse.json();
+    
+    if (!reportData.download_links || reportData.download_links.length === 0) {
       return {
         status: "OK",
         response: [],
       };
     }
 
-    const queryParams = new URLSearchParams();
+    const downloadPromises = reportData.download_links.map(async (downloadUrl) => {
+      const downloadResponse = await fetch(downloadUrl, {
+        cache: "no-store",
+      });
 
-    if (filter.startDate) {
-      queryParams.append("since", format(filter.startDate, "yyyy-MM-dd"));
-    }
-    if (filter.endDate) {
-      queryParams.append("until", format(filter.endDate, "yyyy-MM-dd"));
-    }
-
-    const queryString = queryParams.toString()
-      ? `?${queryParams.toString()}`
-      : "";
-
-    // Fetch metrics for each team and combine results
-    const teamMetricsPromises = filter.team.map(async (teamSlug) => {
-      let url: string;
-      let entityName: string;
-
-      if (filter.enterprise) {
-        // For enterprise-level team metrics
-        url = `https://api.github.com/enterprises/${filter.enterprise}/team/${teamSlug}/copilot/metrics${queryString}`;
-        entityName = `${filter.enterprise}/team/${teamSlug}`;
-      } else {
-        // For organization-level team metrics
-        url = `https://api.github.com/orgs/${filter.organization}/team/${teamSlug}/copilot/metrics${queryString}`;
-        entityName = `${filter.organization}/team/${teamSlug}`;
+      if (!downloadResponse.ok) {
+        throw new Error(`Failed to download: ${downloadResponse.status}`);
       }
 
-      return fetchCopilotMetrics(url, token, version, entityName);
+      const json = await downloadResponse.json();
+      if (Array.isArray(json)) {
+        const wrappers = json as CopilotMetricsReportWrapper[];
+        return wrappers.flatMap(w => w.day_totals || []);
+      } else if (json && typeof json === 'object' && 'day_totals' in json) {
+        const wrapper = json as CopilotMetricsReportWrapper;
+        return wrapper.day_totals || [];
+      }
+      return [];
     });
 
-    const teamMetricsResults = await Promise.all(teamMetricsPromises);
-
-    // Check if any requests failed
-    const failedResults = teamMetricsResults.filter(result => result.status !== "OK");
-    if (failedResults.length > 0) {
-      // Return the first error encountered
-      return failedResults[0];
-    }
-
-    // Combine all successful results
-    const allMetrics: CopilotUsageOutput[] = [];
-    teamMetricsResults.forEach(result => {
-      if (result.status === "OK") {
-        allMetrics.push(...result.response);
-      }    });
-
-    // Sort by day to maintain consistency
-    allMetrics.sort((a, b) => new Date(a.day).getTime() - new Date(b.day).getTime());
-
+    const allDownloadedData = await Promise.all(downloadPromises);
+    const flattenedData = allDownloadedData.flat();
+    const dataWithTimeFrame = transformCopilotMetricsReportData(flattenedData);
+    
     return {
       status: "OK",
-      response: allMetrics,
+      response: dataWithTimeFrame,
     };
   } catch (e) {
     return unknownResponseError(e);

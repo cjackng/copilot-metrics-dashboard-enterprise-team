@@ -1,6 +1,6 @@
 import { featuresEnvConfig } from "@/services/env-service";
 import { format, startOfWeek, parse, isValid } from "date-fns";
-import { CopilotMetrics, CopilotUsageOutput, Breakdown } from "@/features/common/models";
+import { CopilotMetrics, CopilotUsageOutput, CopilotMetricsReportData } from "@/features/common/models";
 
 export const applyTimeFrameLabel = (
   data: CopilotMetrics[]
@@ -21,41 +21,20 @@ export const applyTimeFrameLabel = (
     const weekIdentifier = format(weekStart, "MMM dd");
     const monthIdentifier = format(date, "MMM yy");
 
-    // Create a breakdown array
-    let breakdowns: Breakdown[] = [];
-
-    (item.copilot_ide_code_completions.editors|| []).forEach((editor) => {
-      editor.models.forEach((model) => {
-        model.languages!.forEach((language) => {
-          breakdowns.push({
-            editor: editor.name.toLowerCase(),
-            model: model.name,
-            language: language.name,
-            suggestions_count: language.total_code_suggestions,
-            acceptances_count: language.total_code_acceptances,
-            lines_suggested: language.total_code_lines_suggested,
-            lines_accepted: language.total_code_lines_accepted,
-            active_users: language.total_engaged_users
-          } as Breakdown);
-        });
-      });
-    });
-
     const output: CopilotUsageOutput = {
       ...item,
       total_active_users: item.total_active_users,
       total_engaged_users: item.total_engaged_users,
-      total_ide_engaged_users: item.copilot_ide_code_completions.total_engaged_users,
-      total_code_suggestions: (item.copilot_ide_code_completions.editors|| []).reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_suggestions || 0), 0), 0), 0),
-      total_code_acceptances: (item.copilot_ide_code_completions.editors|| []).reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_acceptances || 0), 0), 0), 0),
-      total_code_lines_suggested: (item.copilot_ide_code_completions.editors|| []).reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_lines_suggested || 0), 0), 0), 0),
-      total_code_lines_accepted: (item.copilot_ide_code_completions.editors|| []).reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_lines_accepted || 0), 0), 0), 0),
-      total_chat_engaged_users: item.copilot_ide_chat.total_engaged_users,
-      total_chats:  (item.copilot_ide_chat.editors || []).reduce((acc, editor) => acc + (editor.models.reduce((modelAcc, model) => modelAcc + (model.total_chats || 0), 0)), 0),
-      total_chat_insertion_events:  (item.copilot_ide_chat.editors || []).reduce((acc, editor) => acc + (editor.models.reduce((modelAcc, model) => modelAcc + (model.total_chat_insertion_events || 0), 0)), 0),
-      total_chat_copy_events:  (item.copilot_ide_chat.editors || []).reduce((acc, editor) => acc + (editor.models.reduce((modelAcc, model) => modelAcc + (model.total_chat_copy_events || 0), 0)), 0),
+      total_ide_engaged_users: item.copilot_ide_code_completions?.total_engaged_users,
+      total_code_suggestions: (item.copilot_ide_code_completions?.editors|| []).reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_suggestions || 0), 0), 0), 0),
+      total_code_acceptances: (item.copilot_ide_code_completions?.editors|| []).reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_acceptances || 0), 0), 0), 0),
+      total_code_lines_suggested: (item.copilot_ide_code_completions?.editors|| []).reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_lines_suggested || 0), 0), 0), 0),
+      total_code_lines_accepted: (item.copilot_ide_code_completions?.editors|| []).reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_lines_accepted || 0), 0), 0), 0),
+      total_chat_engaged_users: item.copilot_ide_chat?.total_engaged_users,
+      total_chats:  (item.copilot_ide_chat?.editors || []).reduce((acc, editor) => acc + (editor.models.reduce((modelAcc, model) => modelAcc + (model.total_chats || 0), 0)), 0),
+      total_accepted_chats:  (item.copilot_ide_chat?.editors || []).reduce((acc, editor) => acc + (editor.models.reduce((modelAcc, model) => modelAcc + (model.total_chat_insertion_events || 0) + (model.total_chat_copy_events || 0), 0)), 0),
       day: item.date,
-      breakdown: breakdowns,
+
       time_frame_week: weekIdentifier,
       time_frame_month: monthIdentifier,
       time_frame_display: weekIdentifier,
@@ -71,7 +50,8 @@ export const getFeatures = () => {
   if (features.status !== "OK") {
     return {
       dashboard: true,
-      seats: true
+      premiumRequests: true,
+      seats: true,
     }
   }
   return features.response;
@@ -106,3 +86,90 @@ export const getNextUrlFromLinkHeader = (linkHeader: string | null): string | nu
   }
   return null;
 }
+
+export const transformCopilotMetricsReportData = (
+  data: CopilotMetricsReportData[]
+): CopilotUsageOutput[] => {
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return [];
+  }
+
+  const sortedData = [...data].sort(
+    (a, b) => new Date(a.day).getTime() - new Date(b.day).getTime()
+  );
+
+  const dataWithTimeFrame: CopilotUsageOutput[] = [];
+
+  sortedData.forEach((item) => {
+    if (!item.day) {
+      return;
+    }
+    const date = new Date(item.day);
+    if (isNaN(date.getTime())) {
+      return;
+    }
+    const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+    const weekIdentifier = format(weekStart, "MMM dd");
+    const monthIdentifier = format(date, "MMM yy");
+
+    const ideMap = new Map<string, number>();
+    (item.totals_by_ide || []).forEach((ideData) => {
+      ideMap.set(ideData.ide, ideData.user_initiated_interaction_count);
+    });
+
+    (item.totals_by_language_feature || []).forEach((langFeature) => {
+      if (!langFeature.language || langFeature.language === "others" || langFeature.language === "unknown") {
+        return;
+      }
+      
+      let language = langFeature.language;
+      if (language === "js" || language === "jsx") {
+        language = "javascript";
+      } else if (language === "ts" || language === "tsx") {
+        language = "typescript";
+      }
+    });
+
+    const chatFeatures = item.totals_by_feature || [];
+    var totalChats = 0;
+    var totalAcceptedChats = 0;
+    var totalLinesSuggested = 0;
+    var totalLinesAccepted = 0;
+    var totalCodeCompletionSuggested = 0;
+    var totalCodeCompletionAccepted = 0;
+    chatFeatures.forEach((featureData) => {
+      if (featureData.feature != "agent_edit") {
+        totalLinesSuggested += (featureData.loc_suggested_to_add_sum + featureData.loc_suggested_to_delete_sum);
+        totalLinesAccepted += (featureData.loc_added_sum + featureData.loc_deleted_sum);
+      }
+      if (featureData.feature.includes("chat")) {
+        totalChats += featureData.code_generation_activity_count;
+        totalAcceptedChats += featureData.code_acceptance_activity_count;
+      }
+      if (featureData.feature === "code_completion") {
+        totalCodeCompletionSuggested += featureData.code_generation_activity_count;
+        totalCodeCompletionAccepted += featureData.code_acceptance_activity_count;
+      }
+    });
+
+    const output: CopilotUsageOutput = {
+      day: item.day,
+      total_active_users: item.monthly_active_users,
+      total_engaged_users: item.daily_active_users,
+      total_ide_engaged_users: item.daily_active_users - item.daily_active_cli_users,
+      total_code_suggestions: totalCodeCompletionSuggested,
+      total_code_acceptances: totalCodeCompletionAccepted,
+      total_code_lines_suggested: totalLinesSuggested,
+      total_code_lines_accepted: totalLinesAccepted,
+      total_chat_engaged_users: item.monthly_active_chat_users,
+      total_chats: totalChats,
+      total_accepted_chats: totalAcceptedChats,
+      time_frame_week: weekIdentifier,
+      time_frame_month: monthIdentifier,
+      time_frame_display: weekIdentifier,
+    };
+    dataWithTimeFrame.push(output);
+  });
+
+  return dataWithTimeFrame;
+};

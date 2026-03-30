@@ -10,6 +10,7 @@ interface GitHubConfig {
 
 interface FeaturesConfig {
   dashboard: boolean;
+  premiumRequests: boolean;
   seats: boolean;
 }
 
@@ -19,17 +20,6 @@ export const ensureGitHubEnvConfig = (): ServerActionResponse<GitHubConfig> => {
   const token = process.env.GITHUB_TOKEN;
   const version = process.env.GITHUB_API_VERSION;
   let scope = process.env.GITHUB_API_SCOPE;
-
-  if (stringIsNullOrEmpty(organization)) {
-    return {
-      status: "ERROR",
-      errors: [
-        {
-          message: "Missing required environment variable for organization",
-        },
-      ],
-    };
-  }
 
   if (stringIsNullOrEmpty(enterprise)) {
     return {
@@ -98,11 +88,13 @@ export const ensureGitHubEnvConfig = (): ServerActionResponse<GitHubConfig> => {
 
 export const featuresEnvConfig = (): ServerActionResponse<FeaturesConfig> => {
   const enableDashboardFeature = process.env.ENABLE_DASHBOARD_FEATURE !== "false" ? true : false;
+  const enablePremiumRequestsFeature = process.env.ENABLE_PREMIUM_REQUESTS_FEATURE !== "false" ? true : false;
   const enableSeatsFeature = process.env.ENABLE_SEATS_FEATURE !== "false" ? true : false;
   return {
     status: "OK",
     response: {
       dashboard: enableDashboardFeature,
+      premiumRequests: enablePremiumRequestsFeature,
       seats: enableSeatsFeature,
     },
   };

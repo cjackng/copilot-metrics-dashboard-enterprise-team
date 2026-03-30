@@ -51,17 +51,10 @@ export const TotalChatsAndAcceptances = () => {
               stroke="hsl(var(--chart-2))"
             />
             <Area
-              dataKey={chartConfig.totalChatInsertionEvents.key}
+              dataKey={chartConfig.totalAcceptedChats.key}
               type="linear"
               fill="hsl(var(--chart-1))"
               stroke="hsl(var(--chart-1))"
-              fillOpacity={0.2}
-            />
-            <Area
-              dataKey={chartConfig.totalChatCopyEvents.key}
-              type="linear"
-              fill="hsl(var(--chart-3))"
-              stroke="hsl(var(--chart-3))"
               fillOpacity={0.2}
             />
             <ChartLegend content={<ChartLegendContent />} />
@@ -83,13 +76,9 @@ const chartConfig: Record<
     label: "Total Chats",
     key: "totalChats",
   },
-  ["totalChatInsertionEvents"]: {
-    label: "Total Chat Insertion Events",
-    key: "totalChatInsertionEvents",
-  },
-  ["totalChatCopyEvents"]: {
-    label: "Total Chat Copy Events",
-    key: "totalChatCopyEvents",
+  ["totalAcceptedChats"]: {
+    label: "Total Accepted Chats",
+    key: "totalAcceptedChats",
   },
   ["timeFrameDisplay"]: {
     label: "Time frame display",

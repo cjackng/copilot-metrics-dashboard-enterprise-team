@@ -2,7 +2,6 @@
 
 import { PropsWithChildren } from "react";
 import {
-  Breakdown,
   CopilotUsageOutput,
   GitHubTeam,
 } from "@/features/common/models";
@@ -79,8 +78,6 @@ class DashboardState {
     this.onTimeFrameChange(this.timeFrame);
     this.seatsData = seatsData;
     this.teamsData = teamsData;
-    this.languages = this.extractUniqueLanguages();
-    this.editors = this.extractUniqueEditors();
     this.teams = this.extractUniqueTeams();
     // Store current filter for data refreshing
     if (filter) {
@@ -149,8 +146,6 @@ class DashboardState {
       if (metricsResult.success && metricsResult.data) {
         // Update the metrics data and re-extract unique values
         this.apiData = [...metricsResult.data];
-        this.languages = this.extractUniqueLanguages();
-        this.editors = this.extractUniqueEditors();
 
         // Preserve team selections and reapply all filters
         const currentTeamSelections = this.teams.map((t) => ({
@@ -213,66 +208,7 @@ class DashboardState {
 
   private applyFilters(): void {
     const data = this.aggregatedDataByTimeFrame(this.hideWeekends);
-
-    const selectedLanguages = this.languages.filter((item) => item.isSelected);
-    const selectedEditors = this.editors.filter((item) => item.isSelected);
-
-    if (selectedLanguages.length !== 0) {
-      data.forEach((item) => {
-        const filtered = item.breakdown.filter((breakdown: Breakdown) =>
-          selectedLanguages.some(
-            (selectedLanguage) => selectedLanguage.value === breakdown.language
-          )
-        );
-        item.breakdown = filtered;
-      });
-    }
-
-    if (selectedEditors.length !== 0) {
-      data.forEach((item) => {
-        const filtered = item.breakdown.filter((breakdown: Breakdown) =>
-          selectedEditors.some((editor) => editor.value === breakdown.editor)
-        );
-        item.breakdown = filtered;
-      });
-    }
-
-    this.filteredData = data.filter((item) => item.breakdown.length > 0);
-  }
-
-  private extractUniqueLanguages(): DropdownFilterItem[] {
-    const languages: DropdownFilterItem[] = [];
-
-    this.apiData.forEach((item) => {
-      item.breakdown.forEach((breakdown) => {
-        const index = languages.findIndex(
-          (language) => language.value === breakdown.language
-        );
-
-        if (index === -1) {
-          languages.push({ value: breakdown.language, isSelected: false });
-        }
-      });
-    });
-
-    return languages.sort((a, b) => a.value.localeCompare(b.value));
-  }
-  
-  private extractUniqueEditors(): DropdownFilterItem[] {
-    const editors: DropdownFilterItem[] = [];
-    this.apiData.forEach((item) => {
-      item.breakdown.forEach((breakdown) => {
-        const index = editors.findIndex(
-          (editor) => editor.value === breakdown.editor
-        );
-
-        if (index === -1) {
-          editors.push({ value: breakdown.editor, isSelected: false });
-        }
-      });
-    });
-
-    return editors.sort((a, b) => a.value.localeCompare(b.value));
+    this.filteredData = data
   }
 
   private extractUniqueTeams(): DropdownFilterItem[] {

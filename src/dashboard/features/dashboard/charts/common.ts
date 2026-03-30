@@ -1,5 +1,4 @@
-import { Breakdown, CopilotUsageOutput } from "@/features/common/models";
-import { PieChartData } from "./language";
+import { CopilotUsageOutput } from "@/features/common/models";
 
 export interface AcceptanceRateData {
   acceptanceRate: number;
@@ -11,28 +10,16 @@ export const computeAcceptanceAverage = (
   filteredData: CopilotUsageOutput[]
 ): AcceptanceRateData[] => {
   const rates = filteredData.map((item) => {
-    let cumulatedAccepted = 0;
-    let cumulatedSuggested = 0;
-
-    item.breakdown.forEach((breakdown: Breakdown) => {
-      const { acceptances_count, suggestions_count } = breakdown;
-      cumulatedAccepted += acceptances_count;
-      cumulatedSuggested += suggestions_count;
-    });
+    const cumulatedAccepted = item.total_code_acceptances || 0;
+    const cumulatedSuggested = item.total_code_suggestions || 0;
 
     const acceptanceAverage =
-    cumulatedSuggested !== 0
-      ? (cumulatedAccepted / cumulatedSuggested) * 100
-      : 0;
+      cumulatedSuggested !== 0
+        ? (cumulatedAccepted / cumulatedSuggested) * 100
+        : 0;
     
-    let cumulatedLinesAccepted = 0;
-    let cumulatedLinesSuggested = 0;
-
-    item.breakdown.forEach((breakdown: Breakdown) => {
-      const { lines_accepted, lines_suggested } = breakdown;
-      cumulatedLinesAccepted += lines_accepted;
-      cumulatedLinesSuggested += lines_suggested;
-    });
+    const cumulatedLinesAccepted = item.total_code_lines_accepted || 0;
+    const cumulatedLinesSuggested = item.total_code_lines_suggested || 0;
 
     const acceptanceLinesAverage =
       cumulatedLinesSuggested !== 0
@@ -68,90 +55,6 @@ export function getActiveUsers(
 
   return rates;
 }
-
-export const computeEditorData = (
-  filteredData: CopilotUsageOutput[]
-): Array<PieChartData> => {
-  const editorMap = new Map<string, PieChartData>();
-
-  // Aggregate data
-  filteredData.forEach(({ breakdown }) => {
-    breakdown.forEach(({ editor, active_users }) => {
-      const editorData = editorMap.get(editor) || {
-        id: editor,
-        name: editor,
-        value: 0,
-        fill: "",
-      };
-      editorData.value += active_users;
-      editorMap.set(editor, editorData);
-    });
-  });
-
-  // Convert Map to Array and calculate percentages
-  let totalSum = 0;
-  const editors = Array.from(editorMap.values()).map((editor) => {
-    totalSum += editor.value;
-    return editor;
-  });
-
-  // Calculate percentage values
-  editors.forEach((editor) => {
-    editor.value = Number(((editor.value / totalSum) * 100).toFixed(2));
-  });
-
-  // Sort by value
-  editors.sort((a, b) => b.value - a.value);
-
-  // Assign colors
-  editors.forEach((editor, index) => {
-    editor.fill = `hsl(var(--chart-${index < 4 ? index + 1 : 5}))`;
-  });
-
-  return editors;
-};
-
-export const computeLanguageData = (
-  filteredData: CopilotUsageOutput[]
-): Array<PieChartData> => {
-  const languageMap = new Map<string, PieChartData>();
-
-  // Aggregate data
-  filteredData.forEach(({ breakdown }) => {
-    breakdown.forEach(({ language, active_users }) => {
-      const languageData = languageMap.get(language) || {
-        id: language,
-        name: language,
-        value: 0,
-        fill: "",
-      };
-      languageData.value += active_users;
-      languageMap.set(language, languageData);
-    });
-  });
-
-  // Convert Map to Array and calculate percentages
-  let totalSum = 0;
-  const languages = Array.from(languageMap.values()).map((language) => {
-    totalSum += language.value;
-    return language;
-  });
-
-  // Calculate percentage values
-  languages.forEach((language) => {
-    language.value = Number(((language.value / totalSum) * 100).toFixed(2));
-  });
-
-  // Sort by value
-  languages.sort((a, b) => b.value - a.value);
-
-  // Assign colors
-  languages.forEach((language, index) => {
-    language.fill = `hsl(var(--chart-${index < 4 ? index + 1 : 5}))`;
-  });
-
-  return languages;
-};
 
 export const computeActiveUserAverage = (
   filteredData: CopilotUsageOutput[]
@@ -211,17 +114,9 @@ export function totalLinesSuggestedAndAccepted(
   filteredData: CopilotUsageOutput[]
 ): LineSuggestionsAndAcceptancesData[] {
   const codeLineSuggestionsAndAcceptances = filteredData.map((item) => {
-    let total_lines_accepted = 0;
-    let total_lines_suggested = 0;
-
-    item.breakdown.forEach((breakdown) => {
-      total_lines_accepted += breakdown.lines_accepted;
-      total_lines_suggested += breakdown.lines_suggested;
-    });
-
     return {
-      totalLinesAccepted: total_lines_accepted,
-      totalLinesSuggested: total_lines_suggested,
+      totalLinesAccepted: item.total_code_lines_accepted || 0,
+      totalLinesSuggested: item.total_code_lines_suggested || 0,
       timeFrameDisplay: item.time_frame_display,
     };
   });
@@ -239,17 +134,10 @@ export function totalSuggestionsAndAcceptances(
   filteredData: CopilotUsageOutput[]
 ): SuggestionAcceptanceData[] {
   const rates = filteredData.map((item) => {
-    let totalAcceptancesCount = 0;
-    let totalSuggestionsCount = 0;
-
-    item.breakdown.forEach((breakdown) => {
-      totalAcceptancesCount += breakdown.acceptances_count;
-      totalSuggestionsCount += breakdown.suggestions_count;
-    });
 
     return {
-      totalAcceptancesCount,
-      totalSuggestionsCount,
+      totalAcceptancesCount: item.total_code_acceptances || 0,
+      totalSuggestionsCount: item.total_code_suggestions || 0,
       timeFrameDisplay: item.time_frame_display,
     };
   });
@@ -269,7 +157,7 @@ export const computeChatAcceptanceAverage = (
 
     const acceptanceRate =
     item.total_chats !== 0
-      ? ((item.total_chat_insertion_events + item.total_chat_copy_events) / item.total_chats) * 100
+      ? ((item.total_accepted_chats) / item.total_chats) * 100
       : 0;
 
     return {
@@ -283,8 +171,7 @@ export const computeChatAcceptanceAverage = (
 
 export interface ChatAcceptanceData {
   totalChats: number;
-  totalChatInsertionEvents: number;
-  totalChatCopyEvents: number;
+  totalAcceptedChats: number;
   timeFrameDisplay: string;
 }
 
@@ -295,8 +182,7 @@ export function totalChatsAndAcceptances(
 
     return {
       totalChats: item.total_chats,
-      totalChatInsertionEvents: item.total_chat_insertion_events,
-      totalChatCopyEvents: item.total_chat_copy_events,
+      totalAcceptedChats: item.total_accepted_chats,
       timeFrameDisplay: item.time_frame_display
     };
   });
