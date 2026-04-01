@@ -30,6 +30,12 @@ const MenuItems = () => {
         <LayoutDashboard size={18} strokeWidth={1.4} />
         Dashboard
       </MainNavItem>
+      {features.premiumRequests && (
+          <MainNavItem path="/premium-requests">
+            <Menu size={18} strokeWidth={1.4} />
+            Premium Requests
+          </MainNavItem>
+      )}
       {features.seats && (
         <MainNavItem path="/seats">
           <Users size={18} strokeWidth={1.4} />
