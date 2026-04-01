@@ -287,29 +287,19 @@ export interface CopilotMetricsReportWrapper {
   }
 
 export interface PremiumRequestUsage {
-  timePeriod: PremiumRequestTimePeriod;
-  enterprise: string;
-  user?: string;
-  usageItems: PremiumRequestUsageItem[];
-}
-
-  export interface PremiumRequestTimePeriod {
-    year: number;
-    month?: number;
-    day?: number;
-  }
-
-  export interface PremiumRequestUsageItem {
-    product: string;
-    sku: string;
-    model: string;
-    unitType: string;
-    pricePerUnit: number;
-    grossQuantity: number;
-    grossAmount: number;
-    discountQuantity: number;
-    discountAmount: number;
-    netQuantity: number;
-    netAmount: number;
-  }
-
+  date: string;                      // ISO date string, e.g. "2026-03-31"
+  username: string;
+  product: string;
+  sku: string;
+  model: string;
+  quantity: number;
+  unit_type: string;
+  applied_cost_per_quantity: number;
+  gross_amount: number;
+  discount_amount: number;
+  net_amount: number;
+  exceeds_quota: boolean;
+  total_monthly_quota: number;
+  organization?: string;
+  cost_center_name?: string;
+};
