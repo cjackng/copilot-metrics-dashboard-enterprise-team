@@ -54,6 +54,7 @@
     "next": "^14.2.28",
     "next-auth": "^4.24.10",
     "next-themes": "^0.3.0",
+    "pg": "^8.11.3",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
@@ -71,6 +72,7 @@
   "devDependencies": {
     "@testing-library/react": "^16.0.0",
     "@types/node": "^20.14.10",
+    "@types/pg": "^8.11.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
