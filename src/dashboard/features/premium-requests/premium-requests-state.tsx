@@ -4,11 +4,14 @@ import { PropsWithChildren } from "react";
 import { CopilotSeatsData } from "@/features/common/models";
 import { proxy, useSnapshot } from "valtio";
 import { PremiumRequestUsage } from '@/features/common/models';
-
+import { UserUsageData } from "@/features/common/models";
 
 interface IProps extends PropsWithChildren {
   copilotSeats: CopilotSeatsData;
   premiumRequestUsages: PremiumRequestUsage[];
+  selectedMonth?: string;
+  startDate: string;
+  endDate: string;
 }
 
 export interface DropdownFilterItem {
@@ -19,14 +22,71 @@ export interface DropdownFilterItem {
 class PremiumRequestsState {
   public seatsData: CopilotSeatsData = {} as CopilotSeatsData;
   public premiumRequestUsages: PremiumRequestUsage[] = [];
+  public userUsageData: UserUsageData[] = [];
+  public startDate: string = "";
+  public endDate: string = "";
+  public selectedMonth: string = "";
 
   public initData(
     seatsData: CopilotSeatsData,
-    premiumRequestUsages: PremiumRequestUsage[]
+    premiumRequestUsages: PremiumRequestUsage[],
+    startDate: string,
+    endDate: string,
+    selectedMonth?: string
   ): void {
     this.seatsData = seatsData;
     this.premiumRequestUsages = premiumRequestUsages;
+    this.selectedMonth = selectedMonth || this.getCurrentMonth();
+    this.userUsageData = this.getUserUsageData(seatsData, premiumRequestUsages);
+    this.startDate = startDate;
+    this.endDate = endDate;
   }
+
+  private getCurrentMonth(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  public setSelectedMonth(month: string): void {
+    this.selectedMonth = month;
+  }
+
+  public updateUsageData(usageData: PremiumRequestUsage[]): void {
+    this.premiumRequestUsages = usageData;
+    this.userUsageData = this.getUserUsageData(this.seatsData, usageData);
+  }
+
+  public getUserUsageData = (seatsData: CopilotSeatsData, usageData: PremiumRequestUsage[]): UserUsageData[] => {
+    const userToTeamMap = new Map<string, string[]>();
+    seatsData.seats?.forEach(seat => {
+      const login = seat.assignee.login;
+      const teamName = seat.assigning_team.name;
+      if (!userToTeamMap.has(login)) {
+        userToTeamMap.set(login, []);
+      }
+      const teams = userToTeamMap.get(login)!;
+      if (!teams.includes(teamName)) {
+        teams.push(teamName);
+      }
+    });
+
+    const userUsageMap = new Map<string, UserUsageData>();
+    usageData?.forEach(usage => {
+      const teams = userToTeamMap.get(usage.username) || [];
+      if (!userUsageMap.has(usage.username)) {
+        userUsageMap.set(usage.username, {
+          user: usage.username,
+          totalRequestQuantity: 0,
+          totalRequestQuota: usage.total_monthly_quota,
+          team: teams
+        });
+      }
+      const userData = userUsageMap.get(usage.username)!;
+      userData.totalRequestQuantity += Number(usage.quantity);
+    });
+
+    return Array.from(userUsageMap.values());
+  };
 
 }
 
@@ -39,8 +99,11 @@ export const useDashboard = () => {
 export const DataProvider = ({
   children,
   copilotSeats,
-  premiumRequestUsages
+  premiumRequestUsages,
+  selectedMonth,
+  startDate,
+  endDate
 }: IProps) => {
-  dashboardStore.initData(copilotSeats, premiumRequestUsages);
+  dashboardStore.initData(copilotSeats, premiumRequestUsages, startDate, endDate, selectedMonth);
   return <>{children}</>;
 };

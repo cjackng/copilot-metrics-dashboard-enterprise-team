@@ -1,19 +1,39 @@
 import { formatResponseError, unknownResponseError } from "@/features/common/response-error";
 import { ServerActionResponse } from "@/features/common/server-action-response";
 import { PremiumRequestUsage } from "@/features/common/models";
+import { format } from "date-fns";
 
 export interface IFilter {
   startDate?: Date;
   endDate?: Date;
+  month?: string;
 }
 
 const getPremiumRequestUsageFromDB = async (filter: IFilter): Promise<ServerActionResponse<PremiumRequestUsage[]>> => {
   const PremiumRequestUsageService = (await import('./postgres-db-service')).default;
   const service = new PremiumRequestUsageService();
   await service.init();
+  const defaultDays = 31;
   
   try {
-    const rows = await service.getAllRows();
+    let start = "";
+    let end = "";
+    if (filter.startDate && filter.endDate) {
+      start = format(filter.startDate, "yyyy-MM-dd");
+      end = format(filter.endDate, "yyyy-MM-dd");
+    } else {
+      // set the start date to today and the end date to 31 days ago
+      const todayDate = new Date();
+      const startDate = new Date(todayDate);
+      startDate.setDate(todayDate.getDate() - defaultDays);
+  
+      start = format(startDate, "yyyy-MM-dd");
+      end = format(todayDate, "yyyy-MM-dd");
+    }
+
+    const rows = await service.getRowsByDateRange(start, end);
+    console.log(`Fetched ${rows.length} premium request usage records from DB for date range ${start} to ${end}`);
+
     return {
       status: "OK",
       response: rows,
@@ -30,12 +50,17 @@ export const getPremiumRequestUsage = async (
   filter: IFilter
 ): Promise<ServerActionResponse<PremiumRequestUsage[]>> => {
   
-  // To-Do: apply getPremiumRequestUsageFromDB
-  // To-Do: update getPremiumRequestUsageFromDB to with filter
-  // To-Do: add join
+  const result = await getPremiumRequestUsageFromDB(filter);
+
+  if (result.status !== "OK" || !result.response) {
+    return {
+      status: "ERROR",
+      errors: [{ message: "No data found" }],
+    };
+  }
 
   return {
     status: "OK",
-    response: [],
+    response: result.response,
   };
 };

@@ -2,13 +2,20 @@ import { ErrorPage } from "../common/error-page";
 import { PremiumRequestsTable } from "./charts/premium-requests-table";
 import { Header } from "./header";
 import { getFeatures } from "@/utils/helpers";
+import { parseDate } from "@/utils/helpers";
 import { cosmosConfiguration } from "@/services/cosmos-db-service";
 import { getCopilotSeats, IFilter as SeatServiceFilter } from "@/services/copilot-seat-service";
 import { DataProvider } from "./premium-requests-state";
 import { getPremiumRequestUsage, IFilter as PremiumRequestUsageServiceFilter } from "@/services/premium-request-usage-service";
+import { startOfMonth, endOfMonth } from "date-fns";
 
 export interface IProps {
-  searchParams: SeatServiceFilter;
+  searchParams: SeatServiceFilter & { month?: string; startDate?: string; endDate?: string };
+}
+
+function getDefaultMonth(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
 export default async function Dashboard(props: IProps) {
@@ -19,8 +26,31 @@ export default async function Dashboard(props: IProps) {
     return <ErrorPage error="Feature not available"></ErrorPage>
   }
 
+  let startDate: Date;
+  let endDate: Date;
+  let selectedMonth: string;
+
+  const startDateParam = props.searchParams.startDate ? parseDate(props.searchParams.startDate) : null;
+  const endDateParam = props.searchParams.endDate ? parseDate(props.searchParams.endDate) : null;
+
+  if (startDateParam && endDateParam) {
+    startDate = startDateParam;
+    endDate = endDateParam;
+    selectedMonth = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}`;
+  } else if (props.searchParams.month) {
+    selectedMonth = props.searchParams.month;
+    const [year, monthNum] = selectedMonth.split('-').map(Number);
+    startDate = startOfMonth(new Date(year, monthNum - 1));
+    endDate = endOfMonth(new Date(year, monthNum - 1));
+  } else {
+    selectedMonth = getDefaultMonth();
+    const [year, monthNum] = selectedMonth.split('-').map(Number);
+    startDate = startOfMonth(new Date(year, monthNum - 1));
+    endDate = endOfMonth(new Date(year, monthNum - 1));
+  }
+  
   const seatsPromise = getCopilotSeats(props.searchParams);
-  const premiumRequestUsagesPromise = getPremiumRequestUsage(undefined as unknown as PremiumRequestUsageServiceFilter);
+  const premiumRequestUsagesPromise = getPremiumRequestUsage({ startDate, endDate } as PremiumRequestUsageServiceFilter);
   const [seats, premiumRequestUsages] = await Promise.all([seatsPromise, premiumRequestUsagesPromise]);
   if (seats.status !== "OK") {
     return <ErrorPage error={seats.errors[0].message} />;
@@ -31,7 +61,13 @@ export default async function Dashboard(props: IProps) {
   }
 
   return (
-    <DataProvider copilotSeats={seats.response} premiumRequestUsages={premiumRequestUsages.response}>
+    <DataProvider 
+      copilotSeats={seats.response} 
+      premiumRequestUsages={premiumRequestUsages.response} 
+      startDate={startDate.toLocaleDateString()} 
+      endDate={endDate.toLocaleDateString()}
+      selectedMonth={selectedMonth} 
+    >
       <main className="flex flex-1 flex-col gap-4 md:gap-8 pb-8">
         <Header isCosmosDb={isCosmosDb} />
         <div className="mx-auto w-full max-w-6xl container">

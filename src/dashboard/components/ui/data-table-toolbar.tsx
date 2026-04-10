@@ -11,11 +11,12 @@ import { DataTableExportOptions } from "./data-table-export-options";
 interface DataTableToolbarProps<TData> {
     table: Table<TData>;
     search?: { column: string; placeholder: string };
-    filters?: { column: string; label: string }[];
+    filters?: { column: string, label: string }[];
     enableExport?: boolean;
+    getArrayFacets?: (columnId: string) => Map<string, number>;
 }
 
-export function DataTableToolbar<TData>({ table, search, filters, enableExport }: DataTableToolbarProps<TData>) {
+export function DataTableToolbar<TData>({ table, search, filters, enableExport, getArrayFacets }: DataTableToolbarProps<TData>) {
     const isFiltered = table.getState().columnFilters.length > 0;
 
     return (
@@ -34,6 +35,7 @@ export function DataTableToolbar<TData>({ table, search, filters, enableExport }
                         key={filter.column}
                         column={table.getColumn(filter.column)}
                         title={filter.label}
+                        getArrayFacets={getArrayFacets}
                     />
                 ))}
                 {isFiltered && (

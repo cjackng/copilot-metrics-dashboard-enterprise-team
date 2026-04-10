@@ -19,7 +19,7 @@ class PremiumRequestUsageService {
 
   async init() {
     const createTableSQL = `
-    CREATE TABLE IF NOT EXISTS copilot_premium_request_usage (
+    CREATE TABLE IF NOT EXISTS premium_usage_report (
       date TEXT NOT NULL,
       username TEXT NOT NULL,
       product TEXT NOT NULL,
@@ -43,7 +43,7 @@ class PremiumRequestUsageService {
 
   async insertRow(row: PremiumRequestUsage) {
     const stmt = `
-      INSERT INTO copilot_premium_request_usage (
+      INSERT INTO premium_usage_report (
         date, username, product, sku, model, quantity, unit_type,
         applied_cost_per_quantity, gross_amount, discount_amount, net_amount,
         exceeds_quota, total_monthly_quota, organization, cost_center_name
@@ -85,7 +85,16 @@ class PremiumRequestUsageService {
   }
 
   async getAllRows(): Promise<PremiumRequestUsage[]> {
-    const result = await this.pool.query('SELECT * FROM copilot_premium_request_usage');
+    const result = await this.pool.query('SELECT * FROM premium_usage_report');
+    return result.rows;
+  }
+
+  async getRowsByDateRange(startDate: string, endDate: string): Promise<PremiumRequestUsage[]> {
+    const stmt = `
+      SELECT * FROM premium_usage_report
+      WHERE date >= $1 AND date <= $2
+    `;
+    const result = await this.pool.query(stmt, [startDate, endDate]);
     return result.rows;
   }
 

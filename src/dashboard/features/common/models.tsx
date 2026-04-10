@@ -303,3 +303,10 @@ export interface PremiumRequestUsage {
   organization?: string;
   cost_center_name?: string;
 };
+
+export interface UserUsageData {
+  user: string;
+  totalRequestQuantity: number;
+  totalRequestQuota: number;
+  team: string[];
+}

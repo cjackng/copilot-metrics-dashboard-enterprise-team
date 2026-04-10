@@ -12,12 +12,27 @@ interface DataTableProps<TData, TValue> {
     data: TData[];
     initialVisibleColumns?: VisibilityState;
     search?: { column: string; placeholder: string };
-    filters?: { column: string; label: string }[];
+    filters?: { column: string, label: string }[];
     enableExport?: boolean;
     enableExpand?: boolean;
     getSubRows?: (row: TData) => TData[] | undefined;
     expandAll?: boolean;
 }
+
+const getArrayFacets = <TData, TValue>(data: TData[], columnId: string): Map<string, number> => {
+    const valueCounts = new Map<string, number>();
+    data.forEach((row) => {
+        const value = (row as Record<string, unknown>)[columnId];
+        if (Array.isArray(value)) {
+            value.forEach((item) => {
+                valueCounts.set(item, (valueCounts.get(item) || 0) + 1);
+            });
+        } else if (value !== null && value !== undefined) {
+            valueCounts.set(String(value), (valueCounts.get(String(value)) || 0) + 1);
+        }
+    });
+    return valueCounts;
+};
 
 export function DataTable<TData, TValue>({ columns, data, initialVisibleColumns, search, filters, enableExport, enableExpand, getSubRows, expandAll }: DataTableProps<TData, TValue>) {
     const [rowSelection, setRowSelection] = React.useState({});
@@ -98,12 +113,21 @@ export function DataTable<TData, TValue>({ columns, data, initialVisibleColumns,
                                 </Button>
                             </TableCell>
                         )}
+                        {enableExpand && level > 0 && !hasSubRows && <TableCell className="w-10" />}
                         {row.getVisibleCells().map((cell) => (
                             <TableCell key={cell.id} className={level > 0 ? "pl-8" : ""}>
                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
                             </TableCell>
                         ))}
                     </TableRow>
+                    {hasSubRows && isExpanded && level === 0 && (
+                        <TableRow className="bg-muted/50 hover:bg-muted/50">
+                            <TableCell className="w-10" />
+                            <TableCell>Member</TableCell>
+                            <TableCell>Included Requests</TableCell>
+                            <TableCell>Included Request Quota</TableCell>
+                        </TableRow>
+                    )}
                     {hasSubRows && isExpanded && (
                         renderRows(row.subRows as Row<TData>[], level + 1)
                     )}
@@ -119,6 +143,7 @@ export function DataTable<TData, TValue>({ columns, data, initialVisibleColumns,
                 search={search}
                 filters={filters}
                 enableExport={enableExport}
+                getArrayFacets={(columnId) => getArrayFacets(data, columnId)}
             />
             <div className="rounded-md border">
                 <Table>

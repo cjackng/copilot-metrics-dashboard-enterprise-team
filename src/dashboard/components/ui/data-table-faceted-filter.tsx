@@ -11,10 +11,12 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 interface DataTableFacetedFilterProps<TData, TValue> {
     column?: Column<TData, TValue>;
     title?: string;
+    getArrayFacets?: (columnId: string) => Map<string, number>;
 }
 
-export function DataTableFacetedFilter<TData, TValue>({ column, title }: DataTableFacetedFilterProps<TData, TValue>) {
-    const facets = column?.getFacetedUniqueValues();
+export function DataTableFacetedFilter<TData, TValue>({ column, title, getArrayFacets }: DataTableFacetedFilterProps<TData, TValue>) {
+    const defaultFacets = column?.getFacetedUniqueValues();
+    const facets = column?.id && getArrayFacets ? getArrayFacets(column.id) : defaultFacets;
     const selectedValues = new Set(column?.getFilterValue() as string[]);
 
     return (
