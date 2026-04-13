@@ -17,6 +17,7 @@ interface DataTableProps<TData, TValue> {
     enableExpand?: boolean;
     getSubRows?: (row: TData) => TData[] | undefined;
     expandAll?: boolean;
+    summaryField?: string;
 }
 
 const getArrayFacets = <TData, TValue>(data: TData[], columnId: string): Map<string, number> => {
@@ -34,12 +35,17 @@ const getArrayFacets = <TData, TValue>(data: TData[], columnId: string): Map<str
     return valueCounts;
 };
 
-export function DataTable<TData, TValue>({ columns, data, initialVisibleColumns, search, filters, enableExport, enableExpand, getSubRows, expandAll }: DataTableProps<TData, TValue>) {
+export function DataTable<TData, TValue>({ columns, data, initialVisibleColumns, search, filters, enableExport, enableExpand, getSubRows, expandAll, summaryField }: DataTableProps<TData, TValue>) {
     const [rowSelection, setRowSelection] = React.useState({});
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>(initialVisibleColumns ?? {});
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [expanded, setExpanded] = React.useState<Record<string, boolean>>({});
+    const [isMounted, setIsMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     React.useEffect(() => {
         if (expandAll && getSubRows) {
@@ -145,6 +151,15 @@ export function DataTable<TData, TValue>({ columns, data, initialVisibleColumns,
                 enableExport={enableExport}
                 getArrayFacets={(columnId) => getArrayFacets(data, columnId)}
             />
+            {data.length > 0 && summaryField && isMounted && (
+                <div className="flex justify-end gap-6 text-sm font-medium">
+                    <span>Total Users: {table.getFilteredRowModel().rows.length}</span>
+                    <span>Total Requests: {table.getFilteredRowModel().rows.reduce((sum, row) => {
+                        const value = (row.original as Record<string, unknown>)[summaryField];
+                        return sum + (typeof value === 'number' ? value : 0);
+                    }, 0).toFixed(0).toLocaleString()}</span>
+                </div>
+            )}
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
