@@ -101,6 +101,7 @@ export const PremiumRequestsTable = () => {
           data={userUsageData}
           enableExport
           filters={[{ column: "team", label: "Team" }]}
+          summaryField="totalRequestQuantity"
         />
       </CardContent>
     </Card>
