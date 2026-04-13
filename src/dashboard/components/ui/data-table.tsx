@@ -179,23 +179,6 @@ export function DataTable<TData, TValue>({ columns, data, initialVisibleColumns,
                                 })}
                             </TableRow>
                         ))}
-                        {data.length > 0 && summaryField && (
-                            <>
-                                <TableRow className="bg-muted/40">
-                                    <TableCell colSpan={columns.length + (enableExpand ? 1 : 0)} className="text-right font-medium">
-                                        Total Users: {table.getFilteredRowModel().rows.length}
-                                    </TableCell>
-                                </TableRow>
-                                <TableRow className="bg-muted/40">
-                                    <TableCell colSpan={columns.length + (enableExpand ? 1 : 0)} className="text-right font-medium">
-                                        Total Requests: {table.getFilteredRowModel().rows.reduce((sum, row) => {
-                                            const value = (row.original as Record<string, unknown>)[summaryField];
-                                            return sum + (typeof value === 'number' ? value : 0);
-                                        }, 0).toFixed(0).toLocaleString()}
-                                    </TableCell>
-                                </TableRow>
-                            </>
-                        )}
                     </TableHeader>
                     <TableBody>
                         {table.getRowModel().rows?.length ? (
