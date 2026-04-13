@@ -20,22 +20,22 @@ class PremiumRequestUsageService {
   async init() {
     const createTableSQL = `
     CREATE TABLE IF NOT EXISTS premium_usage_report (
-      date TEXT NOT NULL,
-      username TEXT NOT NULL,
-      product TEXT NOT NULL,
-      sku TEXT NOT NULL,
-      model TEXT NOT NULL,
-      quantity INTEGER NOT NULL,
-      unit_type TEXT NOT NULL,
-      applied_cost_per_quantity REAL NOT NULL,
-      gross_amount REAL NOT NULL,
-      discount_amount REAL NOT NULL,
-      net_amount REAL NOT NULL,
-      exceeds_quota BOOLEAN NOT NULL DEFAULT FALSE,
-      total_monthly_quota INTEGER NOT NULL,
-      organization TEXT,
-      cost_center_name TEXT,
-      PRIMARY KEY (date, username, sku)
+      date DATE NOT NULL,
+      username VARCHAR(255) NOT NULL,
+      product VARCHAR(100) NOT NULL,
+      sku VARCHAR(100) NOT NULL,
+      model VARCHAR(255) NOT NULL,
+      quantity DECIMAL(30,17) NOT NULL,
+      unit_type VARCHAR(50) NOT NULL,
+      applied_cost_per_quantity DECIMAL(10,4) NOT NULL,
+      gross_amount DECIMAL(30,17) NOT NULL,
+      discount_amount DECIMAL(30,17) NOT NULL,
+      net_amount DECIMAL(30,17) NOT NULL,
+      exceeds_quota BOOLEAN NOT NULL,
+      total_monthly_quota INTEGER,
+      organization VARCHAR(255),
+      cost_center_name VARCHAR(255),
+      create_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
     `;
     await this.pool.query(createTableSQL);
