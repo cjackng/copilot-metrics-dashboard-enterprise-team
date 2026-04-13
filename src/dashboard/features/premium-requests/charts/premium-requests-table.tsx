@@ -15,6 +15,35 @@ const teamFilterFn: FilterFn<UserUsageData> = (row, columnId, filterValues: stri
   return filterValues.some(team => teams.includes(team));
 };
 
+const formatPremiumRequestTitle = (latestUpdateTime: string) => {
+  const date = new Date(latestUpdateTime);
+
+  // Safety check
+  if (isNaN(date.getTime())) {
+    throw new Error('Invalid latestUpdateTime string provided');
+  }
+
+  const datePart = date.toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'Asia/Hong_Kong'
+  });
+
+  const timePart = date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+    timeZone: 'Asia/Hong_Kong'
+  });
+
+  const formattedTime = `${datePart} ${timePart} HKT`;
+
+  return `Premium Request Usage (Latest Update at: ${formattedTime})`;
+}
+
 const userColumns: ColumnDef<UserUsageData>[] = [
   {
     accessorKey: "user",
@@ -71,13 +100,13 @@ const userColumns: ColumnDef<UserUsageData>[] = [
 }));
 
 export const PremiumRequestsTable = () => {
-  const { userUsageData, startDate, endDate } = useDashboard();
+  const { userUsageData, startDate, endDate, latestUpdateTime } = useDashboard();
 
   if (userUsageData.length === 0) {
     return (
       <Card className="col-span-4">
         <ChartHeader
-          title="Premium Request Usage"
+          title={formatPremiumRequestTitle(latestUpdateTime)}
           description="Premium request usage by user"
         />
         <CardContent>
@@ -92,7 +121,7 @@ export const PremiumRequestsTable = () => {
   return (
     <Card className="col-span-4">
       <ChartHeader
-        title="Premium Request Usage"
+        title={`Premium Request Usage (Latest Update at: ${latestUpdateTime.toLocaleString()})`}
         description={`Premium request usage by user from ${startDate} to ${endDate}`}
       />
       <CardContent>
