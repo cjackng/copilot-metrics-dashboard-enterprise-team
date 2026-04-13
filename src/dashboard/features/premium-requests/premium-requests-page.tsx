@@ -6,7 +6,7 @@ import { parseDate } from "@/utils/helpers";
 import { cosmosConfiguration } from "@/services/cosmos-db-service";
 import { getCopilotSeats, IFilter as SeatServiceFilter } from "@/services/copilot-seat-service";
 import { DataProvider } from "./premium-requests-state";
-import { getPremiumRequestUsage, IFilter as PremiumRequestUsageServiceFilter } from "@/services/premium-request-usage-service";
+import { getLatestPremiumRequestUsageUpdateTime, getPremiumRequestUsage, IFilter as PremiumRequestUsageServiceFilter } from "@/services/premium-request-usage-service";
 import { startOfMonth, endOfMonth } from "date-fns";
 
 export interface IProps {
@@ -51,7 +51,8 @@ export default async function Dashboard(props: IProps) {
   
   const seatsPromise = getCopilotSeats(props.searchParams);
   const premiumRequestUsagesPromise = getPremiumRequestUsage({ startDate, endDate } as PremiumRequestUsageServiceFilter);
-  const [seats, premiumRequestUsages] = await Promise.all([seatsPromise, premiumRequestUsagesPromise]);
+  const latestUpdateTimePromise = getLatestPremiumRequestUsageUpdateTime();
+  const [seats, premiumRequestUsages, latestUpdateTime] = await Promise.all([seatsPromise, premiumRequestUsagesPromise, latestUpdateTimePromise]);
   if (seats.status !== "OK") {
     return <ErrorPage error={seats.errors[0].message} />;
   }
@@ -60,10 +61,15 @@ export default async function Dashboard(props: IProps) {
     return <ErrorPage error={premiumRequestUsages.errors[0].message} />;
   }
 
+  if (latestUpdateTime.status !== "OK") {
+    return <ErrorPage error={latestUpdateTime.errors[0].message} />;
+  }
+
   return (
     <DataProvider 
       copilotSeats={seats.response} 
-      premiumRequestUsages={premiumRequestUsages.response} 
+      premiumRequestUsages={premiumRequestUsages.response}
+      latestUpdateTime={latestUpdateTime.response}
       startDate={startDate.toLocaleDateString()} 
       endDate={endDate.toLocaleDateString()}
       selectedMonth={selectedMonth} 

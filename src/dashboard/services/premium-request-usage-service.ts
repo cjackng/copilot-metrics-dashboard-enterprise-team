@@ -64,3 +64,23 @@ export const getPremiumRequestUsage = async (
     response: result.response,
   };
 };
+
+export const getLatestPremiumRequestUsageUpdateTime = async (): Promise<ServerActionResponse<string>> => {
+  const PremiumRequestUsageService = (await import('./postgres-db-service')).default;
+  const service = new PremiumRequestUsageService();
+  await service.init();
+
+  try {
+    const latestUpdateTime = await service.getLatestUpdateTime();
+
+    return {
+      status: "OK",
+      response: latestUpdateTime || "",
+    };
+  } catch (error) {
+    console.error("Failed to fetch latest premium request usage update time from DB:", error);
+    return unknownResponseError(error);
+  } finally {
+    await service.close();
+  }
+}

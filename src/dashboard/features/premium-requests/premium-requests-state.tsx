@@ -9,6 +9,7 @@ import { UserUsageData } from "@/features/common/models";
 interface IProps extends PropsWithChildren {
   copilotSeats: CopilotSeatsData;
   premiumRequestUsages: PremiumRequestUsage[];
+  latestUpdateTime: string;
   selectedMonth?: string;
   startDate: string;
   endDate: string;
@@ -26,16 +27,19 @@ class PremiumRequestsState {
   public startDate: string = "";
   public endDate: string = "";
   public selectedMonth: string = "";
+  public latestUpdateTime: string = "";
 
   public initData(
     seatsData: CopilotSeatsData,
     premiumRequestUsages: PremiumRequestUsage[],
+    latestUpdateTime: string,
     startDate: string,
     endDate: string,
     selectedMonth?: string
   ): void {
     this.seatsData = seatsData;
     this.premiumRequestUsages = premiumRequestUsages;
+    this.latestUpdateTime = latestUpdateTime;
     this.selectedMonth = selectedMonth || this.getCurrentMonth();
     this.userUsageData = this.getUserUsageData(seatsData, premiumRequestUsages);
     this.startDate = startDate;
@@ -100,10 +104,11 @@ export const DataProvider = ({
   children,
   copilotSeats,
   premiumRequestUsages,
+  latestUpdateTime,
   selectedMonth,
   startDate,
   endDate
 }: IProps) => {
-  dashboardStore.initData(copilotSeats, premiumRequestUsages, startDate, endDate, selectedMonth);
+  dashboardStore.initData(copilotSeats, premiumRequestUsages, latestUpdateTime, startDate, endDate, selectedMonth);
   return <>{children}</>;
 };

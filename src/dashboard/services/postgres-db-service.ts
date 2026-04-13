@@ -35,53 +35,13 @@ class PremiumRequestUsageService {
       total_monthly_quota INTEGER,
       organization VARCHAR(255),
       cost_center_name VARCHAR(255),
-      create_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      create_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      team VARCHAR(255),
+      display_name VARCHAR(255),
+      update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     `;
     await this.pool.query(createTableSQL);
-  }
-
-  async insertRow(row: PremiumRequestUsage) {
-    const stmt = `
-      INSERT INTO premium_usage_report (
-        date, username, product, sku, model, quantity, unit_type,
-        applied_cost_per_quantity, gross_amount, discount_amount, net_amount,
-        exceeds_quota, total_monthly_quota, organization, cost_center_name
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
-      )
-      ON CONFLICT (date, username, sku) DO UPDATE SET
-        product = EXCLUDED.product,
-        model = EXCLUDED.model,
-        quantity = EXCLUDED.quantity,
-        unit_type = EXCLUDED.unit_type,
-        applied_cost_per_quantity = EXCLUDED.applied_cost_per_quantity,
-        gross_amount = EXCLUDED.gross_amount,
-        discount_amount = EXCLUDED.discount_amount,
-        net_amount = EXCLUDED.net_amount,
-        exceeds_quota = EXCLUDED.exceeds_quota,
-        total_monthly_quota = EXCLUDED.total_monthly_quota,
-        organization = EXCLUDED.organization,
-        cost_center_name = EXCLUDED.cost_center_name
-    `;
-
-    await this.pool.query(stmt, [
-      row.date,
-      row.username,
-      row.product,
-      row.sku,
-      row.model,
-      row.quantity,
-      row.unit_type,
-      row.applied_cost_per_quantity,
-      row.gross_amount,
-      row.discount_amount,
-      row.net_amount,
-      row.exceeds_quota,
-      row.total_monthly_quota,
-      row.organization || null,
-      row.cost_center_name || null,
-    ]);
   }
 
   async getAllRows(): Promise<PremiumRequestUsage[]> {
@@ -96,6 +56,12 @@ class PremiumRequestUsageService {
     `;
     const result = await this.pool.query(stmt, [startDate, endDate]);
     return result.rows;
+  }
+
+  async getLatestUpdateTime(): Promise<string | null> {
+    const stmt = `SELECT MAX(update_at) as latest_update FROM premium_usage_report`;
+    const result = await this.pool.query(stmt);
+    return result.rows[0]?.latest_update || null;
   }
 
   async close() {
