@@ -17,9 +17,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 interface DateFilterProps {
   limited?: boolean;
+  disabled?: boolean;
 }
 
-export const DateFilter = ({ limited = false }: DateFilterProps) => {
+export const DateFilter = ({ limited = false, disabled = false }: DateFilterProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const today = new Date();
@@ -38,11 +39,16 @@ export const DateFilter = ({ limited = false }: DateFilterProps) => {
         return { from: startDate, to: endDate };
       }
     }
-    return { from: lastDays, to: today };
+    return undefined;
   };
 
-  const [date, setDate] = React.useState<DateRange | undefined>(getInitialDateRange());
+  const [date, setDate] = React.useState<DateRange | undefined>(getInitialDateRange);
   const [isOpen, setIsOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const newDateRange = getInitialDateRange();
+    setDate(newDateRange);
+  }, [searchParams]);
 
   const applyFilters = () => {
     if (date?.from && date?.to) {
@@ -69,6 +75,14 @@ export const DateFilter = ({ limited = false }: DateFilterProps) => {
     setIsOpen(false);
   };
 
+  const getDisplayText = () => {
+    const dateRange = getInitialDateRange();
+    if (dateRange?.from && dateRange?.to) {
+      return `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}`;
+    }
+    return "Pick a period";
+  };
+
   return (
     <div className={cn("grid gap-2")}>
       <Popover open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
@@ -80,20 +94,10 @@ export const DateFilter = ({ limited = false }: DateFilterProps) => {
               "justify-start text-left font-normal",
               !date && "text-muted-foreground"
             )}
+            disabled={disabled}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date?.from ? (
-              date.to ? (
-                <>
-                  {format(date.from, "LLL dd, y")} -{" "}
-                  {format(date.to, "LLL dd, y")}
-                </>
-              ) : (
-                format(date.from, "LLL dd, y")
-              )
-            ) : (
-              <span>Pick a date</span>
-            )}
+            {getDisplayText()}
           </Button>
         </PopoverTrigger>
         <PopoverContent

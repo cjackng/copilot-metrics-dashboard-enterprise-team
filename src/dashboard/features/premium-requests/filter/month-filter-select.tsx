@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface MonthFilterSelectProps {
@@ -24,14 +25,15 @@ const getMonthOptions = () => {
 };
 
 export const MonthFilterSelect = ({ onMonthChange, defaultMonth, disabled }: MonthFilterSelectProps) => {
-  const [selectedMonth, setSelectedMonth] = useState(defaultMonth || "");
+  const searchParams = useSearchParams();
+  const currentMonthParam = searchParams.get('month');
+  const [selectedMonth, setSelectedMonth] = useState(currentMonthParam || defaultMonth);
   const monthOptions = getMonthOptions();
 
   useEffect(() => {
-    if (!selectedMonth && defaultMonth) {
-      setSelectedMonth(defaultMonth);
-    }
-  }, [defaultMonth]);
+    const newMonth = currentMonthParam || defaultMonth;
+    setSelectedMonth(newMonth);
+  }, [currentMonthParam, defaultMonth]);
 
   const handleChange = (value: string) => {
     setSelectedMonth(value);

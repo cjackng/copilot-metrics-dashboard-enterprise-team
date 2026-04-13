@@ -6,6 +6,8 @@ import { MonthFilterSelect } from "./filter/month-filter-select";
 import { useDashboard } from "./premium-requests-state";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
   isCosmosDb?: boolean;
@@ -18,12 +20,20 @@ export const Header = ({ isCosmosDb }: HeaderProps) => {
   const { selectedMonth } = useDashboard();
 
   const hasDateFilter = searchParams.has('startDate') && searchParams.has('endDate');
+  const hasMonthFilter = searchParams.has('month');
+  const hasActiveFilter = hasDateFilter || hasMonthFilter;
 
   const handleMonthChange = (month: string) => {
     startTransition(() => {
       const params = new URLSearchParams();
       params.set("month", month);
       router.push(`/premium-requests?${params.toString()}`);
+    });
+  };
+
+  const handleReset = () => {
+    startTransition(() => {
+      router.push(`/premium-requests`);
     });
   };
 
@@ -36,7 +46,13 @@ export const Header = ({ isCosmosDb }: HeaderProps) => {
           defaultMonth={selectedMonth}
           disabled={hasDateFilter}
         />
-        <DateFilter limited={true} />
+        <DateFilter limited={false} disabled={hasMonthFilter} />
+        {hasActiveFilter && (
+          <Button variant="ghost" size="sm" onClick={handleReset}>
+            <X className="h-4 w-4 mr-1" />
+            Reset
+          </Button>
+        )}
       </div>
     </PageHeader>
   );
