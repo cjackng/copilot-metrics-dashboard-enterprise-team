@@ -179,16 +179,6 @@ export function DataTable<TData, TValue>({ columns, data, initialVisibleColumns,
                                 })}
                             </TableRow>
                         ))}
-                        {data.length > 0 && summaryField && (
-                            <TableRow className="bg-muted/40">
-                                <TableCell colSpan={columns.length + (enableExpand ? 1 : 0)} className="text-right font-medium">
-                                    Total Users: {table.getFilteredRowModel().rows.length} | Total Requests: {table.getFilteredRowModel().rows.reduce((sum, row) => {
-                                        const value = (row.original as Record<string, unknown>)[summaryField];
-                                        return sum + (typeof value === 'number' ? value : 0);
-                                    }, 0).toFixed(0).toLocaleString()}
-                                </TableCell>
-                            </TableRow>
-                        )}
                     </TableHeader>
                     <TableBody>
                         {table.getRowModel().rows?.length ? (
@@ -203,18 +193,6 @@ export function DataTable<TData, TValue>({ columns, data, initialVisibleColumns,
                             </TableRow>
                         )}
                     </TableBody>
-                    {data.length > 0 && summaryField && (
-                        <tfoot>
-                            <TableRow className="bg-muted/40">
-                                <TableCell colSpan={columns.length + (enableExpand ? 1 : 0)} className="text-right font-medium">
-                                    Total Users: {table.getFilteredRowModel().rows.length} | Total Requests: {table.getFilteredRowModel().rows.reduce((sum, row) => {
-                                        const value = (row.original as Record<string, unknown>)[summaryField];
-                                        return sum + (typeof value === 'number' ? value : 0);
-                                    }, 0).toFixed(0).toLocaleString()}
-                                </TableCell>
-                            </TableRow>
-                        </tfoot>
-                    )}
                 </Table>
             </div>
         </div>
