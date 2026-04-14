@@ -8,6 +8,7 @@ import { DataTableColumnHeader } from "@/components/ui/data-table-column-header"
 import { UserUsageData } from "@/features/common/models";
 import { Column, Row } from "@tanstack/react-table";
 import { useDashboard } from "../premium-requests-state";
+import { format } from "date-fns";
 
 const teamFilterFn: FilterFn<UserUsageData> = (row, columnId, filterValues: string[]) => {
   if (!filterValues || filterValues.length === 0) return true;
@@ -15,33 +16,17 @@ const teamFilterFn: FilterFn<UserUsageData> = (row, columnId, filterValues: stri
   return filterValues.some(team => teams.includes(team));
 };
 
-const formatPremiumRequestTitle = (latestUpdateTime: string) => {
-  const date = new Date(latestUpdateTime);
+const formatPremiumRequestTitle = (latestUpdateTime: Date | null) => {
+  if (!latestUpdateTime) {
+    return "Premium Request Usage (Latest Update at: N/A)";
+  }
 
   // Safety check
-  if (isNaN(date.getTime())) {
+  if (isNaN(latestUpdateTime.getTime())) {
     throw new Error('Invalid latestUpdateTime string provided');
   }
 
-  const datePart = date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'Asia/Hong_Kong'
-  });
-
-  const timePart = date.toLocaleTimeString('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: true,
-    timeZone: 'Asia/Hong_Kong'
-  });
-
-  const formattedTime = `${datePart} ${timePart} HKT`;
-
-  return `Premium Request Usage (Latest Update at: ${formattedTime})`;
+  return `Premium Request Usage (Latest Update at: ${format(latestUpdateTime, "dd MMM yyyy HH:mm:ss")})`;
 }
 
 const userColumns: ColumnDef<UserUsageData>[] = [
@@ -121,8 +106,8 @@ export const PremiumRequestsTable = () => {
   return (
     <Card className="col-span-4">
       <ChartHeader
-        title={`Premium Request Usage (Latest Update at: ${latestUpdateTime.toLocaleString()})`}
-        description={`Premium request usage by user from ${startDate} to ${endDate}`}
+        title={`Premium Request Usage (Latest Update at: ${latestUpdateTime ? format(latestUpdateTime, "dd MMM yyyy HH:mm:ss") : "N/A"})`}
+        description={`Premium request usage by user from ${format(new Date(startDate), "dd MMM yyyy")} to ${format(new Date(endDate), "dd MMM yyyy")}`}
       />
       <CardContent>
         <DataTable 

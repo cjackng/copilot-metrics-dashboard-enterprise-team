@@ -9,7 +9,7 @@ import { UserUsageData } from "@/features/common/models";
 interface IProps extends PropsWithChildren {
   copilotSeats: CopilotSeatsData;
   premiumRequestUsages: PremiumRequestUsage[];
-  latestUpdateTime: string;
+  latestUpdateTime: Date | null;
   selectedMonth?: string;
   startDate: string;
   endDate: string;
@@ -27,12 +27,12 @@ class PremiumRequestsState {
   public startDate: string = "";
   public endDate: string = "";
   public selectedMonth: string = "";
-  public latestUpdateTime: string = "";
+  public latestUpdateTime: Date | null = null;
 
   public initData(
     seatsData: CopilotSeatsData,
     premiumRequestUsages: PremiumRequestUsage[],
-    latestUpdateTime: string,
+    latestUpdateTime: Date | null,
     startDate: string,
     endDate: string,
     selectedMonth?: string

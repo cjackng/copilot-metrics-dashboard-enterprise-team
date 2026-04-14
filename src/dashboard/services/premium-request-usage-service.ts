@@ -65,7 +65,7 @@ export const getPremiumRequestUsage = async (
   };
 };
 
-export const getLatestPremiumRequestUsageUpdateTime = async (): Promise<ServerActionResponse<string>> => {
+export const getLatestPremiumRequestUsageUpdateTime = async (): Promise<ServerActionResponse<Date | null>> => {
   const PremiumRequestUsageService = (await import('./postgres-db-service')).default;
   const service = new PremiumRequestUsageService();
   await service.init();
@@ -75,7 +75,7 @@ export const getLatestPremiumRequestUsageUpdateTime = async (): Promise<ServerAc
 
     return {
       status: "OK",
-      response: latestUpdateTime || "",
+      response: latestUpdateTime || null,
     };
   } catch (error) {
     console.error("Failed to fetch latest premium request usage update time from DB:", error);
