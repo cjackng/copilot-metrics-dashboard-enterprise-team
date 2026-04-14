@@ -2,11 +2,10 @@ import { ErrorPage } from "../common/error-page";
 import { PremiumRequestsTable } from "./charts/premium-requests-table";
 import { Header } from "./header";
 import { getFeatures } from "@/utils/helpers";
-import { parseDate } from "@/utils/helpers";
 import { cosmosConfiguration } from "@/services/cosmos-db-service";
 import { DataProvider } from "./premium-requests-state";
 import { getLatestPremiumRequestUsageUpdateTime, getPremiumRequestUsage, IFilter as PremiumRequestUsageServiceFilter } from "@/services/premium-request-usage-service";
-import { startOfMonth, endOfMonth } from "date-fns";
+import { startOfMonth, endOfMonth, format } from "date-fns";
 
 export interface IProps {
   searchParams: PremiumRequestUsageServiceFilter;
@@ -64,8 +63,8 @@ export default async function Dashboard(props: IProps) {
     <DataProvider 
       premiumRequestUsages={premiumRequestUsages.response}
       latestUpdateTime={latestUpdateTime.response}
-      startDate={startDate.toLocaleDateString()} 
-      endDate={endDate.toLocaleDateString()}
+      startDate={format(startDate, "dd/MM/yyyy")} 
+      endDate={format(endDate, "dd/MM/yyyy")}
       selectedMonth={selectedMonth} 
     >
       <main className="flex flex-1 flex-col gap-4 md:gap-8 pb-8">

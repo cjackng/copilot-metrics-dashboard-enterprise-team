@@ -75,7 +75,7 @@ export const getLatestPremiumRequestUsageUpdateTime = async (): Promise<ServerAc
 
     return {
       status: "OK",
-      response: latestUpdateTime || "",
+      response: format(latestUpdateTime || new Date(), "dd/MM/yyyy HH:mm"),
     };
   } catch (error) {
     console.error("Failed to fetch latest premium request usage update time from DB:", error);
