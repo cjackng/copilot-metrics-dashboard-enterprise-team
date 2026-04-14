@@ -38,7 +38,7 @@ class PremiumRequestUsageService {
       cost_center_name VARCHAR(255),
       create_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       team VARCHAR(255),
-      display_name VARCHAR(255),
+      display_username VARCHAR(255),
       update_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
     `;
@@ -90,7 +90,8 @@ class PremiumRequestUsageService {
       row.organization || null,
       row.cost_center_name || null,
       new Date(),
-      "", // team
+      row.display_username || null,
+      row.team || "", 
     ]);
 
     const insertStmt = format(`
@@ -98,7 +99,7 @@ class PremiumRequestUsageService {
         date, username, product, sku, model, quantity, unit_type,
         applied_cost_per_quantity, gross_amount, discount_amount, net_amount,
         exceeds_quota, total_monthly_quota, organization, cost_center_name,
-        update_at, team
+        update_at, display_username, team
       ) VALUES %L
       ON CONFLICT (date, username, sku, model, unit_type, exceeds_quota, team) 
       DO UPDATE SET
@@ -112,6 +113,7 @@ class PremiumRequestUsageService {
         total_monthly_quota = EXCLUDED.total_monthly_quota,
         organization = EXCLUDED.organization,
         cost_center_name = EXCLUDED.cost_center_name,
+        display_username = EXCLUDED.display_username,
         update_at = NOW()
     `, values);
 

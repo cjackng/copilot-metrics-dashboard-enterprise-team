@@ -302,6 +302,8 @@ export interface PremiumRequestUsage {
   total_monthly_quota: number;
   organization?: string;
   cost_center_name?: string;
+  team?: string;
+  display_username?: string;
 };
 
 export interface UserUsageData {

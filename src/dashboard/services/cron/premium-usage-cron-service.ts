@@ -1,9 +1,9 @@
 import cron, { ScheduledTask } from 'node-cron';
 import { requestPremiumUsageReport, getBillingReport, IFilter as BillReportFilter } from '@/services/billing-report-service';
 import { processCsvFromDownloadUrl } from '@/handlers/premium-usage-csv-handler';
-import { ensureGitHubEnvConfig } from '@/services/env-service';
 import { PremiumRequestUsage } from '@/features/common/models';
-import PremiumRequestUsageService from '@/services/postgres-db-service';
+import PostgresService from '@/services/postgres-db-service';
+import { getAllEnterpriseMembersLookup } from '../enterprise-members-service';
 
 let premiumUsageTask: ScheduledTask | null = null;
 const cronExpression = '0 5,13 * * *';
@@ -16,13 +16,7 @@ export async function syncPremiumUsageData() {
   try {
     log('Starting Premium Usage data synchronization...');
 
-    const env = ensureGitHubEnvConfig();
-    if (env.status !== 'OK') {
-      log(`Environment configuration error: ${env.errors[0].message}`);
-      return;
-    }
-
-    const dbService = new PremiumRequestUsageService();
+    const dbService = new PostgresService();
     const latestUpdateTime = await dbService.getLatestUpdateTime();
     const startDate: Date = latestUpdateTime ? latestUpdateTime : new Date(); // Last updated day
 
@@ -55,7 +49,27 @@ export async function syncPremiumUsageData() {
     log(`Successfully retrieved Premium Usage report. Download URL: ${downloadUrl}`);
 
     const records: PremiumRequestUsage[] = await processCsvFromDownloadUrl(downloadUrl);
-    await dbService.insertOrUpdateBatch(records);
+    const enterpriseMembers = await getAllEnterpriseMembersLookup();
+    // Expand records: one record per team.
+    // If user has no team, keep one record with team = ''.
+    const enrichedRecords: PremiumRequestUsage[] = records.flatMap((record) => {
+      const login = record.username;
+      const member = enterpriseMembers.get(login);
+
+      if (!member) {
+        throw new Error(`No member found for username: ${login}`);
+      }
+
+      const displayUsername = member.display_name || '';
+      const teams = member.teams.length > 0 ? member.teams : [''];
+
+      return teams.map((team) => ({
+        ...record,
+        display_username: displayUsername,
+        team,
+      }));
+    });
+    await dbService.insertOrUpdateBatch(enrichedRecords);
 
     log('Data sync completed');
   } catch (error) {
