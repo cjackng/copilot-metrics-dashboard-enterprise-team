@@ -12,8 +12,8 @@ export default function Home(props: IProps) {
 
   let id = "initial-premium-requests-dashboard";
 
-  if (props.searchParams.date ) {
-    id = `${id}-${props.searchParams.date}`;
+  if (props.searchParams.startDate) {
+    id = `${id}-${props.searchParams.startDate}`;
   }
 
   return (

@@ -7,7 +7,6 @@ import { PremiumRequestUsage } from '@/features/common/models';
 import { UserUsageData } from "@/features/common/models";
 
 interface IProps extends PropsWithChildren {
-  copilotSeats: CopilotSeatsData;
   premiumRequestUsages: PremiumRequestUsage[];
   latestUpdateTime: Date | null;
   selectedMonth?: string;
@@ -30,18 +29,16 @@ class PremiumRequestsState {
   public latestUpdateTime: Date | null = null;
 
   public initData(
-    seatsData: CopilotSeatsData,
     premiumRequestUsages: PremiumRequestUsage[],
     latestUpdateTime: Date | null,
     startDate: string,
     endDate: string,
     selectedMonth?: string
   ): void {
-    this.seatsData = seatsData;
     this.premiumRequestUsages = premiumRequestUsages;
     this.latestUpdateTime = latestUpdateTime;
     this.selectedMonth = selectedMonth || this.getCurrentMonth();
-    this.userUsageData = this.getUserUsageData(seatsData, premiumRequestUsages);
+    this.userUsageData = this.getUserUsageData(premiumRequestUsages);
     this.startDate = startDate;
     this.endDate = endDate;
   }
@@ -57,36 +54,32 @@ class PremiumRequestsState {
 
   public updateUsageData(usageData: PremiumRequestUsage[]): void {
     this.premiumRequestUsages = usageData;
-    this.userUsageData = this.getUserUsageData(this.seatsData, usageData);
+    this.userUsageData = this.getUserUsageData(usageData);
   }
 
-  public getUserUsageData = (seatsData: CopilotSeatsData, usageData: PremiumRequestUsage[]): UserUsageData[] => {
-    const userToTeamMap = new Map<string, string[]>();
-    seatsData.seats?.forEach(seat => {
-      const login = seat.assignee.login;
-      const teamName = seat.assigning_team.name;
-      if (!userToTeamMap.has(login)) {
-        userToTeamMap.set(login, []);
-      }
-      const teams = userToTeamMap.get(login)!;
-      if (!teams.includes(teamName)) {
-        teams.push(teamName);
-      }
-    });
-
+  public getUserUsageData = (usageData: PremiumRequestUsage[]): UserUsageData[] => {
     const userUsageMap = new Map<string, UserUsageData>();
     usageData?.forEach(usage => {
-      const teams = userToTeamMap.get(usage.username) || [];
       if (!userUsageMap.has(usage.username)) {
         userUsageMap.set(usage.username, {
           user: usage.username,
+          userDisplayName: usage.display_username || "",
           totalRequestQuantity: 0,
           totalRequestQuota: usage.total_monthly_quota,
-          team: teams
+          team: []
         });
       }
       const userData = userUsageMap.get(usage.username)!;
       userData.totalRequestQuantity += Number(usage.quantity);
+      if (userData.userDisplayName === "") {
+        userData.userDisplayName = usage.display_username || "";
+      }
+      usage.team?.split(',').forEach(team => {
+        const trimmedTeam = team.trim();
+        if (trimmedTeam && !userData.team?.includes(trimmedTeam)) {
+          userData.team?.push(trimmedTeam);
+        }
+      });
     });
 
     return Array.from(userUsageMap.values());
@@ -102,13 +95,12 @@ export const useDashboard = () => {
 
 export const DataProvider = ({
   children,
-  copilotSeats,
   premiumRequestUsages,
   latestUpdateTime,
   selectedMonth,
   startDate,
   endDate
 }: IProps) => {
-  dashboardStore.initData(copilotSeats, premiumRequestUsages, latestUpdateTime, startDate, endDate, selectedMonth);
+  dashboardStore.initData(premiumRequestUsages, latestUpdateTime, startDate, endDate, selectedMonth);
   return <>{children}</>;
 };

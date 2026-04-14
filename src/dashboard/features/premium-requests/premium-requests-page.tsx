@@ -2,15 +2,13 @@ import { ErrorPage } from "../common/error-page";
 import { PremiumRequestsTable } from "./charts/premium-requests-table";
 import { Header } from "./header";
 import { getFeatures } from "@/utils/helpers";
-import { parseDate } from "@/utils/helpers";
 import { cosmosConfiguration } from "@/services/cosmos-db-service";
-import { getCopilotSeats, IFilter as SeatServiceFilter } from "@/services/copilot-seat-service";
 import { DataProvider } from "./premium-requests-state";
 import { getLatestPremiumRequestUsageUpdateTime, getPremiumRequestUsage, IFilter as PremiumRequestUsageServiceFilter } from "@/services/premium-request-usage-service";
-import { startOfMonth, endOfMonth } from "date-fns";
+import { startOfMonth, endOfMonth, format } from "date-fns";
 
 export interface IProps {
-  searchParams: SeatServiceFilter & { month?: string; startDate?: string; endDate?: string };
+  searchParams: PremiumRequestUsageServiceFilter;
 }
 
 function getDefaultMonth(): string {
@@ -30,12 +28,12 @@ export default async function Dashboard(props: IProps) {
   let endDate: Date;
   let selectedMonth: string;
 
-  const startDateParam = props.searchParams.startDate ? parseDate(props.searchParams.startDate) : null;
-  const endDateParam = props.searchParams.endDate ? parseDate(props.searchParams.endDate) : null;
+  const startDateParam = props.searchParams.startDate;
+  const endDateParam = props.searchParams.endDate;
 
   if (startDateParam && endDateParam) {
-    startDate = startDateParam;
-    endDate = endDateParam;
+    startDate = new Date(startDateParam);
+    endDate = new Date(endDateParam);
     selectedMonth = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}`;
   } else if (props.searchParams.month) {
     selectedMonth = props.searchParams.month;
@@ -49,13 +47,9 @@ export default async function Dashboard(props: IProps) {
     endDate = endOfMonth(new Date(year, monthNum - 1));
   }
   
-  const seatsPromise = getCopilotSeats(props.searchParams);
   const premiumRequestUsagesPromise = getPremiumRequestUsage({ startDate, endDate } as PremiumRequestUsageServiceFilter);
   const latestUpdateTimePromise = getLatestPremiumRequestUsageUpdateTime();
-  const [seats, premiumRequestUsages, latestUpdateTime] = await Promise.all([seatsPromise, premiumRequestUsagesPromise, latestUpdateTimePromise]);
-  if (seats.status !== "OK") {
-    return <ErrorPage error={seats.errors[0].message} />;
-  }
+  const [premiumRequestUsages, latestUpdateTime] = await Promise.all([premiumRequestUsagesPromise, latestUpdateTimePromise]);
 
   if (premiumRequestUsages.status !== "OK") {
     return <ErrorPage error={premiumRequestUsages.errors[0].message} />;
@@ -67,11 +61,10 @@ export default async function Dashboard(props: IProps) {
 
   return (
     <DataProvider 
-      copilotSeats={seats.response} 
       premiumRequestUsages={premiumRequestUsages.response}
       latestUpdateTime={latestUpdateTime.response}
-      startDate={startDate.toLocaleDateString()} 
-      endDate={endDate.toLocaleDateString()}
+      startDate={format(startDate, "dd/MM/yyyy")} 
+      endDate={format(endDate, "dd/MM/yyyy")}
       selectedMonth={selectedMonth} 
     >
       <main className="flex flex-1 flex-col gap-4 md:gap-8 pb-8">
