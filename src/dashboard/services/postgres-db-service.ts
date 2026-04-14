@@ -39,7 +39,7 @@ class PremiumRequestUsageService {
       create_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       team VARCHAR(255),
       display_username VARCHAR(255),
-      update_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      update_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     `;
     await this.pool.query(createTableSQL);
@@ -127,8 +127,17 @@ class PremiumRequestUsageService {
 
   async getRowsByDateRange(startDate: string, endDate: string): Promise<PremiumRequestUsage[]> {
     const stmt = `
-      SELECT * FROM premium_usage_report
+      SELECT 
+        date, username, product, sku, model, quantity,
+        unit_type, applied_cost_per_quantity, gross_amount, discount_amount, net_amount,
+        exceeds_quota, display_username, total_monthly_quota, display_username,
+        STRING_AGG(DISTINCT team, ', ' ORDER BY team) as team
+      FROM premium_usage_report
       WHERE date >= $1 AND date <= $2
+      GROUP BY 
+        date, username, product, sku, model, quantity,
+        unit_type, applied_cost_per_quantity, gross_amount, discount_amount, net_amount,
+        exceeds_quota, display_username, total_monthly_quota, display_username
     `;
     const result = await this.pool.query(stmt, [startDate, endDate]);
     return result.rows;

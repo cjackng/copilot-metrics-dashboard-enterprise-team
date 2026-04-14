@@ -46,11 +46,22 @@ const formatPremiumRequestTitle = (latestUpdateTime: string) => {
 
 const userColumns: ColumnDef<UserUsageData>[] = [
   {
+    accessorKey: "userDisplayName",
+    id: "userDisplayName",
+    meta: { name: "Username" },
+    header: ({ column }: { column: Column<UserUsageData, unknown> }) => (
+      <DataTableColumnHeader column={column} title="Username" />
+    ),
+    cell: ({ row }: { row: Row<UserUsageData> }) => {
+      return <div className="ml-2">{row.original.userDisplayName}</div>;
+    },
+  },
+  {
     accessorKey: "user",
     id: "user",
-    meta: { name: "User" },
+    meta: { name: "User ID" },
     header: ({ column }: { column: Column<UserUsageData, unknown> }) => (
-      <DataTableColumnHeader column={column} title="User" />
+      <DataTableColumnHeader column={column} title="User ID" />
     ),
     cell: ({ row }: { row: Row<UserUsageData> }) => {
       return <div className="ml-2">{row.original.user}</div>;

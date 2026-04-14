@@ -302,12 +302,14 @@ export interface PremiumRequestUsage {
   total_monthly_quota: number;
   organization?: string;
   cost_center_name?: string;
-  team?: string;
+  team?: string; 
   display_username?: string;
 };
 
+
 export interface UserUsageData {
   user: string;
+  userDisplayName: string;
   totalRequestQuantity: number;
   totalRequestQuota: number;
   team: string[];
