@@ -92,7 +92,6 @@ export interface CopilotUsage {
 
   export interface CopilotUsageOutput extends CopilotUsage {
     time_frame_week: string;
-    time_frame_month: string;
     time_frame_display: string;
   }
 

@@ -15,7 +15,7 @@ export const Header = ({ isCosmosDb }: HeaderProps) => {
         <Filters />
         <div className="flex gap-2">
           <WeekendFilter />
-          <DateFilter limited={!isCosmosDb} />
+          <DateFilter limited={true} />
         </div>
       </div>
     </PageHeader>

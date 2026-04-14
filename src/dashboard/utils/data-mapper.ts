@@ -18,7 +18,6 @@ export const groupByTimeFrame = (
       total_chats: 0,
       total_accepted_chats: 0,
       day: "", // Decide how to handle this
-      time_frame_month: "",
       time_frame_week: "",
       time_frame_display: week,
     };

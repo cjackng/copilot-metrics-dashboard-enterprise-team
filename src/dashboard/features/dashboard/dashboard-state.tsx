@@ -252,10 +252,7 @@ class DashboardState {
     }
 
     const groupedByTimeFrame = items.reduce((acc, item) => {
-      const timeFrameLabel =
-        this.timeFrame === "weekly"
-          ? item.time_frame_week
-          : item.time_frame_month;
+      const timeFrameLabel = item.time_frame_week;
 
       if (!acc[timeFrameLabel]) {
         acc[timeFrameLabel] = [];

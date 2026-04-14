@@ -36,7 +36,6 @@ export const applyTimeFrameLabel = (
       day: item.date,
 
       time_frame_week: weekIdentifier,
-      time_frame_month: monthIdentifier,
       time_frame_display: weekIdentifier,
     };
     dataWithTimeFrame.push(output);
@@ -110,25 +109,6 @@ export const transformCopilotMetricsReportData = (
     }
     const weekStart = startOfWeek(date, { weekStartsOn: 1 });
     const weekIdentifier = format(weekStart, "MMM dd");
-    const monthIdentifier = format(date, "MMM yy");
-
-    const ideMap = new Map<string, number>();
-    (item.totals_by_ide || []).forEach((ideData) => {
-      ideMap.set(ideData.ide, ideData.user_initiated_interaction_count);
-    });
-
-    (item.totals_by_language_feature || []).forEach((langFeature) => {
-      if (!langFeature.language || langFeature.language === "others" || langFeature.language === "unknown") {
-        return;
-      }
-      
-      let language = langFeature.language;
-      if (language === "js" || language === "jsx") {
-        language = "javascript";
-      } else if (language === "ts" || language === "tsx") {
-        language = "typescript";
-      }
-    });
 
     const chatFeatures = item.totals_by_feature || [];
     var totalChats = 0;
@@ -154,7 +134,7 @@ export const transformCopilotMetricsReportData = (
 
     const output: CopilotUsageOutput = {
       day: item.day,
-      total_active_users: item.monthly_active_users,
+      total_active_users: item.daily_active_users,
       total_engaged_users: item.daily_active_users,
       total_ide_engaged_users: item.daily_active_users - item.daily_active_cli_users,
       total_code_suggestions: totalCodeCompletionSuggested,
@@ -165,7 +145,6 @@ export const transformCopilotMetricsReportData = (
       total_chats: totalChats,
       total_accepted_chats: totalAcceptedChats,
       time_frame_week: weekIdentifier,
-      time_frame_month: monthIdentifier,
       time_frame_display: weekIdentifier,
     };
     dataWithTimeFrame.push(output);

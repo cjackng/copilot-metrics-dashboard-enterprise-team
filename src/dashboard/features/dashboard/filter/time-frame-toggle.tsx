@@ -7,7 +7,7 @@ export const TimeFrameToggle = () => {
   const { timeFrame: selectedTimeFrame } = useDashboard();
   return (
     <Tabs defaultValue={selectedTimeFrame} className="">
-      <TabsList className="grid w-full grid-cols-3">
+      <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger
           value="daily"
           className="gap-2 font-normal"
@@ -25,15 +25,6 @@ export const TimeFrameToggle = () => {
           }}
         >
           Weekly
-        </TabsTrigger>
-        <TabsTrigger
-          value="monthly"
-          className="gap-2 font-normal"
-          onClick={() => {
-            dashboardStore.onTimeFrameChange("monthly");
-          }}
-        >
-          Monthly
         </TabsTrigger>
       </TabsList>
     </Tabs>

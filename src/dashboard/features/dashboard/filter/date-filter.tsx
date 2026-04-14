@@ -3,7 +3,6 @@
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { format } from "date-fns";
 import * as React from "react";
-import { DateRange } from "react-day-picker";
 import { parseDate } from "@/utils/helpers";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -13,44 +12,38 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface DateFilterProps {
   limited?: boolean;
 }
 
 export const DateFilter = ({ limited = false }: DateFilterProps) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const today = new Date();
-  const defaultDays = limited ? 27 : 31;
-  const lastDays = new Date(today);
-  lastDays.setDate(today.getDate() - defaultDays);
 
-  const getInitialDateRange = () => {
-    if (typeof window === 'undefined') {
-      return { from: lastDays, to: today };
+  const getInitialDateRange = (): Date | undefined => {
+    const selectedDate = searchParams.get('date');
+    if (selectedDate) {
+      const parsed = parseDate(selectedDate);
+      return parsed || undefined;
     }
-    
-    const params = new URLSearchParams(window.location.search);
-    const startDate = parseDate(params.get('startDate'));
-    const endDate = parseDate(params.get('endDate'));
-    
-    if (startDate && endDate) {
-      return { from: startDate, to: endDate };
-    }
-    return { from: lastDays, to: today };
+    return undefined;
   };
 
-  const [date, setDate] = React.useState<DateRange | undefined>(getInitialDateRange());
+  const [date, setDate] = React.useState<Date | undefined>(getInitialDateRange());
   const [isOpen, setIsOpen] = React.useState(false);
 
-  const router = useRouter();
+  React.useEffect(() => {
+    setDate(getInitialDateRange());
+  }, [searchParams]);
 
   const applyFilters = () => {
-    if (date?.from && date?.to) {
-      const formatEndDate = format(date.to, "yyyy-MM-dd");
-      const formatStartDate = format(date.from, "yyyy-MM-dd");
+    if (date) {
+      const formatDate = format(date, "yyyy-MM-dd");
 
-      router.push(`?startDate=${formatStartDate}&endDate=${formatEndDate}`, {
+      router.push(`?date=${formatDate}`, {
         scroll: false,
       });
       router.refresh();
@@ -79,15 +72,8 @@ export const DateFilter = ({ limited = false }: DateFilterProps) => {
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date?.from ? (
-              date.to ? (
-                <>
-                  {format(date.from, "LLL dd, y")} -{" "}
-                  {format(date.to, "LLL dd, y")}
-                </>
-              ) : (
-                format(date.from, "LLL dd, y")
-              )
+            {date ? (
+              format(date, "LLL dd, y")
             ) : (
               <span>Pick a date</span>
             )}
@@ -99,12 +85,12 @@ export const DateFilter = ({ limited = false }: DateFilterProps) => {
         >
           <Calendar
             initialFocus
-            mode="range"
-            defaultMonth={date?.from}
+            mode="single"
+            defaultMonth={date}
             selected={date}
             onSelect={setDate}
-            numberOfMonths={2}
-            disabled={limited ? { before: new Date(today.getTime() - (27 * 24 * 60 * 60 * 1000)) } : undefined}
+            numberOfMonths={1}
+            disabled={limited ? { after: new Date(today.getTime()) } : undefined}
           />
           <div className="flex justify-between m-2 gap-2">
             <Button 
