@@ -63,8 +63,8 @@ export default async function Dashboard(props: IProps) {
     <DataProvider 
       premiumRequestUsages={premiumRequestUsages.response}
       latestUpdateTime={latestUpdateTime.response}
-      startDate={format(startDate, "dd/MM/yyyy")} 
-      endDate={format(endDate, "dd/MM/yyyy")}
+      startDate={startDate.toLocaleDateString()} 
+      endDate={endDate.toLocaleDateString()}
       selectedMonth={selectedMonth} 
     >
       <main className="flex flex-1 flex-col gap-4 md:gap-8 pb-8">
