@@ -36,7 +36,10 @@ class PremiumRequestUsageService {
       total_monthly_quota INTEGER,
       organization VARCHAR(255),
       cost_center_name VARCHAR(255),
-      create_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      create_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      team VARCHAR(255),
+      display_name VARCHAR(255),
+      update_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
     `;
     await this.pool.query(createTableSQL);
@@ -170,6 +173,12 @@ class PremiumRequestUsageService {
     `;
     const result = await this.pool.query(stmt, [startDate, endDate]);
     return result.rows;
+  }
+
+  async getLatestUpdateTime(): Promise<string | null> {
+    const stmt = `SELECT MAX(update_at) as latest_update FROM premium_usage_report`;
+    const result = await this.pool.query(stmt);
+    return result.rows[0]?.latest_update || null;
   }
 
   async close() {

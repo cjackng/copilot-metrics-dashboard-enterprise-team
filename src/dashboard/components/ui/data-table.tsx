@@ -41,6 +41,11 @@ export function DataTable<TData, TValue>({ columns, data, initialVisibleColumns,
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
     const [sorting, setSorting] = React.useState<SortingState>([]);
     const [expanded, setExpanded] = React.useState<Record<string, boolean>>({});
+    const [isMounted, setIsMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     React.useEffect(() => {
         if (expandAll && getSubRows) {
@@ -146,6 +151,15 @@ export function DataTable<TData, TValue>({ columns, data, initialVisibleColumns,
                 enableExport={enableExport}
                 getArrayFacets={(columnId) => getArrayFacets(data, columnId)}
             />
+            {data.length > 0 && summaryField && isMounted && (
+                <div className="flex justify-end gap-6 text-sm font-medium">
+                    <span>Total Users: {table.getFilteredRowModel().rows.length}</span>
+                    <span>Total Requests: {table.getFilteredRowModel().rows.reduce((sum, row) => {
+                        const value = (row.original as Record<string, unknown>)[summaryField];
+                        return sum + (typeof value === 'number' ? value : 0);
+                    }, 0).toFixed(0).toLocaleString()}</span>
+                </div>
+            )}
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
