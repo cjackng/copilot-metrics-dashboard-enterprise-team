@@ -22,9 +22,13 @@ export async function syncPremiumUsageData() {
       return;
     }
 
+    const dbService = new PremiumRequestUsageService();
+    const latestUpdateTime = await dbService.getLatestUpdateTime();
+    const startDate: Date = latestUpdateTime ? latestUpdateTime : new Date(); // Last updated day
+
     const billReportFilter: BillReportFilter = {
       report_type: 'premium_request',
-      startDate: new Date(new Date().setDate(new Date().getDate() - 1)), // Last 1 day
+      startDate: startDate,
       endDate: new Date(),
     };
     const requestResult = await requestPremiumUsageReport(billReportFilter);
@@ -51,7 +55,6 @@ export async function syncPremiumUsageData() {
     log(`Successfully retrieved Premium Usage report. Download URL: ${downloadUrl}`);
 
     const records: PremiumRequestUsage[] = await processCsvFromDownloadUrl(downloadUrl);
-    const dbService = new PremiumRequestUsageService();
     await dbService.insertOrUpdateBatch(records);
 
     log('Data sync completed');

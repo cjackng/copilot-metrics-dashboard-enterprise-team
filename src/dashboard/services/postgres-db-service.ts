@@ -175,7 +175,7 @@ class PremiumRequestUsageService {
     return result.rows;
   }
 
-  async getLatestUpdateTime(): Promise<string | null> {
+  async getLatestUpdateTime(): Promise<Date | null> {
     const stmt = `SELECT MAX(update_at) as latest_update FROM premium_usage_report`;
     const result = await this.pool.query(stmt);
     return result.rows[0]?.latest_update || null;
