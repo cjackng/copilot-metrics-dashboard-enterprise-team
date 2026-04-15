@@ -169,6 +169,11 @@ export interface CopilotMetricsReportResponse {
   report_end_day: string;
 }
 
+export interface CopilotMetricsDayReportResponse {
+  download_links: string[];
+  report_day: string;
+}
+
 export interface CopilotMetricsReportWrapper {
   report_start_day: string;
   report_end_day: string;

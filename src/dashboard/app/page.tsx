@@ -10,6 +10,10 @@ export default function Home(props: IProps) {
     id = `${id}-${props.searchParams.startDate}-${props.searchParams.endDate}`;
   }
 
+  if (props.searchParams.date) {
+    id = `${id}-${props.searchParams.date}`;
+  }
+
   return (
     <Suspense fallback={<Loading />} key={id}>
       <Dashboard {...props} />

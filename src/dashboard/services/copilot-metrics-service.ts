@@ -1,5 +1,5 @@
 import { formatResponseError, unknownResponseError } from "@/features/common/response-error";
-import { CopilotMetrics, CopilotUsageOutput, CopilotMetricsReportResponse, CopilotMetricsReportData, CopilotMetricsReportWrapper } from "@/features/common/models";
+import { CopilotMetrics, CopilotUsageOutput, CopilotMetricsReportResponse, CopilotMetricsDayReportResponse, CopilotMetricsReportData, CopilotMetricsReportWrapper } from "@/features/common/models";
 import { ServerActionResponse } from "@/features/common/server-action-response";
 import { SqlQuerySpec } from "@azure/cosmos";
 import { format } from "date-fns";
@@ -11,6 +11,7 @@ import { sampleData } from "./sample-data";
 export interface IFilter {
   startDate?: Date;
   endDate?: Date;
+  date?: string;
   enterprise: string;
   organization?: string;
   team?: string[];
@@ -55,7 +56,9 @@ export const getCopilotMetricsFromApi = async (
   const { token, version } = env.response;
 
   try {
-    const reportUrl = `https://api.github.com/enterprises/${filter.enterprise}/copilot/metrics/reports/enterprise-28-day/latest`;
+    const reportUrl = filter.date
+      ? `https://api.github.com/enterprises/${filter.enterprise}/copilot/metrics/reports/enterprise-1-day?day=${filter.date}`
+      : `https://api.github.com/enterprises/${filter.enterprise}/copilot/metrics/reports/enterprise-28-day/latest`;
     
     const reportResponse = await fetch(reportUrl, {
       cache: "no-store",
@@ -70,7 +73,7 @@ export const getCopilotMetricsFromApi = async (
       return formatResponseError(filter.enterprise, reportResponse);
     }
 
-    const reportData: CopilotMetricsReportResponse = await reportResponse.json();
+    const reportData: CopilotMetricsReportResponse | CopilotMetricsDayReportResponse = await reportResponse.json();
     
     if (!reportData.download_links || reportData.download_links.length === 0) {
       return {
@@ -95,6 +98,9 @@ export const getCopilotMetricsFromApi = async (
       } else if (json && typeof json === 'object' && 'day_totals' in json) {
         const wrapper = json as CopilotMetricsReportWrapper;
         return wrapper.day_totals || [];
+      } else if (json && typeof json === 'object') {
+        const repsonseJson = json as CopilotMetricsReportData;
+        return [repsonseJson];
       }
       return [];
     });
