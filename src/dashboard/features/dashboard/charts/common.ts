@@ -83,15 +83,17 @@ export const computeAdoptionRate = (seatsData: any) => {
 export const computeCumulativeAcceptanceAverage = (
   filteredData: CopilotUsageOutput[]
 ) => {
-  const acceptanceAverages = computeAcceptanceAverage(filteredData);
-
-  const totalAcceptanceRate = acceptanceAverages.reduce(
-    (sum, rate) => sum + rate.acceptanceLinesRate,
+  const totalAccepted = filteredData.reduce(
+    (sum, item) => sum + (item.total_code_acceptances || 0),
+    0
+  );
+  const totalSuggested = filteredData.reduce(
+    (sum, item) => sum + (item.total_code_suggestions || 0),
     0
   );
 
-  const result = totalAcceptanceRate / acceptanceAverages.length;
-  return result > 0 ? result : 0;
+  if (totalSuggested === 0) return 0;
+  return (totalAccepted / totalSuggested) * 100;
 };
 
 export interface LineSuggestionsAndAcceptancesData {
@@ -144,11 +146,11 @@ export const computeChatAcceptanceAverage = (
   filteredData: CopilotUsageOutput[]
 ): ChatAcceptanceRateData[] => {
   const rates = filteredData.map((item) => {
-
+    const totalGenerated = item.total_chat_generations ?? item.total_chats;
     const acceptanceRate =
-    item.total_chats !== 0
-      ? ((item.total_accepted_chats) / item.total_chats) * 100
-      : 0;
+      totalGenerated !== 0
+        ? (item.total_accepted_chats / totalGenerated) * 100
+        : 0;
 
     return {
       acceptanceChatRate: parseFloat(acceptanceRate.toFixed(2)),

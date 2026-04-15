@@ -83,6 +83,7 @@ export interface CopilotUsage {
     total_code_acceptances: number;
     total_code_lines_suggested: number;
     total_code_lines_accepted: number;
+    total_chat_generations?: number;
     total_chats: number;
     total_accepted_chats: number;
     day: string;

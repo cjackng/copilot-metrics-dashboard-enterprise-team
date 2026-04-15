@@ -19,8 +19,8 @@ export const Stats = () => {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 col-span-4">
       <StatsCard
         title="Acceptance average"
-        tip="Acceptance average is the average of the acceptance rate for lines of code and chat suggestions, including chat insertion and copy events."
-        description="Combined acceptance average"
+        tip="Acceptance average is the ratio of total code suggestions accepted to total code suggestions."
+        description="Code suggestions acceptance rate"
         value={isLoading ? "..." : acceptanceAverage.toFixed(0) + "%"}
       ></StatsCard>
       <StatsCard

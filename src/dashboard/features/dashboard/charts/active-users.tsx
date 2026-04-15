@@ -68,11 +68,11 @@ const chartConfig: Record<
   }
 > = {
   ["totalUsers"]: {
-    label: "Total users",
+    label: "Total active users",
     key: "totalUsers",
   },
   ["totalIdeUsers"]: {
-    label: "Total IDE users",
+    label: "Total IDE engaged users",
     key: "totalIdeUsers",
   },
   ["timeFrameDisplay"]: {

@@ -109,19 +109,21 @@ export const transformCopilotMetricsReportData = (
     const weekIdentifier = format(weekStart, "MMM dd");
 
     const chatFeatures = item.totals_by_feature || [];
-    var totalChats = 0;
-    var totalAcceptedChats = 0;
-    var totalLinesSuggested = 0;
-    var totalLinesAccepted = 0;
-    var totalCodeCompletionSuggested = 0;
-    var totalCodeCompletionAccepted = 0;
+    let totalChats = 0;
+    let totalChatGenerations = 0;
+    let totalAcceptedChats = 0;
+    let totalLinesSuggested = 0;
+    let totalLinesAccepted = 0;
+    let totalCodeCompletionSuggested = 0;
+    let totalCodeCompletionAccepted = 0;
     chatFeatures.forEach((featureData) => {
-      if (featureData.feature != "agent_edit") {
-        totalLinesSuggested += (featureData.loc_suggested_to_add_sum + featureData.loc_suggested_to_delete_sum);
-        totalLinesAccepted += (featureData.loc_added_sum + featureData.loc_deleted_sum);
+      if (featureData.feature !== "agent_edit") {
+        totalLinesSuggested += featureData.loc_suggested_to_add_sum;
+        totalLinesAccepted += featureData.loc_added_sum;
       }
       if (featureData.feature.includes("chat")) {
-        totalChats += featureData.code_generation_activity_count;
+        totalChats += featureData.user_initiated_interaction_count;
+        totalChatGenerations += featureData.code_generation_activity_count;
         totalAcceptedChats += featureData.code_acceptance_activity_count;
       }
       if (featureData.feature === "code_completion") {
@@ -133,13 +135,14 @@ export const transformCopilotMetricsReportData = (
     const output: CopilotUsageOutput = {
       day: item.day,
       total_active_users: item.daily_active_users,
-      total_ide_engaged_users: item.daily_active_users - item.daily_active_cli_users,
+      total_ide_engaged_users: item.daily_active_users - (item.daily_active_cli_users ?? 0),
       total_code_suggestions: totalCodeCompletionSuggested,
       total_code_acceptances: totalCodeCompletionAccepted,
       total_code_lines_suggested: totalLinesSuggested,
       total_code_lines_accepted: totalLinesAccepted,
       total_chats: totalChats,
       total_accepted_chats: totalAcceptedChats,
+      total_chat_generations: totalChatGenerations,
       time_frame_week: weekIdentifier,
       time_frame_display: weekIdentifier,
     };
