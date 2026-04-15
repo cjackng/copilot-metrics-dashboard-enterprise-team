@@ -5,7 +5,7 @@ import { getFeatures } from "@/utils/helpers";
 import { cosmosConfiguration } from "@/services/cosmos-db-service";
 import { DataProvider } from "./premium-requests-state";
 import { getLatestPremiumRequestUsageUpdateTime, getPremiumRequestUsage, IFilter as PremiumRequestUsageServiceFilter } from "@/services/premium-request-usage-service";
-import { startOfMonth, endOfMonth, format } from "date-fns";
+import { startOfMonth, endOfMonth, differenceInCalendarMonths } from "date-fns";
 
 export interface IProps {
   searchParams: PremiumRequestUsageServiceFilter;
@@ -46,7 +46,7 @@ export default async function Dashboard(props: IProps) {
     startDate = startOfMonth(new Date(year, monthNum - 1));
     endDate = endOfMonth(new Date(year, monthNum - 1));
   }
-  
+  const isCrossMonthRange = differenceInCalendarMonths(endDate, startDate) > 0;
   const premiumRequestUsagesPromise = getPremiumRequestUsage({ startDate, endDate } as PremiumRequestUsageServiceFilter);
   const latestUpdateTimePromise = getLatestPremiumRequestUsageUpdateTime();
   const [premiumRequestUsages, latestUpdateTime] = await Promise.all([premiumRequestUsagesPromise, latestUpdateTimePromise]);
@@ -66,6 +66,7 @@ export default async function Dashboard(props: IProps) {
       startDate={startDate.toLocaleDateString()} 
       endDate={endDate.toLocaleDateString()}
       selectedMonth={selectedMonth} 
+      isCrossMonthRange={isCrossMonthRange}
     >
       <main className="flex flex-1 flex-col gap-4 md:gap-8 pb-8">
         <Header isCosmosDb={isCosmosDb} />

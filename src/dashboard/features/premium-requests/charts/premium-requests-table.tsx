@@ -71,7 +71,11 @@ const userColumns: ColumnDef<UserUsageData>[] = [
       <DataTableColumnHeader column={column} title="Request Quota" />
     ),
     cell: ({ row }: { row: Row<UserUsageData> }) => {
-      return <div className="ml-2">{row.original.totalRequestQuota.toFixed(0)}</div>;
+      return (
+        <div className="ml-2">
+          {row.original.totalRequestQuota === null ? "N/A" : row.original.totalRequestQuota.toFixed(0)}
+        </div>
+      )
     },
   },
   {

@@ -12,6 +12,7 @@ interface IProps extends PropsWithChildren {
   selectedMonth?: string;
   startDate: string;
   endDate: string;
+  isCrossMonthRange: boolean;
 }
 
 export interface DropdownFilterItem {
@@ -33,12 +34,13 @@ class PremiumRequestsState {
     latestUpdateTime: Date | null,
     startDate: string,
     endDate: string,
-    selectedMonth?: string
+    selectedMonth?: string,
+    isCrossMonthRange = false
   ): void {
     this.premiumRequestUsages = premiumRequestUsages;
     this.latestUpdateTime = latestUpdateTime;
     this.selectedMonth = selectedMonth || this.getCurrentMonth();
-    this.userUsageData = this.getUserUsageData(premiumRequestUsages);
+    this.userUsageData = this.getUserUsageData(premiumRequestUsages, isCrossMonthRange);
     this.startDate = startDate;
     this.endDate = endDate;
   }
@@ -52,12 +54,12 @@ class PremiumRequestsState {
     this.selectedMonth = month;
   }
 
-  public updateUsageData(usageData: PremiumRequestUsage[]): void {
+  public updateUsageData(usageData: PremiumRequestUsage[], isCrossMonthRange = false): void {
     this.premiumRequestUsages = usageData;
-    this.userUsageData = this.getUserUsageData(usageData);
+    this.userUsageData = this.getUserUsageData(usageData, isCrossMonthRange);
   }
 
-  public getUserUsageData = (usageData: PremiumRequestUsage[]): UserUsageData[] => {
+  public getUserUsageData = (usageData: PremiumRequestUsage[], isCrossMonthRange: boolean): UserUsageData[] => {
     const userUsageMap = new Map<string, UserUsageData>();
     usageData?.forEach(usage => {
       if (!userUsageMap.has(usage.username)) {
@@ -65,7 +67,7 @@ class PremiumRequestsState {
           user: usage.username,
           userDisplayName: usage.display_username || "",
           totalRequestQuantity: 0,
-          totalRequestQuota: usage.total_monthly_quota,
+          totalRequestQuota: isCrossMonthRange ? null : usage.total_monthly_quota,
           team: []
         });
       }
@@ -99,8 +101,9 @@ export const DataProvider = ({
   latestUpdateTime,
   selectedMonth,
   startDate,
-  endDate
+  endDate,
+  isCrossMonthRange,
 }: IProps) => {
-  dashboardStore.initData(premiumRequestUsages, latestUpdateTime, startDate, endDate, selectedMonth);
+  dashboardStore.initData(premiumRequestUsages, latestUpdateTime, startDate, endDate, selectedMonth, isCrossMonthRange);
   return <>{children}</>;
 };

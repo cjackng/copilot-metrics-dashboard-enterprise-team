@@ -311,6 +311,6 @@ export interface UserUsageData {
   user: string;
   userDisplayName: string;
   totalRequestQuantity: number;
-  totalRequestQuota: number;
+  totalRequestQuota: number | null;
   team: string[];
 }
