@@ -6,8 +6,8 @@ export async function register() {
   if (globalThis.__premiumUsageCronStarted) {
     return;
   }
-
-  if (process.env.NEXT_RUNTIME === 'nodejs') {
+  console.log(`[Instrumentation] current environment: ${process.env.NODE_ENV}`);
+  if (process.env.NEXT_RUNTIME === 'nodejs' && process.env.NODE_ENV === 'production') {
     try {
       console.log('[Instrumentation] instrumentation register called, starting cron...');
       const { startPremiumUsageTask } = await import('@/services/cron/premium-usage-cron-service');
