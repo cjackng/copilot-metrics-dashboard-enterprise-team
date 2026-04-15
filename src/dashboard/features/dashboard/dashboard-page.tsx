@@ -68,9 +68,9 @@ export default async function Dashboard(props: IProps) {
             <ActiveUsers />
             <AcceptanceRate />
             <ChatAcceptanceRate />
-            <TotalCodeLineSuggestionsAndAcceptances />
+            {/* <TotalCodeLineSuggestionsAndAcceptances /> */}
             <TotalSuggestionsAndAcceptances />
-            <TotalChatsAndAcceptances />
+            {/* <TotalChatsAndAcceptances /> */}
           </div>
         </div>
       </main>

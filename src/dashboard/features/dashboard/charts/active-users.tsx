@@ -48,7 +48,7 @@ export const ActiveUsers = () => {
               radius={4}
             />{" "}
             <Bar
-              dataKey={chartConfig.totalChatUsers.key}
+              dataKey={chartConfig.totalIdeUsers.key}
               fill="hsl(var(--chart-1))"
               radius={4}
             />
@@ -71,9 +71,9 @@ const chartConfig: Record<
     label: "Total users",
     key: "totalUsers",
   },
-  ["totalChatUsers"]: {
-    label: "Total chat users",
-    key: "totalChatUsers",
+  ["totalIdeUsers"]: {
+    label: "Total IDE users",
+    key: "totalIdeUsers",
   },
   ["timeFrameDisplay"]: {
     label: "Time frame display",

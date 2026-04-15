@@ -24,7 +24,7 @@ export const ChatAcceptanceRate = () => {
     <Card className="col-span-4">
       <ChartHeader
         title="Chat Acceptance rate"
-        description=" The ratio of GitHub Copilot Chat total insertion and copy events to the total Github Copilot Chats"
+        description=" The ratio of GitHub Copilot Chat acceptance events to the total Github Copilot Chats suggested."
       />
 
       <CardContent>

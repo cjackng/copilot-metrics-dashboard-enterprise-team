@@ -23,7 +23,7 @@ export const TotalSuggestionsAndAcceptances = () => {
   return (
     <Card className="col-span-4">
       <ChartHeader
-        title="Total code suggestions and acceptance"
+        title="Total code completion suggestions and acceptance"
         description="The total number of Copilot code completion suggestions shown to users vs the total number of Copilot code completion suggestions accepted by users."
       />
       <CardContent>

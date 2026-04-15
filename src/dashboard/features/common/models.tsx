@@ -78,13 +78,11 @@ export interface CopilotSeatsData {
 
 export interface CopilotUsage {
     total_active_users: number;
-    total_engaged_users: number;
     total_ide_engaged_users: number;
     total_code_suggestions: number;
     total_code_acceptances: number;
     total_code_lines_suggested: number;
     total_code_lines_accepted: number;
-    total_chat_engaged_users: number;
     total_chats: number;
     total_accepted_chats: number;
     day: string;

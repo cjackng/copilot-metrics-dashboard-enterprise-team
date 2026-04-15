@@ -38,7 +38,7 @@ export const computeAcceptanceAverage = (
 
 export interface ActiveUserData {
   totalUsers: number;
-  totalChatUsers: number;
+  totalIdeUsers: number;
   timeFrameDisplay: string;
 }
 
@@ -48,7 +48,7 @@ export function getActiveUsers(
   const rates = filteredData.map((item) => {
     return {
       totalUsers: item.total_active_users,
-      totalChatUsers: item.total_chat_engaged_users,
+      totalIdeUsers: item.total_ide_engaged_users,
       timeFrameDisplay: item.time_frame_display,
     };
   });
@@ -85,22 +85,12 @@ export const computeCumulativeAcceptanceAverage = (
 ) => {
   const acceptanceAverages = computeAcceptanceAverage(filteredData);
 
-  const acceptanceChatAverages = computeChatAcceptanceAverage(filteredData);
-
   const totalAcceptanceRate = acceptanceAverages.reduce(
     (sum, rate) => sum + rate.acceptanceLinesRate,
     0
   );
 
-  const totalChatAcceptanceRate = acceptanceChatAverages.reduce(
-    (sum, rate) => sum + rate.acceptanceChatRate,
-    0
-  ); 
-
-  const comulativeAcceptanceRate = totalAcceptanceRate / acceptanceAverages.length;
-  const comulativeChatAcceptanceRate = totalChatAcceptanceRate / acceptanceChatAverages.length;
-  const result = (comulativeAcceptanceRate + comulativeChatAcceptanceRate) / 2;
-
+  const result = totalAcceptanceRate / acceptanceAverages.length;
   return result > 0 ? result : 0;
 };
 
