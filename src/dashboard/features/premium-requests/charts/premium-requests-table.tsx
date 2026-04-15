@@ -26,7 +26,7 @@ const formatPremiumRequestTitle = (latestUpdateTime: Date | null) => {
     throw new Error('Invalid latestUpdateTime string provided');
   }
 
-  return `Premium Request Usage (Latest Update at: ${format(latestUpdateTime, "dd MMM yyyy HH:mm:ss")})`;
+  return `Premium Request Usage (Latest Update at: ${format(latestUpdateTime, "dd MMM yyyy HH:mm")})`;
 }
 
 const userColumns: ColumnDef<UserUsageData>[] = [
@@ -117,7 +117,7 @@ export const PremiumRequestsTable = () => {
   return (
     <Card className="col-span-4">
       <ChartHeader
-        title={`Premium Request Usage (Latest Update at: ${latestUpdateTime ? format(latestUpdateTime, "dd MMM yyyy HH:mm:ss") : "N/A"})`}
+        title={formatPremiumRequestTitle(latestUpdateTime)}
         description={`Premium request usage by user from ${format(new Date(startDate), "dd MMM yyyy")} to ${format(new Date(endDate), "dd MMM yyyy")}`}
       />
       <CardContent>
