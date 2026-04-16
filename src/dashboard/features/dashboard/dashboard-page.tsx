@@ -10,6 +10,7 @@ import { DataProvider } from "./dashboard-state";
 import { TimeFrameToggle } from "./filter/time-frame-toggle";
 import { Header } from "./header";
 import { getCopilotMetrics, IFilter as MetricsFilter } from "@/services/copilot-metrics-service";
+import { getAllEnterpriseMembersLookup } from "@/services/enterprise-members-service";
 import { getCopilotSeatsManagement, getAllCopilotSeatsTeams, IFilter as SeatServiceFilter } from "@/services/copilot-seat-service";
 import { cosmosConfiguration } from "@/services/cosmos-db-service";
 
@@ -24,10 +25,8 @@ export default async function Dashboard(props: IProps) {
   const seatsPromise = getCopilotSeatsManagement({
     date: props.searchParams.endDate,
   } as SeatServiceFilter);
-  const teamsPromise = getAllCopilotSeatsTeams({
-    date: props.searchParams.endDate,
-  } as SeatServiceFilter);
-  const [metrics, seats, teams] = await Promise.all([
+  const teamsPromise = getAllEnterpriseMembersLookup();
+  const [metrics, seats, membersToTeams] = await Promise.all([
     metricsPromise,
     seatsPromise,
     teamsPromise,
@@ -42,14 +41,11 @@ export default async function Dashboard(props: IProps) {
     return <ErrorPage error={seats.errors[0].message} />;
   }
 
-  if (teams.status !== "OK") {
-    return <ErrorPage error={teams.errors[0].message} />;
-  }
   return (
     <DataProvider
       copilotUsages={metrics.response}
       seatsData={seats.response}
-      teamsData={teams.response}
+      teamsData={membersToTeams}
       filter={{
         startDate: props.searchParams.startDate,
         endDate: props.searchParams.endDate,

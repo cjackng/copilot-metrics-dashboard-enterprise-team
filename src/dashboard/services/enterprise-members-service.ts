@@ -65,7 +65,7 @@ type GraphQLMembersResponse = {
   errors?: GraphQLError[];
 };
 
-type Member = {
+export type Member = {
   id: number | null;
   login: string;
   display_name: string;
@@ -211,7 +211,7 @@ async function fetchTeamMembers(
   return logins;
 }
 
-async function buildMemberTeamsMap(enterprise: string, token: string, version: string): Promise<Map<string, string[]>> {
+export async function buildMemberTeamsMap(enterprise: string, token: string, version: string): Promise<Map<string, string[]>> {
   
   console.log("  Fetching enterprise teams ...");
   const teams = await fetchEnterpriseTeams(enterprise, token, version);

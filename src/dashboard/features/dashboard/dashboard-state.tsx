@@ -3,7 +3,6 @@
 import { PropsWithChildren } from "react";
 import {
   CopilotUsageOutput,
-  GitHubTeam,
 } from "@/features/common/models";
 import { formatDate } from "@/utils/helpers";
 
@@ -12,17 +11,18 @@ import { proxy, useSnapshot } from "valtio";
 import { groupByTimeFrame } from "@/utils/data-mapper";
 import { CopilotSeatsData } from "../common/models";
 import {
-  refreshMetricsData,
   refreshSeatsData,
 } from "@/services/dashboard-actions";
+import { Member } from "@/services/enterprise-members-service";
 
 interface IProps extends PropsWithChildren {
-  copilotUsages: CopilotUsageOutput[];
+  copilotUsages: Map<string, CopilotUsageOutput[]>;
   seatsData: CopilotSeatsData;
-  teamsData: GitHubTeam[];
+  teamsData: Map<string, Member>;
   filter?: {
     startDate?: Date;
     endDate?: Date;
+    date?: string;
     enterprise?: string;
     organization?: string;
   };
@@ -33,21 +33,21 @@ export interface DropdownFilterItem {
   isSelected: boolean;
 }
 
-export type TimeFrame = "daily" | "weekly" | "monthly";
+export type TimeFrame = "daily" | "weekly";
 
 class DashboardState {
-  public filteredData: CopilotUsageOutput[] = [];
-  public languages: DropdownFilterItem[] = [];
-  public editors: DropdownFilterItem[] = [];
+  public filteredData: Map<string, CopilotUsageOutput[]> = new Map();
+  public displayData: CopilotUsageOutput[] = [];
   public teams: DropdownFilterItem[] = [];
   public timeFrame: TimeFrame = "weekly";
   public hideWeekends: boolean = false;
   public isLoading: boolean = false;
 
   public seatsData: CopilotSeatsData = {} as CopilotSeatsData;
-  public teamsData: GitHubTeam[] = [];
+  public teamsData: Map<string, Member> = new Map();
 
-  private apiData: CopilotUsageOutput[] = [];
+  private apiData: Map<string, CopilotUsageOutput[]> = new Map();
+  private teamFilteredData: Map<string, CopilotUsageOutput[]> = new Map();
   private hasPendingTeamChanges: boolean = false; // Track if teams have changed
   private currentFilter: {
     startDate?: Date;
@@ -63,9 +63,9 @@ class DashboardState {
   }
 
   public initData(
-    data: CopilotUsageOutput[],
+    data: Map<string, CopilotUsageOutput[]>,
     seatsData: CopilotSeatsData,
-    teamsData: GitHubTeam[],
+    teamsData: Map<string, Member>,
     filter?: {
       startDate?: Date;
       endDate?: Date;
@@ -73,8 +73,8 @@ class DashboardState {
       organization?: string;
     }
   ): void {
-    this.apiData = [...data];
-    this.filteredData = [...data];
+    this.apiData = new Map(data);
+    this.teamFilteredData = new Map(data);
     this.onTimeFrameChange(this.timeFrame);
     this.seatsData = seatsData;
     this.teamsData = teamsData;
@@ -82,22 +82,6 @@ class DashboardState {
     // Store current filter for data refreshing
     if (filter) {
       this.currentFilter = filter;
-    }
-  }
-
-  public filterLanguage(language: string): void {
-    const item = this.languages.find((l) => l.value === language);
-    if (item) {
-      item.isSelected = !item.isSelected;
-      this.applyFilters();
-    }
-  }
-
-  public filterEditor(editor: string): void {
-    const item = this.editors.find((l) => l.value === editor);
-    if (item) {
-      item.isSelected = !item.isSelected;
-      this.applyFilters();
     }
   }
 
@@ -130,11 +114,7 @@ class DashboardState {
 
     try {
       // Refresh both metrics data and seats data in parallel
-      const [metricsResult, seatsResult] = await Promise.all([
-        refreshMetricsData({
-          ...this.currentFilter,
-          teams: selectedTeams,
-        }),
+      const [seatsResult] = await Promise.all([
         refreshSeatsData({
           date: this.currentFilter.endDate, // Use endDate for seats filtering
           enterprise: this.currentFilter.enterprise,
@@ -143,29 +123,19 @@ class DashboardState {
         }),
       ]);
 
-      if (metricsResult.success && metricsResult.data) {
-        // Update the metrics data and re-extract unique values
-        this.apiData = [...metricsResult.data];
-
-        // Preserve team selections and reapply all filters
-        const currentTeamSelections = this.teams.map((t) => ({
-          value: t.value,
-          isSelected: t.isSelected,
-        }));
-        this.teams = this.extractUniqueTeams();
-
-        // Restore team selections
-        this.teams.forEach((team) => {
-          const previousSelection = currentTeamSelections.find(
-            (t) => t.value === team.value
-          );
-          if (previousSelection) {
-            team.isSelected = previousSelection.isSelected;
+      if (selectedTeams.length > 0) {
+        this.teamFilteredData = new Map();
+        this.apiData.forEach((value, key) => {
+          if (this.teamsData && this.teamsData.size > 0 && this.teamsData.has(key)) {
+            if (this.teamsData.get(key)?.teams.some((team) => selectedTeams.includes(team))) {
+              this.teamFilteredData.set(key, value);
+            }
           }
         });
-
-        this.applyFilters();
+      } else {
+        this.teamFilteredData = new Map(this.apiData);
       }
+      this.applyFilters();
 
       if (seatsResult.success && seatsResult.data) {
         // Update the seats data
@@ -185,8 +155,6 @@ class DashboardState {
   }
 
   public async resetAllFilters(): Promise<void> {
-    this.languages.forEach((item) => (item.isSelected = false));
-    this.editors.forEach((item) => (item.isSelected = false));
     this.teams.forEach((item) => (item.isSelected = false));
     this.hideWeekends = false;
     this.hasPendingTeamChanges = false; // Reset pending changes
@@ -207,23 +175,75 @@ class DashboardState {
   }
 
   private applyFilters(): void {
-    const data = this.aggregatedDataByTimeFrame(this.hideWeekends);
-    this.filteredData = data
+    this.filteredData = this.aggregatedDataByTimeFrame(this.hideWeekends);
+    this.displayData = this.calculateDisplayData();
+  }
+
+  private calculateDisplayData(): CopilotUsageOutput[] {
+    // Flatten all users' already-aggregated data into one array
+    const allItems: CopilotUsageOutput[] = [];
+    this.filteredData.forEach((userItems) => allItems.push(...userItems));
+
+    // Group by time_frame_display (set by aggregatedDataByTimeFrame)
+    const grouped = allItems.reduce((acc, item) => {
+      const key = item.time_frame_display || item.day;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(item);
+      return acc;
+    }, {} as Record<string, CopilotUsageOutput[]>);
+
+    return Object.entries(grouped)
+      .map(([key, items]) => {
+        const merged: CopilotUsageOutput = {
+          day: items[0].day,
+          time_frame_week: items[0].time_frame_week,
+          time_frame_display: key,
+          total_active_users: 0,
+          total_ide_engaged_users: 0,
+          total_code_suggestions: 0,
+          total_code_acceptances: 0,
+          total_code_lines_suggested: 0,
+          total_code_lines_accepted: 0,
+          total_chats: 0,
+          total_accepted_chats: 0,
+          used_chat: false,
+          used_cli: false,
+        };
+
+        items.forEach((item) => {
+          merged.total_active_users += item.total_active_users;
+          merged.total_ide_engaged_users += item.total_ide_engaged_users;
+          merged.total_code_suggestions += item.total_code_suggestions;
+          merged.total_code_acceptances += item.total_code_acceptances;
+          merged.total_code_lines_suggested += item.total_code_lines_suggested;
+          merged.total_code_lines_accepted += item.total_code_lines_accepted;
+          merged.total_chats += item.total_chats;
+          merged.total_accepted_chats += item.total_accepted_chats;
+          if (item.total_chat_generations !== undefined) {
+            merged.total_chat_generations =
+              (merged.total_chat_generations ?? 0) + item.total_chat_generations;
+          }
+          merged.used_chat = merged.used_chat || item.used_chat;
+          merged.used_cli = merged.used_cli || item.used_cli;
+        });
+
+        return merged;
+      })
+      .sort((a, b) => a.day.localeCompare(b.day));
   }
 
   private extractUniqueTeams(): DropdownFilterItem[] {
     const teams: DropdownFilterItem[] = [];
 
     // Use the fetched teams data instead of extracting from seats
-    if (this.teamsData && this.teamsData.length > 0) {
-      this.teamsData.forEach((team) => {
-        if (team && team.name) {
-          const teamName = team.name;
-          const index = teams.findIndex((t) => t.value === teamName);
-
-          if (index === -1) {
-            teams.push({ value: teamName, isSelected: false });
-          }
+    if (this.teamsData && this.teamsData.size > 0) {
+      this.teamsData.forEach((member) => {
+        if (member && member.teams && member.teams.length > 0) {
+          member.teams.forEach((teamName) => {
+            if (!teams.find((t) => t.value === teamName)) {
+              teams.push({ value: teamName, isSelected: false });
+            }
+          });
         }
       });
     }
@@ -231,39 +251,36 @@ class DashboardState {
     return teams.sort((a, b) => a.value.localeCompare(b.value));
   }
 
-  private aggregatedDataByTimeFrame(hideWeekends: boolean) {
-    let items = JSON.parse(
-      JSON.stringify(this.apiData)
-    ) as CopilotUsageOutput[];
+  private aggregatedDataByTimeFrame(hideWeekends: boolean): Map<string, CopilotUsageOutput[]> {
+    const result = new Map<string, CopilotUsageOutput[]>();
 
-    if (hideWeekends) {
-      items = items.filter((item) => {
-        const date = new Date(item.day);
-        const day = date.getDay();
-        return day !== 0 && day !== 6; // 0 is Sunday, 6 is Saturday
-      });
-    }
+    this.teamFilteredData.forEach((userItems, user) => {
+      let items = hideWeekends
+        ? userItems.filter((item) => {
+            const day = new Date(item.day).getDay();
+            return day !== 0 && day !== 6; // 0 = Sunday, 6 = Saturday
+          })
+        : userItems;
 
-    if (this.timeFrame === "daily") {
-      items.forEach((item) => {
-        item.time_frame_display = formatDate(item.day);
-      });
-      return items;
-    }
-
-    const groupedByTimeFrame = items.reduce((acc, item) => {
-      const timeFrameLabel = item.time_frame_week;
-
-      if (!acc[timeFrameLabel]) {
-        acc[timeFrameLabel] = [];
+      if (this.timeFrame === "daily") {
+        result.set(
+          user,
+          items.map((item) => ({ ...item, time_frame_display: formatDate(item.day) }))
+        );
+        return;
       }
 
-      acc[timeFrameLabel].push(item);
+      const groupedByTimeFrame = items.reduce((acc, item) => {
+        const label = item.time_frame_week;
+        if (!acc[label]) acc[label] = [];
+        acc[label].push(item);
+        return acc;
+      }, {} as Record<string, CopilotUsageOutput[]>);
 
-      return acc;
-    }, {} as Record<string, CopilotUsageOutput[]>);
+      result.set(user, groupByTimeFrame(groupedByTimeFrame));
+    });
 
-    return groupByTimeFrame(groupedByTimeFrame);
+    return result;
   }
 }
 
