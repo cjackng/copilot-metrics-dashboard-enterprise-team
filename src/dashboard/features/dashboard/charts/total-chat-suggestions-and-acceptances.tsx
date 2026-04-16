@@ -18,8 +18,8 @@ import {
 } from "./common";
 
 export const TotalChatsAndAcceptances = () => {
-  const { filteredData } = useDashboard();
-  const data = totalChatsAndAcceptances(filteredData);
+  const { displayData } = useDashboard();
+  const data = totalChatsAndAcceptances(displayData);
   return (
     <Card className="col-span-4">
       <ChartHeader

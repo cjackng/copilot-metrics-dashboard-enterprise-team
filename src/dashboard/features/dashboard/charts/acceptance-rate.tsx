@@ -17,8 +17,8 @@ import { AcceptanceRateData, computeAcceptanceAverage } from "./common";
 import { ChartHeader } from "./chart-header";
 
 export const AcceptanceRate = () => {
-  const { filteredData } = useDashboard();
-  const data = computeAcceptanceAverage(filteredData);
+  const { displayData } = useDashboard();
+  const data = computeAcceptanceAverage(displayData);
 
   return (
     <Card className="col-span-4">

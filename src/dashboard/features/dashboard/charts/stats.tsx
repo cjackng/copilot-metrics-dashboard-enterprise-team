@@ -10,9 +10,9 @@ import {
 import StatsCard from "./stats-card";
 
 export const Stats = () => {
-  const { filteredSeatsData, filteredData, isLoading } = useDashboard();
-  const acceptanceAverage = computeCumulativeAcceptanceAverage(filteredData);
-  const averageActiveUsers = computeActiveUserAverage(filteredData);
+  const { filteredSeatsData, displayData, isLoading } = useDashboard();
+  const acceptanceAverage = computeCumulativeAcceptanceAverage(displayData);
+  const averageActiveUsers = computeActiveUserAverage(displayData);
   const adoptionRate = computeAdoptionRate(filteredSeatsData);
 
   return (

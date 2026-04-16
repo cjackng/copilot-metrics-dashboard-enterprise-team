@@ -59,14 +59,13 @@ export function getActiveUsers(
 export const computeActiveUserAverage = (
   filteredData: CopilotUsageOutput[]
 ) => {
+  if (filteredData.length === 0) return 0;
   const activeUsersSum: number = filteredData.reduce(
     (sum: number, item: { total_active_users: number }) =>
       sum + item.total_active_users,
     0
   );
-
-  const averageActiveUsers = activeUsersSum / filteredData.length;
-  return averageActiveUsers > 0 ? averageActiveUsers : 0;
+  return activeUsersSum / filteredData.length;
 };
 
 export const computeAdoptionRate = (seatsData: any) => {

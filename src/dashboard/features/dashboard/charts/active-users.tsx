@@ -15,8 +15,8 @@ import { ChartHeader } from "./chart-header";
 import { ActiveUserData, getActiveUsers } from "./common";
 
 export const ActiveUsers = () => {
-  const { filteredData } = useDashboard();
-  const data = getActiveUsers(filteredData);
+  const { displayData } = useDashboard();
+  const data = getActiveUsers(displayData);
 
   return (
     <Card className="col-span-4">

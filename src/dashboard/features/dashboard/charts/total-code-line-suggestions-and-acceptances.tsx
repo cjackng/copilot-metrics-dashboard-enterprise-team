@@ -18,8 +18,8 @@ import {
 } from "./common";
 
 export const TotalCodeLineSuggestionsAndAcceptances = () => {
-  const { filteredData } = useDashboard();
-  const data = totalLinesSuggestedAndAccepted(filteredData);
+  const { displayData } = useDashboard();
+  const data = totalLinesSuggestedAndAccepted(displayData);
   return (
     <Card className="col-span-4">
       <ChartHeader
