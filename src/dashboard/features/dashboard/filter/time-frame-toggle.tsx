@@ -4,30 +4,32 @@ import { createContext, PropsWithChildren, useContext, useState } from "react";
 import { dashboardStore, TimeFrame, useDashboard } from "../dashboard-state";
 
 export const TimeFrameToggle = () => {
-  const { timeFrame: selectedTimeFrame } = useDashboard();
+  const { timeFrame: selectedTimeFrame, days } = useDashboard();
   return (
-    <Tabs defaultValue={selectedTimeFrame} className="">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger
-          value="daily"
-          className="gap-2 font-normal"
-          onClick={() => {
-            dashboardStore.onTimeFrameChange("daily");
-          }}
-        >
-          Daily
-        </TabsTrigger>
-        <TabsTrigger
-          value="weekly"
-          className="gap-2 font-normal"
-          onClick={() => {
-            dashboardStore.onTimeFrameChange("weekly");
-          }}
-        >
-          Weekly
-        </TabsTrigger>
-      </TabsList>
-    </Tabs>
+    days === 28 ? (
+      <Tabs defaultValue={selectedTimeFrame} className="">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger
+            value="daily"
+            className="gap-2 font-normal"
+            onClick={() => {
+              dashboardStore.onTimeFrameChange("daily");
+            }}
+          >
+            Daily
+          </TabsTrigger>
+          <TabsTrigger
+            value="weekly"
+            className="gap-2 font-normal"
+            onClick={() => {
+              dashboardStore.onTimeFrameChange("weekly");
+            }}
+          >
+            Weekly
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+    ) : <></>
   );
 };
 

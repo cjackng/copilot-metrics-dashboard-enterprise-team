@@ -11,7 +11,7 @@ import { TimeFrameToggle } from "./filter/time-frame-toggle";
 import { Header } from "./header";
 import { getCopilotMetrics, IFilter as MetricsFilter } from "@/services/copilot-metrics-service";
 import { getAllEnterpriseMembersLookup } from "@/services/enterprise-members-service";
-import { getCopilotSeatsManagement, getAllCopilotSeatsTeams, IFilter as SeatServiceFilter } from "@/services/copilot-seat-service";
+import { getCopilotSeatsManagement, IFilter as SeatServiceFilter } from "@/services/copilot-seat-service";
 import { cosmosConfiguration } from "@/services/cosmos-db-service";
 
 export interface IProps {

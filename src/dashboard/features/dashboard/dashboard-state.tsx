@@ -39,8 +39,9 @@ class DashboardState {
   public filteredData: Map<string, CopilotUsageOutput[]> = new Map();
   public displayData: CopilotUsageOutput[] = [];
   public teams: DropdownFilterItem[] = [];
-  public timeFrame: TimeFrame = "weekly";
+  public timeFrame: TimeFrame = "daily";
   public hideWeekends: boolean = false;
+  public days: number = 28;
   public isLoading: boolean = false;
 
   public seatsData: CopilotSeatsData = {} as CopilotSeatsData;
@@ -157,6 +158,7 @@ class DashboardState {
   public async resetAllFilters(): Promise<void> {
     this.teams.forEach((item) => (item.isSelected = false));
     this.hideWeekends = false;
+    this.days = 28;
     this.hasPendingTeamChanges = false; // Reset pending changes
     this.applyFilters();
 
@@ -171,6 +173,12 @@ class DashboardState {
 
   public onTimeFrameChange(timeFrame: TimeFrame): void {
     this.timeFrame = timeFrame;
+    this.applyFilters();
+  }
+
+  public onDaysChange(days: number): void {
+    this.days = days;
+    this.timeFrame = "daily";
     this.applyFilters();
   }
 
@@ -254,13 +262,19 @@ class DashboardState {
   private aggregatedDataByTimeFrame(hideWeekends: boolean): Map<string, CopilotUsageOutput[]> {
     const result = new Map<string, CopilotUsageOutput[]>();
 
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - this.days);
+    const cutoffStr = cutoff.toISOString().slice(0, 10); // "yyyy-MM-dd"
+
     this.teamFilteredData.forEach((userItems, user) => {
-      let items = hideWeekends
-        ? userItems.filter((item) => {
-            const day = new Date(item.day).getDay();
-            return day !== 0 && day !== 6; // 0 = Sunday, 6 = Saturday
-          })
-        : userItems;
+      let items = userItems.filter((item) => item.day >= cutoffStr);
+
+      if (hideWeekends) {
+        items = items.filter((item) => {
+          const day = new Date(item.day).getDay();
+          return day !== 0 && day !== 6; // 0 = Sunday, 6 = Saturday
+        });
+      }
 
       if (this.timeFrame === "daily") {
         result.set(
