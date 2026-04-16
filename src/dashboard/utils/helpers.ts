@@ -1,46 +1,7 @@
 import { featuresEnvConfig } from "@/services/env-service";
 import { format, startOfWeek, parse, isValid } from "date-fns";
-import { CopilotMetrics, CopilotUsageOutput, CopilotMetricsReportData } from "@/features/common/models";
+import { CopilotUsageOutput, CopilotMetricsReportData } from "@/features/common/models";
 
-export const applyTimeFrameLabel = (
-  data: CopilotMetrics[]
-): CopilotUsageOutput[] => {
-  // Sort data by 'day'
-  const sortedData = data.sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
-
-  const dataWithTimeFrame: CopilotUsageOutput[] = [];
-
-  sortedData.forEach((item) => {
-    // Convert 'day' to a Date object and find the start of its week
-    const date = new Date(item.date);
-    const weekStart = startOfWeek(date, { weekStartsOn: 1 });
-
-    // Create a unique week identifier
-    const weekIdentifier = format(weekStart, "MMM dd");
-    const monthIdentifier = format(date, "MMM yy");
-
-    const output: CopilotUsageOutput = {
-      ...item,
-      total_active_users: item.total_active_users,
-      total_ide_engaged_users: item.copilot_ide_code_completions?.total_engaged_users,
-      total_code_suggestions: (item.copilot_ide_code_completions?.editors|| []).reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_suggestions || 0), 0), 0), 0),
-      total_code_acceptances: (item.copilot_ide_code_completions?.editors|| []).reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_acceptances || 0), 0), 0), 0),
-      total_code_lines_suggested: (item.copilot_ide_code_completions?.editors|| []).reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_lines_suggested || 0), 0), 0), 0),
-      total_code_lines_accepted: (item.copilot_ide_code_completions?.editors|| []).reduce((acc, editor) => acc + editor.models.reduce((modelAcc, model) => modelAcc + model.languages!.reduce((langAcc, lang) => langAcc + (lang.total_code_lines_accepted || 0), 0), 0), 0),
-      total_chats:  (item.copilot_ide_chat?.editors || []).reduce((acc, editor) => acc + (editor.models.reduce((modelAcc, model) => modelAcc + (model.total_chats || 0), 0)), 0),
-      total_accepted_chats:  (item.copilot_ide_chat?.editors || []).reduce((acc, editor) => acc + (editor.models.reduce((modelAcc, model) => modelAcc + (model.total_chat_insertion_events || 0) + (model.total_chat_copy_events || 0), 0)), 0),
-      day: item.date,
-
-      time_frame_week: weekIdentifier,
-      time_frame_display: weekIdentifier,
-    };
-    dataWithTimeFrame.push(output);
-  });
-
-  return dataWithTimeFrame;
-};
 
 export const getFeatures = () => {
   const features = featuresEnvConfig();
@@ -86,16 +47,18 @@ export const getNextUrlFromLinkHeader = (linkHeader: string | null): string | nu
 
 export const transformCopilotMetricsReportData = (
   data: CopilotMetricsReportData[]
-): CopilotUsageOutput[] => {
+): Map<string, CopilotUsageOutput[]> => {
+  // map user to their daily usage data
+
   if (!data || !Array.isArray(data) || data.length === 0) {
-    return [];
+    return new Map();
   }
 
   const sortedData = [...data].sort(
     (a, b) => new Date(a.day).getTime() - new Date(b.day).getTime()
   );
 
-  const dataWithTimeFrame: CopilotUsageOutput[] = [];
+  const dataUserToUsage: Map<string, CopilotUsageOutput[]> = new Map();
 
   sortedData.forEach((item) => {
     if (!item.day) {
@@ -134,8 +97,10 @@ export const transformCopilotMetricsReportData = (
 
     const output: CopilotUsageOutput = {
       day: item.day,
-      total_active_users: item.daily_active_users,
-      total_ide_engaged_users: item.daily_active_users - (item.daily_active_cli_users ?? 0),
+      used_chat: item.used_chat,
+      used_cli: item.used_cli,
+      total_active_users: 1,
+      total_ide_engaged_users: totalCodeCompletionSuggested > 0 ? 1 : 0,
       total_code_suggestions: totalCodeCompletionSuggested,
       total_code_acceptances: totalCodeCompletionAccepted,
       total_code_lines_suggested: totalLinesSuggested,
@@ -146,8 +111,8 @@ export const transformCopilotMetricsReportData = (
       time_frame_week: weekIdentifier,
       time_frame_display: weekIdentifier,
     };
-    dataWithTimeFrame.push(output);
+    dataUserToUsage.set(item.user_login, [...(dataUserToUsage.get(item.user_login) || []), output]);
   });
 
-  return dataWithTimeFrame;
+  return dataUserToUsage;
 };
