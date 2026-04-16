@@ -215,15 +215,21 @@ export async function buildMemberTeamsMap(enterprise: string, token: string, ver
   
   console.log("  Fetching enterprise teams ...");
   const teams = await fetchEnterpriseTeams(enterprise, token, version);
-  console.log(`  Found ${teams.length} team(s). Fetching memberships ...`);
+  console.log(`  Found ${teams.length} team(s). Fetching memberships in parallel ...`);
 
   const memberTeams = new Map<string, string[]>();
 
-  for (const team of teams) {
-    const logins = await fetchTeamMembers(enterprise, token, version, team.slug);
+  const teamMemberResults = await Promise.all(
+    teams.map(async (team) => ({
+      teamName: team.name,
+      logins: await fetchTeamMembers(enterprise, token, version, team.slug),
+    }))
+  );
+
+  for (const { teamName, logins } of teamMemberResults) {
     for (const login of logins) {
       const existing = memberTeams.get(login) ?? [];
-      existing.push(team.name);
+      existing.push(teamName);
       memberTeams.set(login, existing);
     }
   }
@@ -283,8 +289,12 @@ export async function getAllEnterpriseMembersLookup(): Promise<Map<string, Membe
   }
   
   const { token, version, enterprise } = env.response;
-  const members = await fetchMembers(enterprise, token);
-  const memberTeams = await buildMemberTeamsMap(enterprise, token, version);
+
+  // fetchMembers and buildMemberTeamsMap are independent — run in parallel
+  const [members, memberTeams] = await Promise.all([
+    fetchMembers(enterprise, token),
+    buildMemberTeamsMap(enterprise, token, version),
+  ]);
 
   return mapMembersLookup(members, memberTeams);
 }
