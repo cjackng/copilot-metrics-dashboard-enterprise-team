@@ -78,7 +78,7 @@ export const DateFilter = ({ limited = false, disabled = false }: DateFilterProp
   const getDisplayText = () => {
     const dateRange = getInitialDateRange();
     if (dateRange?.from && dateRange?.to) {
-      return `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}`;
+      return `${format(dateRange.from, "dd MMM yyyy")} - ${format(dateRange.to, "dd MMM yyyy")}`;
     }
     return "Pick a period";
   };
