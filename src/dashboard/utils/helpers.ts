@@ -75,15 +75,11 @@ export const transformCopilotMetricsReportData = (
     let totalChats = 0;
     let totalChatGenerations = 0;
     let totalAcceptedChats = 0;
-    let totalLinesSuggested = 0;
-    let totalLinesAccepted = 0;
+    let totalCodeCompletionLinesSuggested = 0;
+    let totalCodeCompletionLinesAccepted = 0;
     let totalCodeCompletionSuggested = 0;
     let totalCodeCompletionAccepted = 0;
     chatFeatures.forEach((featureData) => {
-      if (featureData.feature !== "agent_edit") {
-        totalLinesSuggested += featureData.loc_suggested_to_add_sum;
-        totalLinesAccepted += featureData.loc_added_sum;
-      }
       if (featureData.feature.includes("chat")) {
         totalChats += featureData.user_initiated_interaction_count;
         totalChatGenerations += featureData.code_generation_activity_count;
@@ -92,6 +88,10 @@ export const transformCopilotMetricsReportData = (
       if (featureData.feature === "code_completion") {
         totalCodeCompletionSuggested += featureData.code_generation_activity_count;
         totalCodeCompletionAccepted += featureData.code_acceptance_activity_count;
+        // Scope lines to code_completion only so acceptanceLinesRate
+        // is comparable to acceptanceRate (both code-completion-scoped)
+        totalCodeCompletionLinesSuggested += featureData.loc_suggested_to_add_sum;
+        totalCodeCompletionLinesAccepted += featureData.loc_added_sum;
       }
     });
 
@@ -100,11 +100,11 @@ export const transformCopilotMetricsReportData = (
       used_chat: item.used_chat,
       used_cli: item.used_cli,
       total_active_users: 1,
-      total_ide_engaged_users: totalCodeCompletionSuggested > 0 ? 1 : 0,
+      total_ide_engaged_users: item.totals_by_ide.length > 0 ? 1 : 0,
       total_code_suggestions: totalCodeCompletionSuggested,
       total_code_acceptances: totalCodeCompletionAccepted,
-      total_code_lines_suggested: totalLinesSuggested,
-      total_code_lines_accepted: totalLinesAccepted,
+      total_code_lines_suggested: totalCodeCompletionLinesSuggested,
+      total_code_lines_accepted: totalCodeCompletionLinesAccepted,
       total_chats: totalChats,
       total_accepted_chats: totalAcceptedChats,
       total_chat_generations: totalChatGenerations,
