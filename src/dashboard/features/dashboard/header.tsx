@@ -3,11 +3,7 @@ import { WeekendFilter } from "./filter/weekend-filter";
 import { DaysFilter } from "./filter/days-filter";
 import { Filters } from "./filter/header-filter";
 
-interface HeaderProps {
-  isCosmosDb?: boolean;
-}
-
-export const Header = ({ isCosmosDb }: HeaderProps) => {
+export const Header = () => {
   return (
     <PageHeader>
       <PageTitle>GitHub Copilot Metrics</PageTitle>

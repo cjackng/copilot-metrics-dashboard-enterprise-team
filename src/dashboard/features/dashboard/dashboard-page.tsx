@@ -12,7 +12,6 @@ import { Header } from "./header";
 import { getCopilotMetrics, IFilter as MetricsFilter } from "@/services/copilot-metrics-service";
 import { getAllEnterpriseMembersLookup } from "@/services/enterprise-members-service";
 import { getCopilotSeatsManagement, IFilter as SeatServiceFilter } from "@/services/copilot-seat-service";
-import { cosmosConfiguration } from "@/services/cosmos-db-service";
 
 export interface IProps {
   searchParams: MetricsFilter;
@@ -31,7 +30,6 @@ export default async function Dashboard(props: IProps) {
     seatsPromise,
     teamsPromise,
   ]);
-  const isCosmosDb = cosmosConfiguration();
 
   if (metrics.status !== "OK") {
     return <ErrorPage error={metrics.errors[0].message} />;
@@ -54,7 +52,7 @@ export default async function Dashboard(props: IProps) {
       }}
     >
       <main className="flex flex-1 flex-col gap-4 md:gap-8 pb-8">
-        <Header isCosmosDb={isCosmosDb} />
+        <Header />
         <div className="mx-auto w-full max-w-6xl container">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <Stats />

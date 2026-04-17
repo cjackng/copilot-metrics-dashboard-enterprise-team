@@ -9,11 +9,7 @@ import { useTransition } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface HeaderProps {
-  isCosmosDb?: boolean;
-}
-
-export const Header = ({ isCosmosDb }: HeaderProps) => {
+export const Header = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
