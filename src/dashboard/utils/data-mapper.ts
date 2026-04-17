@@ -28,6 +28,8 @@ export const groupByTimeFrame = (
       chat_requests_edit: 0,
       chat_requests_agent: 0,
       chat_requests_custom: 0,
+      code_completion_suggestions: 0,
+      code_completion_acceptances: 0,
     };
 
     groupedByTimeFrame[week].forEach((item) => {
@@ -44,6 +46,8 @@ export const groupByTimeFrame = (
       aggregatedData.chat_requests_edit! += item.chat_requests_edit ?? 0;
       aggregatedData.chat_requests_agent! += item.chat_requests_agent ?? 0;
       aggregatedData.chat_requests_custom! += item.chat_requests_custom ?? 0;
+      aggregatedData.code_completion_suggestions! += item.code_completion_suggestions ?? 0;
+      aggregatedData.code_completion_acceptances! += item.code_completion_acceptances ?? 0;
       // Per-user weekly aggregate: active/ide_engaged/chat_engaged/cli_engaged is binary (0 or 1)
       aggregatedData.total_active_users = Math.min(1, aggregatedData.total_active_users + item.total_active_users);
       aggregatedData.total_ide_engaged_users = Math.min(1, aggregatedData.total_ide_engaged_users + item.total_ide_engaged_users);

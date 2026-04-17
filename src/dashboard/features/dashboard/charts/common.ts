@@ -223,3 +223,22 @@ export function getRequestsPerChatMode(
     timeFrameDisplay: item.time_frame_display,
   }));
 }
+
+export interface CodeCompletionAcceptanceRateData {
+  acceptanceRate: number;
+  timeFrameDisplay: string;
+}
+
+export function computeCodeCompletionAcceptanceRate(
+  filteredData: CopilotUsageOutput[]
+): CodeCompletionAcceptanceRateData[] {
+  return filteredData.map((item) => {
+    const suggestions = item.code_completion_suggestions ?? 0;
+    const acceptances = item.code_completion_acceptances ?? 0;
+    const acceptanceRate = suggestions > 0 ? (acceptances / suggestions) * 100 : 0;
+    return {
+      acceptanceRate: Math.round(acceptanceRate * 10) / 10,
+      timeFrameDisplay: item.time_frame_display,
+    };
+  });
+}

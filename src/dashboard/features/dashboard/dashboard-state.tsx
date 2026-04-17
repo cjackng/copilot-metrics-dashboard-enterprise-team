@@ -227,6 +227,8 @@ class DashboardState {
           chat_requests_edit: 0,
           chat_requests_agent: 0,
           chat_requests_custom: 0,
+          code_completion_suggestions: 0,
+          code_completion_acceptances: 0,
         };
         
         items.forEach((item) => {
@@ -246,6 +248,8 @@ class DashboardState {
           merged.chat_requests_edit! += item.chat_requests_edit ?? 0;
           merged.chat_requests_agent! += item.chat_requests_agent ?? 0;
           merged.chat_requests_custom! += item.chat_requests_custom ?? 0;
+          merged.code_completion_suggestions! += item.code_completion_suggestions ?? 0;
+          merged.code_completion_acceptances! += item.code_completion_acceptances ?? 0;
           if (item.total_chat_generations !== undefined) {
             merged.total_chat_generations =
               (merged.total_chat_generations ?? 0) + item.total_chat_generations;
