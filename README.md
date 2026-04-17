@@ -45,6 +45,8 @@ You will be required to enter the following information in an **.env** file:
 
 You can use the **.env.example** file as a reference.
 
+> For GitHub Token, create a personal access token (classic) with `manage_billing:copilot` and `read:enterprise` permission using owner or billing manager account of the enterprise.
+
 For the **Premium Requests** feature, additional database environment variables are required (see [Database Setup](#database-setup)).
 
 ## Install & Run
@@ -77,7 +79,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 # Dashboard
 
-![GitHub Copilot Metrics - Dashboard](/docs/dashboard_2025.png "GitHub Copilot Metrics - Dashboard")
+![GitHub Copilot Metrics - Dashboard](/docs/dashboard_page.jpeg "GitHub Copilot Metrics - Dashboard")
 
 ## Features
 
