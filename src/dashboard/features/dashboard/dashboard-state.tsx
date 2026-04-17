@@ -2,9 +2,10 @@
 
 import { PropsWithChildren } from "react";
 import {
-  CopilotUsageOutput,
+  CopilotUsageOutput, CopilotUsageOutputResponse
 } from "@/features/common/models";
 import { formatDate } from "@/utils/helpers";
+import { format, parseISO, subDays } from "date-fns";
 
 import { proxy, useSnapshot } from "valtio";
 
@@ -16,7 +17,7 @@ import {
 import { Member } from "@/services/enterprise-members-service";
 
 interface IProps extends PropsWithChildren {
-  copilotUsages: Map<string, CopilotUsageOutput[]>;
+  copilotUsages: CopilotUsageOutputResponse;
   seatsData: CopilotSeatsData;
   teamsData: Map<string, Member>;
   filter?: {
@@ -43,6 +44,8 @@ class DashboardState {
   public hideWeekends: boolean = false;
   public days: number = 28;
   public isLoading: boolean = false;
+  public reportStartDay: string = "";
+  public reportEndDay: string = "";
 
   public seatsData: CopilotSeatsData = {} as CopilotSeatsData;
   public teamsData: Map<string, Member> = new Map();
@@ -64,7 +67,7 @@ class DashboardState {
   }
 
   public initData(
-    data: Map<string, CopilotUsageOutput[]>,
+    data: CopilotUsageOutputResponse,
     seatsData: CopilotSeatsData,
     teamsData: Map<string, Member>,
     filter?: {
@@ -74,8 +77,10 @@ class DashboardState {
       organization?: string;
     }
   ): void {
-    this.apiData = new Map(data);
-    this.teamFilteredData = new Map(data);
+    this.apiData = new Map(data.copilotUsages);
+    this.teamFilteredData = new Map(data.copilotUsages);
+    this.reportStartDay = data.report_start_day;
+    this.reportEndDay = data.report_end_day;
     this.onTimeFrameChange(this.timeFrame);
     this.seatsData = seatsData;
     this.teamsData = teamsData;
@@ -208,19 +213,21 @@ class DashboardState {
           time_frame_display: key,
           total_active_users: 0,
           total_ide_engaged_users: 0,
+          total_chat_engaged_users: 0,
+          total_cli_engaged_users: 0,
           total_code_suggestions: 0,
           total_code_acceptances: 0,
           total_code_lines_suggested: 0,
           total_code_lines_accepted: 0,
           total_chats: 0,
           total_accepted_chats: 0,
-          used_chat: false,
-          used_cli: false,
         };
-
+        
         items.forEach((item) => {
           merged.total_active_users += item.total_active_users;
           merged.total_ide_engaged_users += item.total_ide_engaged_users;
+          merged.total_chat_engaged_users += item.total_chat_engaged_users;
+          merged.total_cli_engaged_users += item.total_cli_engaged_users;
           merged.total_code_suggestions += item.total_code_suggestions;
           merged.total_code_acceptances += item.total_code_acceptances;
           merged.total_code_lines_suggested += item.total_code_lines_suggested;
@@ -231,8 +238,6 @@ class DashboardState {
             merged.total_chat_generations =
               (merged.total_chat_generations ?? 0) + item.total_chat_generations;
           }
-          merged.used_chat = merged.used_chat || item.used_chat;
-          merged.used_cli = merged.used_cli || item.used_cli;
         });
 
         return merged;
@@ -262,9 +267,8 @@ class DashboardState {
   private aggregatedDataByTimeFrame(hideWeekends: boolean): Map<string, CopilotUsageOutput[]> {
     const result = new Map<string, CopilotUsageOutput[]>();
 
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - this.days);
-    const cutoffStr = cutoff.toISOString().slice(0, 10); // "yyyy-MM-dd"
+    const endDate = this.reportEndDay !== "" ? parseISO(this.reportEndDay) : new Date();
+    const cutoffStr = format(subDays(endDate, this.days), "yyyy-MM-dd");
 
     this.teamFilteredData.forEach((userItems, user) => {
       let items = userItems.filter((item) => item.day >= cutoffStr);

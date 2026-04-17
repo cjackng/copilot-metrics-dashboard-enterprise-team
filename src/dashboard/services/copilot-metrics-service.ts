@@ -1,5 +1,5 @@
 import { formatResponseError, unknownResponseError } from "@/features/common/response-error";
-import { CopilotUsageOutput, CopilotMetricsReportResponse, CopilotMetricsDayReportResponse, CopilotMetricsReportData } from "@/features/common/models";
+import { CopilotUsageOutputResponse, CopilotUsageOutput, CopilotMetricsReportResponse, CopilotMetricsDayReportResponse, CopilotMetricsReportData } from "@/features/common/models";
 import { ServerActionResponse } from "@/features/common/server-action-response";
 import { ensureGitHubEnvConfig } from "./env-service";
 import { stringIsNullOrEmpty, transformCopilotMetricsReportData } from "../utils/helpers";
@@ -15,7 +15,7 @@ export interface IFilter {
 
 export const getCopilotMetrics = async (
   filter: IFilter
-): Promise<ServerActionResponse<Map<string, CopilotUsageOutput[]>>> => {
+): Promise<ServerActionResponse<CopilotUsageOutputResponse>> => {
 
   try {
     return getCopilotMetricsFromApi(filter);
@@ -26,7 +26,7 @@ export const getCopilotMetrics = async (
 
 export const getCopilotMetricsFromApi = async (
   filter: IFilter
-): Promise<ServerActionResponse<Map<string, CopilotUsageOutput[]>>> => {
+): Promise<ServerActionResponse<CopilotUsageOutputResponse>> => {
   const env = ensureGitHubEnvConfig();
 
   if (env.status !== "OK") {
@@ -58,7 +58,11 @@ export const getCopilotMetricsFromApi = async (
     if (!reportData.download_links || reportData.download_links.length === 0) {
       return {
         status: "OK",
-        response: new Map<string, CopilotUsageOutput[]>(),
+        response: {
+          report_start_day: "",
+          report_end_day: "",
+          copilotUsages: new Map<string, CopilotUsageOutput[]>(),
+        },
       };
     }
 
@@ -91,7 +95,11 @@ export const getCopilotMetricsFromApi = async (
     
     return {
       status: "OK",
-      response: dataUserToUsage,
+      response: {
+          report_start_day: flattenedData.length > 0 ? flattenedData[0].report_start_day : "",
+          report_end_day: flattenedData.length > 0 ? flattenedData[0].report_end_day : "",
+          copilotUsages: dataUserToUsage,
+      },
     };
   } catch (e) {
     return unknownResponseError(e);

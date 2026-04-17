@@ -13,6 +13,8 @@ export const groupByTimeFrame = (
       time_frame_display: week,
       total_active_users: 0,
       total_ide_engaged_users: 0,
+      total_chat_engaged_users: 0,
+      total_cli_engaged_users: 0,
       total_code_suggestions: 0,
       total_code_acceptances: 0,
       total_code_lines_suggested: 0,
@@ -20,8 +22,6 @@ export const groupByTimeFrame = (
       total_chat_generations: 0,
       total_chats: 0,
       total_accepted_chats: 0,
-      used_chat: false,
-      used_cli: false,
     };
 
     groupedByTimeFrame[week].forEach((item) => {
@@ -32,11 +32,11 @@ export const groupByTimeFrame = (
       aggregatedData.total_chats += item.total_chats;
       aggregatedData.total_accepted_chats += item.total_accepted_chats;
       aggregatedData.total_chat_generations! += item.total_chat_generations ?? 0;
-      aggregatedData.used_chat = aggregatedData.used_chat || item.used_chat;
-      aggregatedData.used_cli = aggregatedData.used_cli || item.used_cli;
-      // Per-user weekly aggregate: active/ide_engaged is binary (0 or 1)
+      // Per-user weekly aggregate: active/ide_engaged/chat_engaged/cli_engaged is binary (0 or 1)
       aggregatedData.total_active_users = Math.min(1, aggregatedData.total_active_users + item.total_active_users);
       aggregatedData.total_ide_engaged_users = Math.min(1, aggregatedData.total_ide_engaged_users + item.total_ide_engaged_users);
+      aggregatedData.total_chat_engaged_users = Math.min(1, aggregatedData.total_chat_engaged_users + item.total_chat_engaged_users);
+      aggregatedData.total_cli_engaged_users = Math.min(1, aggregatedData.total_cli_engaged_users + item.total_cli_engaged_users);
     });
 
     updatedResponse.push(aggregatedData);

@@ -76,9 +76,17 @@ export interface CopilotSeatsData {
     last_update: string | null;
 }
 
+export interface CopilotUsageOutputResponse {
+  report_start_day: string;
+  report_end_day: string;
+  copilotUsages: Map<string, CopilotUsageOutput[]>;
+}
+
 export interface CopilotUsage {
   total_active_users: number;
   total_ide_engaged_users: number;
+  total_chat_engaged_users: number;
+  total_cli_engaged_users: number;
   total_code_suggestions: number;
   total_code_acceptances: number;
   total_code_lines_suggested: number;
@@ -86,8 +94,6 @@ export interface CopilotUsage {
   total_chat_generations?: number;
   total_chats: number;
   total_accepted_chats: number;
-  used_chat: boolean;
-  used_cli: boolean;
   day: string;
 }
 
