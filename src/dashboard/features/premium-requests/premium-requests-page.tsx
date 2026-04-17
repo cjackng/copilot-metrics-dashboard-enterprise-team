@@ -5,15 +5,10 @@ import { getFeatures } from "@/utils/helpers";
 import { cosmosConfiguration } from "@/services/cosmos-db-service";
 import { DataProvider } from "./premium-requests-state";
 import { getLatestPremiumRequestUsageUpdateTime, getPremiumRequestUsage, IFilter as PremiumRequestUsageServiceFilter } from "@/services/premium-request-usage-service";
-import { startOfMonth, endOfMonth, differenceInCalendarMonths } from "date-fns";
+import { startOfMonth, endOfMonth, differenceInCalendarMonths, format, parse } from "date-fns";
 
 export interface IProps {
   searchParams: PremiumRequestUsageServiceFilter;
-}
-
-function getDefaultMonth(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
 export default async function Dashboard(props: IProps) {
@@ -30,21 +25,22 @@ export default async function Dashboard(props: IProps) {
 
   const startDateParam = props.searchParams.startDate;
   const endDateParam = props.searchParams.endDate;
+  const selectedMonthParam = props.searchParams.month;
 
   if (startDateParam && endDateParam) {
     startDate = new Date(startDateParam);
     endDate = new Date(endDateParam);
-    selectedMonth = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}`;
-  } else if (props.searchParams.month) {
-    selectedMonth = props.searchParams.month;
-    const [year, monthNum] = selectedMonth.split('-').map(Number);
-    startDate = startOfMonth(new Date(year, monthNum - 1));
-    endDate = endOfMonth(new Date(year, monthNum - 1));
+    selectedMonth = format(startDate, "yyyy-MM");
+  } else if (selectedMonthParam) {
+    selectedMonth = selectedMonthParam;
+    const monthDate = parse(selectedMonthParam, "yyyy-MM", new Date());
+    startDate = startOfMonth(monthDate);
+    endDate = endOfMonth(monthDate);
   } else {
-    selectedMonth = getDefaultMonth();
-    const [year, monthNum] = selectedMonth.split('-').map(Number);
-    startDate = startOfMonth(new Date(year, monthNum - 1));
-    endDate = endOfMonth(new Date(year, monthNum - 1));
+    const today = new Date();
+    selectedMonth = format(today, "yyyy-MM");
+    startDate = startOfMonth(today);
+    endDate = endOfMonth(today);
   }
   const isCrossMonthRange = differenceInCalendarMonths(endDate, startDate) > 0;
   const premiumRequestUsagesPromise = getPremiumRequestUsage({ startDate, endDate } as PremiumRequestUsageServiceFilter);
