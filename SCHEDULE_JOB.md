@@ -9,7 +9,7 @@ The dashboard includes a built-in scheduled job to sync Premium Requests usage d
 ## Schedule
 
 - Cron expression: `0 5,13 * * *`
-- Runs at **05:00 and 13:00 UTC** every day.
+- Runs at **05:00 and 13:00** every day.
 
 ## Runtime Behavior
 
@@ -45,6 +45,6 @@ The endpoint returns JSON with `status`, `message`, and `executedAt` fields.
 
 ## Notes
 
-- All times are UTC. The cron expression uses the server's timezone; deploy with `TZ=UTC` to ensure consistent scheduling.
+- The cron expression uses the server's timezone; deploy with `TZ=Asia/Shanghai` to ensure consistent scheduling.
 - If a sync run fails (e.g. report generation times out after 10 retries), the error is logged and the next scheduled run will retry from the last successful sync date.
 - This job keeps Premium Requests dashboard data up to date with a maximum staleness of ~8 hours under normal conditions.

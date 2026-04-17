@@ -139,7 +139,7 @@ psql -h <host> -U <user> -d <database> -f src/dashboard/create_premium_usage_tab
 
 ## Automatic Data Sync
 
-When running in **production** (`NODE_ENV=production`), a background cron job automatically syncs premium request usage data from the GitHub Enterprise Billing Reports API twice daily at **05:00 and 13:00 UTC** (`0 5,13 * * *`).
+When running in **production** (`NODE_ENV=production`), a background cron job automatically syncs premium request usage data from the GitHub Enterprise Billing Reports API twice daily at **05:00 and 13:00** (`0 5,13 * * *`).
 
 The sync process:
 1. Requests a `premium_request` billing report from GitHub for the period since the last sync.
