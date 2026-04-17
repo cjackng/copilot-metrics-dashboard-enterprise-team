@@ -94,6 +94,12 @@ export interface CopilotUsage {
   total_chat_generations?: number;
   /** Sum of user_initiated_interaction_count for all features except code_completion. */
   total_user_initiated_chat_requests?: number;
+  /** User-initiated requests broken down by chat mode. */
+  chat_requests_ask?: number;
+  chat_requests_inline?: number;
+  chat_requests_edit?: number;
+  chat_requests_agent?: number;
+  chat_requests_custom?: number;
   total_chats: number;
   total_accepted_chats: number;
   day: string;

@@ -201,3 +201,25 @@ export function computeAvgChatRequestsPerActiveUser(
     };
   });
 }
+
+export interface RequestsPerChatModeData {
+  ask: number;
+  inline: number;
+  edit: number;
+  agent: number;
+  custom: number;
+  timeFrameDisplay: string;
+}
+
+export function getRequestsPerChatMode(
+  filteredData: CopilotUsageOutput[]
+): RequestsPerChatModeData[] {
+  return filteredData.map((item) => ({
+    ask: item.chat_requests_ask ?? 0,
+    inline: item.chat_requests_inline ?? 0,
+    edit: item.chat_requests_edit ?? 0,
+    agent: item.chat_requests_agent ?? 0,
+    custom: item.chat_requests_custom ?? 0,
+    timeFrameDisplay: item.time_frame_display,
+  }));
+}

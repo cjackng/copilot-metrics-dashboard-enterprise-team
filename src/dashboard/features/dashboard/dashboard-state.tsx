@@ -222,6 +222,11 @@ class DashboardState {
           total_chats: 0,
           total_accepted_chats: 0,
           total_user_initiated_chat_requests: 0,
+          chat_requests_ask: 0,
+          chat_requests_inline: 0,
+          chat_requests_edit: 0,
+          chat_requests_agent: 0,
+          chat_requests_custom: 0,
         };
         
         items.forEach((item) => {
@@ -236,6 +241,11 @@ class DashboardState {
           merged.total_chats += item.total_chats;
           merged.total_accepted_chats += item.total_accepted_chats;
           merged.total_user_initiated_chat_requests! += item.total_user_initiated_chat_requests ?? 0;
+          merged.chat_requests_ask! += item.chat_requests_ask ?? 0;
+          merged.chat_requests_inline! += item.chat_requests_inline ?? 0;
+          merged.chat_requests_edit! += item.chat_requests_edit ?? 0;
+          merged.chat_requests_agent! += item.chat_requests_agent ?? 0;
+          merged.chat_requests_custom! += item.chat_requests_custom ?? 0;
           if (item.total_chat_generations !== undefined) {
             merged.total_chat_generations =
               (merged.total_chat_generations ?? 0) + item.total_chat_generations;
