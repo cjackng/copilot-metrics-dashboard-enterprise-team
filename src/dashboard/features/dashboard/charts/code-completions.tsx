@@ -21,7 +21,7 @@ export const CodeCompletions = () => {
   const { displayData } = useDashboard();
   const data = codeCompletionSuggestionsAndAcceptances(displayData);
   return (
-    <Card className="col-span-4">
+    <Card>
       <ChartHeader
         title="Code completions"
         description="Inline code suggestions shown and accepted."

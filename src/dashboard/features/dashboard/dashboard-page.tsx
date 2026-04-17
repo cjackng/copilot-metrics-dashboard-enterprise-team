@@ -6,8 +6,6 @@ import { CodeCompletionsAcceptanceRate } from "./charts/code-completions-accepta
 import { RequestsPerChatMode } from "./charts/requests-per-chat-mode";
 import { ActiveUsers } from "./charts/active-users";
 import { Stats } from "./charts/stats";
-import { TotalChatsAndAcceptances } from "./charts/total-chat-suggestions-and-acceptances";
-import { TotalCodeLineSuggestionsAndAcceptances } from "./charts/total-code-line-suggestions-and-acceptances";
 import { CodeCompletions } from "./charts/code-completions";
 import { DataProvider } from "./dashboard-state";
 import { TimeFrameToggle } from "./filter/time-frame-toggle";
@@ -68,8 +66,10 @@ export default async function Dashboard(props: IProps) {
             <AvgChatRequestsPerActiveUser />
             <RequestsPerChatMode />
             {/* <TotalCodeLineSuggestionsAndAcceptances /> */}
-            <CodeCompletions />
-            <CodeCompletionsAcceptanceRate />
+            <div className="grid grid-cols-1 md:grid-cols-2 col-span-4 gap-6">
+              <CodeCompletions />
+              <CodeCompletionsAcceptanceRate />
+            </div>
             {/* <TotalChatsAndAcceptances /> */}
           </div>
         </div>

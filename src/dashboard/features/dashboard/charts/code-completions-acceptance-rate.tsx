@@ -23,7 +23,7 @@ export const CodeCompletionsAcceptanceRate = () => {
   const data = computeCodeCompletionAcceptanceRate(displayData);
 
   return (
-    <Card className="col-span-4">
+    <Card>
       <ChartHeader
         title="Code completions acceptance rate"
         description="Percentage of shown inline completions that were either fully or partially accepted."

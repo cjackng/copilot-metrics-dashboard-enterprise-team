@@ -95,26 +95,6 @@ export const computeCumulativeAcceptanceAverage = (
   return (totalAccepted / totalSuggested) * 100;
 };
 
-export interface LineSuggestionsAndAcceptancesData {
-  totalLinesAccepted: number;
-  totalLinesSuggested: number;
-  timeFrameDisplay: string;
-}
-
-export function totalLinesSuggestedAndAccepted(
-  filteredData: CopilotUsageOutput[]
-): LineSuggestionsAndAcceptancesData[] {
-  const codeLineSuggestionsAndAcceptances = filteredData.map((item) => {
-    return {
-      totalLinesAccepted: item.total_code_lines_accepted || 0,
-      totalLinesSuggested: item.total_code_lines_suggested || 0,
-      timeFrameDisplay: item.time_frame_display,
-    };
-  });
-
-  return codeLineSuggestionsAndAcceptances;
-}
-
 export interface codeCompletionSuggestionAcceptanceData {
   acceptedCompletions: number;
   suggestedCompletions: number;
@@ -154,27 +134,6 @@ export const computeChatAcceptanceAverage = (
 
   return rates;
 };
-
-export interface ChatAcceptanceData {
-  totalChats: number;
-  totalAcceptedChats: number;
-  timeFrameDisplay: string;
-}
-
-export function totalChatsAndAcceptances(
-  filteredData: CopilotUsageOutput[]
-): ChatAcceptanceData[] {
-  const rates = filteredData.map((item) => {
-
-    return {
-      totalChats: item.total_chats,
-      totalAcceptedChats: item.total_accepted_chats,
-      timeFrameDisplay: item.time_frame_display
-    };
-  });
-
-  return rates;
-}
 
 export interface AvgChatRequestsPerActiveUserData {
   avgChatRequests: number;
