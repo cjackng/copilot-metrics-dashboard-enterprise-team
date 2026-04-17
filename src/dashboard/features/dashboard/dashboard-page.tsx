@@ -8,7 +8,7 @@ import { ActiveUsers } from "./charts/active-users";
 import { Stats } from "./charts/stats";
 import { TotalChatsAndAcceptances } from "./charts/total-chat-suggestions-and-acceptances";
 import { TotalCodeLineSuggestionsAndAcceptances } from "./charts/total-code-line-suggestions-and-acceptances";
-import { TotalSuggestionsAndAcceptances } from "./charts/total-suggestions-and-acceptances";
+import { CodeCompletions } from "./charts/code-completions";
 import { DataProvider } from "./dashboard-state";
 import { TimeFrameToggle } from "./filter/time-frame-toggle";
 import { Header } from "./header";
@@ -68,7 +68,7 @@ export default async function Dashboard(props: IProps) {
             <AvgChatRequestsPerActiveUser />
             <RequestsPerChatMode />
             {/* <TotalCodeLineSuggestionsAndAcceptances /> */}
-            <TotalSuggestionsAndAcceptances />
+            <CodeCompletions />
             <CodeCompletionsAcceptanceRate />
             {/* <TotalChatsAndAcceptances /> */}
           </div>

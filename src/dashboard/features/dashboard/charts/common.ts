@@ -115,25 +115,20 @@ export function totalLinesSuggestedAndAccepted(
   return codeLineSuggestionsAndAcceptances;
 }
 
-export interface SuggestionAcceptanceData {
-  totalAcceptancesCount: number;
-  totalSuggestionsCount: number;
+export interface codeCompletionSuggestionAcceptanceData {
+  acceptedCompletions: number;
+  suggestedCompletions: number;
   timeFrameDisplay: string;
 }
 
-export function totalSuggestionsAndAcceptances(
+export function codeCompletionSuggestionsAndAcceptances(
   filteredData: CopilotUsageOutput[]
-): SuggestionAcceptanceData[] {
-  const rates = filteredData.map((item) => {
-
-    return {
-      totalAcceptancesCount: item.total_code_acceptances || 0,
-      totalSuggestionsCount: item.total_code_suggestions || 0,
-      timeFrameDisplay: item.time_frame_display,
-    };
-  });
-
-  return rates;
+): codeCompletionSuggestionAcceptanceData[] {
+  return filteredData.map((item) => ({
+    suggestedCompletions: item.code_completion_lines_suggested ?? 0,
+    acceptedCompletions: item.code_completion_lines_accepted ?? 0,
+    timeFrameDisplay: item.time_frame_display,
+  }));
 }
 
 export interface ChatAcceptanceRateData {

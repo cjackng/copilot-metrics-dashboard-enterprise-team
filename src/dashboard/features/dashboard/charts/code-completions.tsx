@@ -13,18 +13,18 @@ import {
 import { useDashboard } from "../dashboard-state";
 import { ChartHeader } from "./chart-header";
 import {
-  SuggestionAcceptanceData,
-  totalSuggestionsAndAcceptances,
+  codeCompletionSuggestionAcceptanceData,
+  codeCompletionSuggestionsAndAcceptances,
 } from "./common";
 
-export const TotalSuggestionsAndAcceptances = () => {
+export const CodeCompletions = () => {
   const { displayData } = useDashboard();
-  const data = totalSuggestionsAndAcceptances(displayData);
+  const data = codeCompletionSuggestionsAndAcceptances(displayData);
   return (
     <Card className="col-span-4">
       <ChartHeader
-        title="Total code completion suggestions and acceptance"
-        description="The total number of Copilot code completion suggestions shown to users vs the total number of Copilot code completion suggestions accepted by users."
+        title="Code completions"
+        description="Inline code suggestions shown and accepted."
       />
       <CardContent>
         <ChartContainer config={chartConfig} className="w-full h-80">
@@ -45,13 +45,13 @@ export const TotalSuggestionsAndAcceptances = () => {
             />
             <ChartTooltip cursor={true} content={<ChartTooltipContent />} />
             <Area
-              dataKey={chartConfig.totalSuggestionsCount.key}
+              dataKey={chartConfig.suggestedCompletions.key}
               type="linear"
               fill="hsl(var(--chart-2))"
               stroke="hsl(var(--chart-2))"
             />
             <Area
-              dataKey={chartConfig.totalAcceptancesCount.key}
+              dataKey={chartConfig.acceptedCompletions.key}
               type="linear"
               fill="hsl(var(--chart-1))"
               stroke="hsl(var(--chart-1))"
@@ -72,13 +72,13 @@ const chartConfig: Record<
     key: DataKey;
   }
 > = {
-  ["totalAcceptancesCount"]: {
-    label: "Total acceptances",
-    key: "totalAcceptancesCount",
+  ["acceptedCompletions"]: {
+    label: "Accepted completions",
+    key: "acceptedCompletions",
   },
-  ["totalSuggestionsCount"]: {
-    label: "Total suggestions",
-    key: "totalSuggestionsCount",
+  ["suggestedCompletions"]: {
+    label: "Suggested completions",
+    key: "suggestedCompletions",
   },
   ["timeFrameDisplay"]: {
     label: "Time frame display",
@@ -86,4 +86,4 @@ const chartConfig: Record<
   },
 };
 
-type DataKey = keyof SuggestionAcceptanceData;
+type DataKey = keyof codeCompletionSuggestionAcceptanceData;

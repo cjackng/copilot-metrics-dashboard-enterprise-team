@@ -77,8 +77,8 @@ export const transformCopilotMetricsReportData = (
     let totalAcceptedChats = 0;
     let totalLinesSuggested = 0;
     let totalLinesAccepted = 0;
-    let totalCodeCompletionLinesSuggested = 0;
-    let totalCodeCompletionLinesAccepted = 0;
+    let codeCompletionLinesSuggested = 0;
+    let codeCompletionLinesAccepted = 0;
     let totalUserInitiatedChatRequests = 0;
     let codeCompletionSuggestions = 0;
     let codeCompletionAcceptances = 0;
@@ -99,8 +99,8 @@ export const transformCopilotMetricsReportData = (
       }
       if (f === "code_completion") {
         // code completion
-        totalCodeCompletionLinesSuggested += featureData.loc_suggested_to_add_sum;
-        totalCodeCompletionLinesAccepted += featureData.loc_added_sum;
+        codeCompletionLinesSuggested += featureData.loc_suggested_to_add_sum;
+        codeCompletionLinesAccepted += featureData.loc_added_sum;
         totalLinesSuggested += featureData.loc_suggested_to_add_sum;
         totalLinesAccepted += featureData.loc_added_sum;
         codeCompletionSuggestions += featureData.code_generation_activity_count;
@@ -145,6 +145,8 @@ export const transformCopilotMetricsReportData = (
       chat_requests_custom: chatRequestsCustom,
       code_completion_suggestions: codeCompletionSuggestions,
       code_completion_acceptances: codeCompletionAcceptances,
+      code_completion_lines_suggested: codeCompletionLinesSuggested,
+      code_completion_lines_accepted: codeCompletionLinesAccepted,
       time_frame_week: weekIdentifier,
       time_frame_display: weekIdentifier,
     };
