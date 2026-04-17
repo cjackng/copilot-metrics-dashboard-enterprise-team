@@ -180,3 +180,24 @@ export function totalChatsAndAcceptances(
 
   return rates;
 }
+
+export interface AvgChatRequestsPerActiveUserData {
+  avgChatRequests: number;
+  timeFrameDisplay: string;
+}
+
+export function computeAvgChatRequestsPerActiveUser(
+  filteredData: CopilotUsageOutput[]
+): AvgChatRequestsPerActiveUserData[] {
+  return filteredData.map((item) => {
+    const requests = item.total_user_initiated_chat_requests ?? 0;
+    const avg =
+      item.total_active_users > 0
+        ? parseFloat((requests / item.total_active_users).toFixed(2))
+        : 0;
+    return {
+      avgChatRequests: avg,
+      timeFrameDisplay: item.time_frame_display,
+    };
+  });
+}

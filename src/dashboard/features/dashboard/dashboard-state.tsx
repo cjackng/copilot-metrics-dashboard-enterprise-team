@@ -221,6 +221,7 @@ class DashboardState {
           total_code_lines_accepted: 0,
           total_chats: 0,
           total_accepted_chats: 0,
+          total_user_initiated_chat_requests: 0,
         };
         
         items.forEach((item) => {
@@ -234,6 +235,7 @@ class DashboardState {
           merged.total_code_lines_accepted += item.total_code_lines_accepted;
           merged.total_chats += item.total_chats;
           merged.total_accepted_chats += item.total_accepted_chats;
+          merged.total_user_initiated_chat_requests! += item.total_user_initiated_chat_requests ?? 0;
           if (item.total_chat_generations !== undefined) {
             merged.total_chat_generations =
               (merged.total_chat_generations ?? 0) + item.total_chat_generations;

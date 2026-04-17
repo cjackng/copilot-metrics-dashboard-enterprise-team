@@ -79,6 +79,7 @@ export const transformCopilotMetricsReportData = (
     let totalLinesAccepted = 0;
     let totalCodeCompletionLinesSuggested = 0;
     let totalCodeCompletionLinesAccepted = 0;
+    let totalUserInitiatedChatRequests = 0;
     chatFeatures.forEach((featureData) => {
       if (featureData.feature.includes("chat")) {
         // chat panel and inline chat
@@ -94,6 +95,9 @@ export const transformCopilotMetricsReportData = (
         totalCodeCompletionLinesAccepted += featureData.loc_added_sum;
         totalLinesSuggested += featureData.loc_suggested_to_add_sum;
         totalLinesAccepted += featureData.loc_added_sum;
+      } else {
+        // All features except code_completion count as user-initiated chat requests
+        totalUserInitiatedChatRequests += featureData.user_initiated_interaction_count;
       }
     });
 
@@ -110,6 +114,7 @@ export const transformCopilotMetricsReportData = (
       total_chats: totalChats,
       total_accepted_chats: totalAcceptedChats,
       total_chat_generations: totalChatGenerations,
+      total_user_initiated_chat_requests: totalUserInitiatedChatRequests,
       time_frame_week: weekIdentifier,
       time_frame_display: weekIdentifier,
     };

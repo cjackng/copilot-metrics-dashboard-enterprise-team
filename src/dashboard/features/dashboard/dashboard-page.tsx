@@ -1,5 +1,6 @@
 import { ErrorPage } from "../common/error-page";
 import { AcceptanceRate } from "./charts/acceptance-rate";
+import { AvgChatRequestsPerActiveUser } from "./charts/avg-chat-requests-per-active-user";
 import { ChatAcceptanceRate } from "./charts/chat-acceptance-rate";
 import { ActiveUsers } from "./charts/active-users";
 import { Stats } from "./charts/stats";
@@ -62,6 +63,7 @@ export default async function Dashboard(props: IProps) {
             <ActiveUsers />
             <AcceptanceRate />
             <ChatAcceptanceRate />
+            <AvgChatRequestsPerActiveUser />
             {/* <TotalCodeLineSuggestionsAndAcceptances /> */}
             <TotalSuggestionsAndAcceptances />
             {/* <TotalChatsAndAcceptances /> */}
