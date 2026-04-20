@@ -2,7 +2,7 @@ import { Readable } from 'node:stream';
 import csv from 'csv-parser';
 import { PremiumRequestUsage } from '@/features/common/models';
 
-export async function processCsvFromDownloadUrl(
+export async function downloadPremiumUsageCsv(
   downloadUrl: string
 ): Promise<PremiumRequestUsage[]> {
   console.log(`[CSV Handler] Starting to download and process CSV from: ${downloadUrl}`);

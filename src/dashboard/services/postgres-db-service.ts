@@ -128,16 +128,43 @@ class PremiumRequestUsageService {
   async getRowsByDateRange(startDate: string, endDate: string): Promise<PremiumRequestUsage[]> {
     const stmt = `
       SELECT 
-        date, username, product, sku, model, quantity,
-        unit_type, applied_cost_per_quantity, gross_amount, discount_amount, net_amount,
-        exceeds_quota, display_username, total_monthly_quota, display_username,
-        STRING_AGG(DISTINCT team, ', ' ORDER BY team) as team
-      FROM premium_usage_report
-      WHERE date >= $1 AND date <= $2
+        pur.date,
+        pur.username,
+        pur.product,
+        pur.sku,
+        pur.model,
+        pur.quantity,
+        pur.unit_type,
+        pur.applied_cost_per_quantity,
+        pur.gross_amount,
+        pur.discount_amount,
+        pur.net_amount,
+        pur.exceeds_quota,
+        pur.display_username,
+        pur.total_monthly_quota,
+        STRING_AGG(
+          DISTINCT COALESCE(et.name, pur.team), 
+          ', ' ORDER BY COALESCE(et.name, pur.team)
+        ) as team
+      FROM premium_usage_report pur
+      LEFT JOIN enterprise_teams et
+        ON pur.team = et.team_id::TEXT
+      WHERE pur.date >= $1 AND pur.date <= $2
       GROUP BY 
-        date, username, product, sku, model, quantity,
-        unit_type, applied_cost_per_quantity, gross_amount, discount_amount, net_amount,
-        exceeds_quota, display_username, total_monthly_quota, display_username
+        pur.date,
+        pur.username,
+        pur.product,
+        pur.sku,
+        pur.model,
+        pur.quantity,
+        pur.unit_type,
+        pur.applied_cost_per_quantity,
+        pur.gross_amount,
+        pur.discount_amount,
+        pur.net_amount,
+        pur.exceeds_quota,
+        pur.display_username,
+        pur.total_monthly_quota
     `;
     const result = await this.pool.query(stmt, [startDate, endDate]);
     return result.rows;
@@ -147,6 +174,14 @@ class PremiumRequestUsageService {
     const stmt = `SELECT MAX(update_at) as latest_update FROM premium_usage_report`;
     const result = await this.pool.query(stmt);
     return result.rows[0]?.latest_update || null;
+  }
+
+  getPool() {
+    return this.pool;
+  }
+
+  formatStatement(fmt: string, ...args: any[]): string {
+    return format(fmt, ...args);
   }
 
   async close() {
