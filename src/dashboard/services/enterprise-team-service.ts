@@ -8,6 +8,22 @@ class EnterpriseTeamService {
     this.dbService = dbService;
   }
 
+  async getEnterpriseTeams(): Promise<EnterpriseTeam[]> {
+    const stmt = `
+      SELECT
+        team_id AS id,
+        name,
+        slug,
+        description,
+        group_id,
+        organization_selection_type
+      FROM enterprise_teams
+    `;
+
+    const result = await this.dbService.getPool().query(stmt);
+    return result.rows as EnterpriseTeam[];
+  }
+
   async upsertEnterpriseTeamsBatch(rows: EnterpriseTeam[]) {
     if (rows.length === 0) return;
 
