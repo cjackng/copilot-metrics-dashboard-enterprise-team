@@ -230,6 +230,17 @@ export interface PremiumRequestUsage {
   display_username?: string;
 };
 
+export interface EnterpriseTeam {
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  group_id: number | null;
+  organization_selection_type: string | null;
+}
+
 
 export interface UserUsageData {
   user: string;

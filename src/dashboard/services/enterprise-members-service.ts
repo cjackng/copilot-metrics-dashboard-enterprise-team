@@ -5,7 +5,7 @@
  *
  */
 
-import process from "node:process";
+import { EnterpriseTeam } from "@/features/common/models";
 import { ensureGitHubEnvConfig } from "./env-service";
 
 
@@ -69,13 +69,7 @@ export type Member = {
   id: number | null;
   login: string;
   display_name: string;
-  teams: string[];
-};
-
-type Team = {
-  id: number;
-  name: string;
-  slug: string;
+  teamIds: number[];
 };
 
 type TeamMembershipUser = {
@@ -140,7 +134,7 @@ async function fetchMembers(enterprise: string, token: string): Promise<Member[]
         id: dbId,
         login: user.login ?? "",
         display_name: user.name ?? "",
-        teams: [],
+        teamIds: [],
       });
     }
 
@@ -154,8 +148,8 @@ async function fetchMembers(enterprise: string, token: string): Promise<Member[]
   return allMembers;
 }
 
-async function fetchEnterpriseTeams(enterprise: string, token: string, version: string): Promise<Team[]> {
-  const teams: Team[] = [];
+async function fetchEnterpriseTeams(enterprise: string, token: string, version: string): Promise<EnterpriseTeam[]> {
+  const teams: EnterpriseTeam[] = [];
   let page = 1;
 
   while (true) {
@@ -163,14 +157,14 @@ async function fetchEnterpriseTeams(enterprise: string, token: string, version: 
     url.searchParams.set("per_page", "100");
     url.searchParams.set("page", String(page));
 
-    const batch = await fetchJson<Team[]>(url.toString(), {
+    const batch = await fetchJson<EnterpriseTeam[]>(url.toString(), {
       headers: restHeaders(token, version),
     });
 
     if (!batch.length) break;
 
     for (const t of batch) {
-      teams.push({ id: t.id, name: t.name, slug: t.slug });
+      teams.push(t);
     }
 
     if (batch.length < 100) break;
@@ -211,30 +205,30 @@ async function fetchTeamMembers(
   return logins;
 }
 
-export async function buildMemberTeamsMap(enterprise: string, token: string, version: string): Promise<Map<string, string[]>> {
+export async function buildMemberTeamsMap(enterprise: string, token: string, version: string): Promise<{memberMap: Map<string, number[]>, teams: EnterpriseTeam[]}> {
   
   console.log("  Fetching enterprise teams ...");
   const teams = await fetchEnterpriseTeams(enterprise, token, version);
   console.log(`  Found ${teams.length} team(s). Fetching memberships in parallel ...`);
 
-  const memberTeams = new Map<string, string[]>();
+  const memberTeams = new Map<string, number[]>();
 
   const teamMemberResults = await Promise.all(
     teams.map(async (team) => ({
-      teamName: team.name,
+      teamId: team.id,
       logins: await fetchTeamMembers(enterprise, token, version, team.slug),
     }))
   );
 
-  for (const { teamName, logins } of teamMemberResults) {
+  for (const { teamId, logins } of teamMemberResults) {
     for (const login of logins) {
       const existing = memberTeams.get(login) ?? [];
-      existing.push(teamName);
+      existing.push(teamId);
       memberTeams.set(login, existing);
     }
   }
 
-  return memberTeams;
+  return { memberMap: memberTeams, teams };
 }
 
 function printTable(members: Member[]): void {
@@ -246,13 +240,13 @@ function printTable(members: Member[]): void {
   const colId = Math.max("ID".length, ...members.map((m) => String(m.id ?? "").length));
   const colLogin = Math.max("Login".length, ...members.map((m) => m.login.length));
   const colName = Math.max("Display Name".length, ...members.map((m) => m.display_name.length));
-  const colTeams = Math.max("Teams".length, ...members.map((m) => m.teams.length));
+  const colTeamIds = Math.max("Team IDs".length, ...members.map((m) => m.teamIds.length));
 
   const header =
     `${"ID".padEnd(colId)}  ` +
     `${"Login".padEnd(colLogin)}  ` +
     `${"Display Name".padEnd(colName)}  ` +
-    `${"Teams".padEnd(colTeams)}`;
+    `${"Team IDs".padEnd(colTeamIds)}`;
 
   const divider = "-".repeat(header.length);
 
@@ -265,7 +259,7 @@ function printTable(members: Member[]): void {
       `${String(m.id ?? "").padEnd(colId)}  ` +
         `${m.login.padEnd(colLogin)}  ` +
         `${m.display_name.padEnd(colName)}  ` +
-        `${m.teams.join(" | ").padEnd(colTeams)}`
+        `${m.teamIds.join(" | ").padEnd(colTeamIds)}`
     );
   }
 
@@ -273,16 +267,16 @@ function printTable(members: Member[]): void {
   console.log(`Total: ${members.length} member(s)`);
 }
 
-function mapMembersLookup(members: Member[], memberTeams: Map<string, string[]>): Map<string, Member> {
+function mapMembersLookup(members: Member[], memberTeams: Map<string, number[]>): Map<string, Member> {
   const lookup = new Map<string, Member>();
   for (const m of members) {
-    const teams = memberTeams.get(m.login) ?? [];
-    lookup.set(m.login, { ...m, teams });
+    const teamIds = memberTeams.get(m.login) ?? [];
+    lookup.set(m.login, { ...m, teamIds });
   }
   return lookup;
 }
 
-export async function getAllEnterpriseMembersLookup(): Promise<Map<string, Member>> {
+export async function getAllEnterpriseMembersLookup(): Promise<{memberMap: Map<string, Member>, teams: EnterpriseTeam[]}> {
   const env = ensureGitHubEnvConfig();
   if (env.status !== 'OK') {
     throw new Error("Invalid GitHub environment configuration.", { cause: env.errors[0] });
@@ -296,5 +290,5 @@ export async function getAllEnterpriseMembersLookup(): Promise<Map<string, Membe
     buildMemberTeamsMap(enterprise, token, version),
   ]);
 
-  return mapMembersLookup(members, memberTeams);
+  return { memberMap: mapMembersLookup(members, memberTeams.memberMap), teams: memberTeams.teams };
 }

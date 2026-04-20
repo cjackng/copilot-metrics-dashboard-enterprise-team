@@ -1,9 +1,10 @@
 import cron, { ScheduledTask } from 'node-cron';
 import { requestPremiumUsageReport, getBillingReport, IFilter as BillReportFilter } from '@/services/billing-report-service';
-import { processCsvFromDownloadUrl } from '@/handlers/premium-usage-csv-handler';
+import { downloadPremiumUsageCsv } from '@/handlers/premium-usage-csv-handler';
 import { PremiumRequestUsage } from '@/features/common/models';
 import PostgresService from '@/services/postgres-db-service';
 import { getAllEnterpriseMembersLookup } from '../enterprise-members-service';
+import EnterpriseTeamService from '../enterprise-team-service';
 
 let premiumUsageTask: ScheduledTask | null = null;
 const cronExpression = '0 5,13 * * *';
@@ -17,6 +18,7 @@ export async function syncPremiumUsageData() {
     log('Starting Premium Usage data synchronization...');
 
     const dbService = new PostgresService();
+    const enterpriseTeamService = new EnterpriseTeamService(dbService);
     const latestUpdateTime = await dbService.getLatestUpdateTime();
     const startDate: Date = latestUpdateTime ? latestUpdateTime : new Date(); // Last updated day
 
@@ -48,8 +50,8 @@ export async function syncPremiumUsageData() {
     const downloadUrl = reportResult.response.download_urls[0];
     log(`Successfully retrieved Premium Usage report. Download URL: ${downloadUrl}`);
 
-    const records: PremiumRequestUsage[] = await processCsvFromDownloadUrl(downloadUrl);
-    const enterpriseMembers = await getAllEnterpriseMembersLookup();
+    const records: PremiumRequestUsage[] = await downloadPremiumUsageCsv(downloadUrl);
+    const { memberMap: enterpriseMembers, teams: enterpriseTeams } = await getAllEnterpriseMembersLookup();
     // Expand records: one record per team.
     // If user has no team, keep one record with team = ''.
     const enrichedRecords: PremiumRequestUsage[] = records.flatMap((record) => {
@@ -61,15 +63,19 @@ export async function syncPremiumUsageData() {
       }
 
       const displayUsername = member.display_name || '';
-      const teams = member.teams.length > 0 ? member.teams : [''];
+      const teamIds = member.teamIds.length > 0 ? member.teamIds : [''];
 
-      return teams.map((team) => ({
+      return teamIds.map((teamId) => ({
         ...record,
         display_username: displayUsername,
-        team,
+        team: String(teamId),
       }));
     });
-    await dbService.insertOrUpdateBatch(enrichedRecords);
+
+    await Promise.all([
+      dbService.insertOrUpdateBatch(enrichedRecords),
+      enterpriseTeamService.upsertEnterpriseTeamsBatch(enterpriseTeams)
+    ]);
 
     log('Data sync completed');
   } catch (error) {
