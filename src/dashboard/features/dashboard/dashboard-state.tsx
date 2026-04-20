@@ -2,7 +2,7 @@
 
 import { PropsWithChildren } from "react";
 import {
-  CopilotUsageOutput, CopilotUsageOutputResponse
+  CopilotUsageOutput, CopilotUsageOutputResponse, EnterpriseTeam
 } from "@/features/common/models";
 import { formatDate } from "@/utils/helpers";
 import { format, parseISO, subDays } from "date-fns";
@@ -19,7 +19,8 @@ import { Member } from "@/services/enterprise-members-service";
 interface IProps extends PropsWithChildren {
   copilotUsages: CopilotUsageOutputResponse;
   seatsData: CopilotSeatsData;
-  teamsData: Map<string, Member>;
+  memberTeamsData: Map<string, Member>;
+  enterpriseTeams: EnterpriseTeam[];
   filter?: {
     startDate?: Date;
     endDate?: Date;
@@ -48,7 +49,8 @@ class DashboardState {
   public reportEndDay: string = "";
 
   public seatsData: CopilotSeatsData = {} as CopilotSeatsData;
-  public teamsData: Map<string, Member> = new Map();
+  public memberTeamsData: Map<string, Member> = new Map();
+  private enterpriseTeams: EnterpriseTeam[] = [];
 
   private apiData: Map<string, CopilotUsageOutput[]> = new Map();
   private teamFilteredData: Map<string, CopilotUsageOutput[]> = new Map();
@@ -69,7 +71,8 @@ class DashboardState {
   public initData(
     data: CopilotUsageOutputResponse,
     seatsData: CopilotSeatsData,
-    teamsData: Map<string, Member>,
+    memberTeamsData: Map<string, Member>,
+    enterpriseTeams: EnterpriseTeam[],
     filter?: {
       startDate?: Date;
       endDate?: Date;
@@ -83,8 +86,9 @@ class DashboardState {
     this.reportEndDay = data.report_end_day;
     this.onTimeFrameChange(this.timeFrame);
     this.seatsData = seatsData;
-    this.teamsData = teamsData;
-    this.teams = this.extractUniqueTeams();
+    this.memberTeamsData = memberTeamsData;
+    this.enterpriseTeams = enterpriseTeams;
+    this.teams = this.extractUniqueTeams(enterpriseTeams);
     // Store current filter for data refreshing
     if (filter) {
       this.currentFilter = filter;
@@ -132,8 +136,8 @@ class DashboardState {
       if (selectedTeams.length > 0) {
         this.teamFilteredData = new Map();
         this.apiData.forEach((value, key) => {
-          if (this.teamsData && this.teamsData.size > 0 && this.teamsData.has(key)) {
-            if (this.teamsData.get(key)?.teams.some((team) => selectedTeams.includes(team))) {
+          if (this.memberTeamsData && this.memberTeamsData.size > 0 && this.memberTeamsData.has(key)) {
+            if (this.memberTeamsData.get(key)?.teamIds.some((teamId) => selectedTeams.includes(this.enterpriseTeams.find((team) => String(team.id) === String(teamId))?.name || ""))) {
               this.teamFilteredData.set(key, value);
             }
           }
@@ -245,23 +249,15 @@ class DashboardState {
       .sort((a, b) => a.day.localeCompare(b.day));
   }
 
-  private extractUniqueTeams(): DropdownFilterItem[] {
-    const teams: DropdownFilterItem[] = [];
+  private extractUniqueTeams(enterpriseTeams: EnterpriseTeam[]): DropdownFilterItem[] {
+    const uniqueTeamNames = Array.from(
+      new Set(enterpriseTeams.map((team) => team.name).filter((teamName) => teamName))
+    ).sort((a, b) => a.localeCompare(b));
 
-    // Use the fetched teams data instead of extracting from seats
-    if (this.teamsData && this.teamsData.size > 0) {
-      this.teamsData.forEach((member) => {
-        if (member && member.teams && member.teams.length > 0) {
-          member.teams.forEach((teamName) => {
-            if (!teams.find((t) => t.value === teamName)) {
-              teams.push({ value: teamName, isSelected: false });
-            }
-          });
-        }
-      });
-    }
-
-    return teams.sort((a, b) => a.value.localeCompare(b.value));
+    return uniqueTeamNames.map((teamName) => ({
+      value: teamName,
+      isSelected: false,
+    }));
   }
 
   private aggregatedDataByTimeFrame(hideWeekends: boolean): Map<string, CopilotUsageOutput[]> {
@@ -312,9 +308,10 @@ export const DataProvider = ({
   children,
   copilotUsages,
   seatsData,
-  teamsData,
+  memberTeamsData,
+  enterpriseTeams,
   filter,
 }: IProps) => {
-  dashboardStore.initData(copilotUsages, seatsData, teamsData, filter);
+  dashboardStore.initData(copilotUsages, seatsData, memberTeamsData, enterpriseTeams, filter);
   return <>{children}</>;
 };

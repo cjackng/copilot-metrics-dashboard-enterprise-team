@@ -1,8 +1,10 @@
 "use server";
 
-import { date } from "zod";
+import { EnterpriseTeam } from "@/features/common/models";
 import { getCopilotMetrics, IFilter as MetricsFilter } from "./copilot-metrics-service";
 import { getCopilotSeatsManagement, IFilter as SeatServiceFilter } from "./copilot-seat-service";
+import PostgresDBService from "./postgres-db-service";
+import EnterpriseTeamService from "./enterprise-team-service";
 
 export async function refreshMetricsData(filter: {
   startDate?: Date;
@@ -72,5 +74,27 @@ export async function refreshSeatsData(filter: {
       success: false,
       error: "An unexpected error occurred",
     };
+  }
+}
+
+export async function refreshEnterpriseTeamsData() {
+  const dbService = new PostgresDBService();
+  const enterpriseTeamService = new EnterpriseTeamService(dbService);
+
+  try {
+    const teams = await enterpriseTeamService.getEnterpriseTeams();
+
+    return {
+      success: true,
+      data: teams,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: "Failed to fetch enterprise teams",
+      data: [] as EnterpriseTeam[],
+    };
+  } finally {
+    await dbService.close();
   }
 }
