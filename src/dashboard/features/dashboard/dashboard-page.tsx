@@ -43,7 +43,7 @@ export default async function Dashboard(props: IProps) {
     <DataProvider
       copilotUsages={metrics.response}
       seatsData={seats.response}
-      teamsData={membersToTeams}
+      teamsData={membersToTeams.memberMap}
       filter={{
         startDate: props.searchParams.startDate,
         endDate: props.searchParams.endDate,
