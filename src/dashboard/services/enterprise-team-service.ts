@@ -18,6 +18,7 @@ class EnterpriseTeamService {
         group_id,
         organization_selection_type
       FROM enterprise_teams
+      WHERE is_deleted = FALSE
     `;
 
     const result = await this.dbService.getPool().query(stmt);
@@ -38,6 +39,8 @@ class EnterpriseTeamService {
         console.log(`[Enterprise Team Service] Processing enterprise teams batch ${i + 1} - ${i + batch.length}`);
         await this.processEnterpriseTeamsBatch(client, batch);
       }
+
+      await this.markMissingTeamsAsDeleted(client, rows);
 
       console.log(`[Enterprise Team Service] Enterprise teams upsert completed for ${rows.length} records`);
       await client.query('COMMIT');
@@ -60,12 +63,13 @@ class EnterpriseTeamService {
       row.updated_at,
       row.group_id,
       row.organization_selection_type,
+      false,
     ]);
 
     const upsertStmt = this.dbService.formatStatement(`
       INSERT INTO enterprise_teams (
         team_id, name, slug, description, created_at_github, updated_at_github,
-        group_id, organization_selection_type
+        group_id, organization_selection_type, is_deleted
       ) VALUES %L
       ON CONFLICT (team_id)
       DO UPDATE SET
@@ -76,10 +80,32 @@ class EnterpriseTeamService {
         updated_at_github = EXCLUDED.updated_at_github,
         group_id = EXCLUDED.group_id,
         organization_selection_type = EXCLUDED.organization_selection_type,
+        is_deleted = FALSE,
         updated_at = NOW()
     `, values);
 
     await client.query(upsertStmt);
+  }
+
+  private async markMissingTeamsAsDeleted(client: PoolClient, rows: EnterpriseTeam[]) {
+    const currentTeamIds = rows
+      .map((row) => row.id)
+      .filter((id): id is number => typeof id === 'number');
+
+    if (currentTeamIds.length === 0) return;
+
+    const markDeletedStmt = `
+      UPDATE enterprise_teams
+      SET
+        is_deleted = TRUE,
+        updated_at = NOW()
+      WHERE team_id <> ALL($1::BIGINT[])
+    `;
+
+    const result = await client.query(markDeletedStmt, [currentTeamIds]);
+    if (result.rowCount && result.rowCount > 0) {
+      console.log(`[Enterprise Team Service] Marked ${result.rowCount} missing team(s) as deleted`);
+    }
   }
 }
 

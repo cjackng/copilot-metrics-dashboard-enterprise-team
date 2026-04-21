@@ -143,8 +143,16 @@ class PremiumRequestUsageService {
         pur.display_username,
         pur.total_monthly_quota,
         STRING_AGG(
-          DISTINCT COALESCE(et.name, pur.team), 
-          ', ' ORDER BY COALESCE(et.name, pur.team)
+          DISTINCT 
+            CASE
+              WHEN et.is_deleted IS TRUE THEN NULL
+              ELSE et.name
+            END
+          , ', ' ORDER BY 
+            CASE
+              WHEN et.is_deleted IS TRUE THEN NULL
+              ELSE et.name
+            END
         ) as team
       FROM premium_usage_report pur
       LEFT JOIN enterprise_teams et

@@ -76,25 +76,3 @@ export async function refreshSeatsData(filter: {
     };
   }
 }
-
-export async function refreshEnterpriseTeamsData() {
-  const dbService = new PostgresDBService();
-  const enterpriseTeamService = new EnterpriseTeamService(dbService);
-
-  try {
-    const teams = await enterpriseTeamService.getEnterpriseTeams();
-
-    return {
-      success: true,
-      data: teams,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: "Failed to fetch enterprise teams",
-      data: [] as EnterpriseTeam[],
-    };
-  } finally {
-    await dbService.close();
-  }
-}
