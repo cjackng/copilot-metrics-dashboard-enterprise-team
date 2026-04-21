@@ -6,7 +6,6 @@ import { CodeCompletionsAcceptanceRate } from "./charts/code-completions-accepta
 import { RequestsPerChatMode } from "./charts/requests-per-chat-mode";
 import { ActiveUsers } from "./charts/active-users";
 import { Stats } from "./charts/stats";
-import { TotalSuggestionsAndAcceptances } from "./charts/total-suggestions-and-acceptances";
 import { CodeCompletions } from "./charts/code-completions";
 import { DataProvider } from "./dashboard-state";
 import { TimeFrameToggle } from "./filter/time-frame-toggle";
