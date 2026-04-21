@@ -77,10 +77,19 @@ export const transformCopilotMetricsReportData = (
     let totalAcceptedChats = 0;
     let totalLinesSuggested = 0;
     let totalLinesAccepted = 0;
-    let totalCodeCompletionLinesSuggested = 0;
-    let totalCodeCompletionLinesAccepted = 0;
+    let codeCompletionLinesSuggested = 0;
+    let codeCompletionLinesAccepted = 0;
+    let totalUserInitiatedChatRequests = 0;
+    let codeCompletionSuggestions = 0;
+    let codeCompletionAcceptances = 0;
+    let chatRequestsAsk = 0;
+    let chatRequestsInline = 0;
+    let chatRequestsEdit = 0;
+    let chatRequestsAgent = 0;
+    let chatRequestsCustom = 0;
     chatFeatures.forEach((featureData) => {
-      if (featureData.feature.includes("chat")) {
+      const f = featureData.feature;
+      if (f.includes("chat")) {
         // chat panel and inline chat
         totalChats += featureData.user_initiated_interaction_count;
         totalChatGenerations += featureData.code_generation_activity_count;
@@ -88,12 +97,30 @@ export const transformCopilotMetricsReportData = (
         totalLinesSuggested += featureData.loc_suggested_to_add_sum;
         totalLinesAccepted += featureData.loc_added_sum;
       }
-      if (featureData.feature === "code_completion") {
+      if (f === "code_completion") {
         // code completion
-        totalCodeCompletionLinesSuggested += featureData.loc_suggested_to_add_sum;
-        totalCodeCompletionLinesAccepted += featureData.loc_added_sum;
+        codeCompletionLinesSuggested += featureData.loc_suggested_to_add_sum;
+        codeCompletionLinesAccepted += featureData.loc_added_sum;
         totalLinesSuggested += featureData.loc_suggested_to_add_sum;
         totalLinesAccepted += featureData.loc_added_sum;
+        codeCompletionSuggestions += featureData.code_generation_activity_count;
+        codeCompletionAcceptances += featureData.code_acceptance_activity_count;
+      } else {
+        const count = featureData.user_initiated_interaction_count;
+        totalUserInitiatedChatRequests += count;
+
+        // Break down by chat mode based on feature name
+        if (f === "chat_inline") {
+          chatRequestsInline += count;
+        } else if (f === "agent_edit") {
+          chatRequestsEdit += count;
+        } else if (f === "chat_panel_agent_mode") {
+          chatRequestsAgent += count;
+        } else if (f === "chat_panel_custom_mode") {
+          chatRequestsCustom += count;
+        } else if (f === "chat_panel_ask_mode") {
+          chatRequestsAsk += count;
+        }
       }
     });
 
@@ -110,6 +137,16 @@ export const transformCopilotMetricsReportData = (
       total_chats: totalChats,
       total_accepted_chats: totalAcceptedChats,
       total_chat_generations: totalChatGenerations,
+      total_user_initiated_chat_requests: totalUserInitiatedChatRequests,
+      chat_requests_ask: chatRequestsAsk,
+      chat_requests_inline: chatRequestsInline,
+      chat_requests_edit: chatRequestsEdit,
+      chat_requests_agent: chatRequestsAgent,
+      chat_requests_custom: chatRequestsCustom,
+      code_completion_suggestions: codeCompletionSuggestions,
+      code_completion_acceptances: codeCompletionAcceptances,
+      code_completion_lines_suggested: codeCompletionLinesSuggested,
+      code_completion_lines_accepted: codeCompletionLinesAccepted,
       time_frame_week: weekIdentifier,
       time_frame_display: weekIdentifier,
     };

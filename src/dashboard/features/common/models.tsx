@@ -87,11 +87,27 @@ export interface CopilotUsage {
   total_ide_engaged_users: number;
   total_chat_engaged_users: number;
   total_cli_engaged_users: number;
+  total_chat_generations?: number;
+  /** Sum of code_generation_activity_count and code_acceptance_activity_count */
   total_code_suggestions: number;
   total_code_acceptances: number;
+  /** Sum of loc_added_sum and loc_suggested_to_add_sum for chat features and code completion */
   total_code_lines_suggested: number;
   total_code_lines_accepted: number;
-  total_chat_generations?: number;
+  /** Sum of user_initiated_interaction_count for all features except code_completion. */
+  total_user_initiated_chat_requests?: number;
+  /** User-initiated requests broken down by chat mode. */
+  chat_requests_ask?: number;
+  chat_requests_inline?: number;
+  chat_requests_edit?: number;
+  chat_requests_agent?: number;
+  chat_requests_custom?: number;
+  /** Code completion (inline suggestion) activity counts, scoped to the code_completion feature. */
+  code_completion_suggestions?: number;
+  code_completion_acceptances?: number;
+  /** Lines of code suggested/accepted, scoped to the code_completion feature only. */
+  code_completion_lines_suggested?: number;
+  code_completion_lines_accepted?: number;
   total_chats: number;
   total_accepted_chats: number;
   day: string;

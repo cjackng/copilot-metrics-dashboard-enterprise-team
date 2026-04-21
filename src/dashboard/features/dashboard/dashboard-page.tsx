@@ -1,9 +1,13 @@
 import { ErrorPage } from "../common/error-page";
 import { AcceptanceRate } from "./charts/acceptance-rate";
+import { AvgChatRequestsPerActiveUser } from "./charts/avg-chat-requests-per-active-user";
 import { ChatAcceptanceRate } from "./charts/chat-acceptance-rate";
+import { CodeCompletionsAcceptanceRate } from "./charts/code-completions-acceptance-rate";
+import { RequestsPerChatMode } from "./charts/requests-per-chat-mode";
 import { ActiveUsers } from "./charts/active-users";
 import { Stats } from "./charts/stats";
 import { TotalSuggestionsAndAcceptances } from "./charts/total-suggestions-and-acceptances";
+import { CodeCompletions } from "./charts/code-completions";
 import { DataProvider } from "./dashboard-state";
 import { TimeFrameToggle } from "./filter/time-frame-toggle";
 import { Header } from "./header";
@@ -63,8 +67,13 @@ export default async function Dashboard(props: IProps) {
             <ActiveUsers />
             <AcceptanceRate />
             <ChatAcceptanceRate />
+            <AvgChatRequestsPerActiveUser />
+            <RequestsPerChatMode />
             {/* <TotalCodeLineSuggestionsAndAcceptances /> */}
-            <TotalSuggestionsAndAcceptances />
+            <div className="grid grid-cols-1 md:grid-cols-2 col-span-4 gap-6">
+              <CodeCompletions />
+              <CodeCompletionsAcceptanceRate />
+            </div>
             {/* <TotalChatsAndAcceptances /> */}
           </div>
         </div>

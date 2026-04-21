@@ -13,18 +13,18 @@ import {
 import { useDashboard } from "../dashboard-state";
 import { ChartHeader } from "./chart-header";
 import {
-  ChatAcceptanceData,
-  totalChatsAndAcceptances,
+  codeCompletionSuggestionAcceptanceData,
+  codeCompletionSuggestionsAndAcceptances,
 } from "./common";
 
-export const TotalChatsAndAcceptances = () => {
+export const CodeCompletions = () => {
   const { displayData } = useDashboard();
-  const data = totalChatsAndAcceptances(displayData);
+  const data = codeCompletionSuggestionsAndAcceptances(displayData);
   return (
-    <Card className="col-span-4">
+    <Card>
       <ChartHeader
-        title="Total chat suggestions and acceptance"
-        description="The total number of Copilot Chat suggestions, including insertion and copy events vs the total number of Copilot Chats."
+        title="Code completions"
+        description="Inline code suggestions shown and accepted."
       />
       <CardContent>
         <ChartContainer config={chartConfig} className="w-full h-80">
@@ -45,17 +45,17 @@ export const TotalChatsAndAcceptances = () => {
             />
             <ChartTooltip cursor={true} content={<ChartTooltipContent />} />
             <Area
-              dataKey={chartConfig.totalChats.key}
+              dataKey={chartConfig.suggestedCompletions.key}
               type="linear"
               fill="hsl(var(--chart-2))"
               stroke="hsl(var(--chart-2))"
             />
             <Area
-              dataKey={chartConfig.totalAcceptedChats.key}
+              dataKey={chartConfig.acceptedCompletions.key}
               type="linear"
               fill="hsl(var(--chart-1))"
               stroke="hsl(var(--chart-1))"
-              fillOpacity={0.2}
+              fillOpacity={0.6}
             />
             <ChartLegend content={<ChartLegendContent />} />
           </AreaChart>
@@ -72,13 +72,13 @@ const chartConfig: Record<
     key: DataKey;
   }
 > = {
-  ["totalChats"]: {
-    label: "Total Chats",
-    key: "totalChats",
+  ["acceptedCompletions"]: {
+    label: "Accepted completions",
+    key: "acceptedCompletions",
   },
-  ["totalAcceptedChats"]: {
-    label: "Total Accepted Chats",
-    key: "totalAcceptedChats",
+  ["suggestedCompletions"]: {
+    label: "Suggested completions",
+    key: "suggestedCompletions",
   },
   ["timeFrameDisplay"]: {
     label: "Time frame display",
@@ -86,4 +86,4 @@ const chartConfig: Record<
   },
 };
 
-type DataKey = keyof ChatAcceptanceData;
+type DataKey = keyof codeCompletionSuggestionAcceptanceData;

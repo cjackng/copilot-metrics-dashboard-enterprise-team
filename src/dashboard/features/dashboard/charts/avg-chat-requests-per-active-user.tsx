@@ -2,6 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { useDashboard } from "../dashboard-state";
 
 import {
   ChartContainer,
@@ -10,27 +11,29 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { useDashboard } from "../dashboard-state";
-import { ChartHeader } from "./chart-header";
-import {
-  SuggestionAcceptanceData,
-  totalSuggestionsAndAcceptances,
-} from "./common";
 
-export const TotalSuggestionsAndAcceptances = () => {
+import {
+  AvgChatRequestsPerActiveUserData,
+  computeAvgChatRequestsPerActiveUser,
+} from "./common";
+import { ChartHeader } from "./chart-header";
+
+export const AvgChatRequestsPerActiveUser = () => {
   const { displayData } = useDashboard();
-  const data = totalSuggestionsAndAcceptances(displayData);
+  const data = computeAvgChatRequestsPerActiveUser(displayData);
+
   return (
     <Card className="col-span-4">
       <ChartHeader
-        title="Total code completion suggestions and acceptance"
-        description="The total number of Copilot code completion suggestions shown to users vs the total number of Copilot code completion suggestions accepted by users."
+        title="Average chat requests per active user"
+        description="User-initiated requests across all chat modes, excluding code completions"
       />
       <CardContent>
-        <ChartContainer config={chartConfig} className="w-full h-80">
+        <ChartContainer config={chartConfig} className="h-80 w-full">
           <AreaChart accessibilityLayer data={data}>
             <CartesianGrid vertical={false} />
             <YAxis
+              dataKey={chartConfig.avgChatRequests.key}
               tickLine={false}
               axisLine={false}
               tickMargin={8}
@@ -45,17 +48,10 @@ export const TotalSuggestionsAndAcceptances = () => {
             />
             <ChartTooltip cursor={true} content={<ChartTooltipContent />} />
             <Area
-              dataKey={chartConfig.totalSuggestionsCount.key}
+              dataKey={chartConfig.avgChatRequests.key}
               type="linear"
               fill="hsl(var(--chart-2))"
               stroke="hsl(var(--chart-2))"
-            />
-            <Area
-              dataKey={chartConfig.totalAcceptancesCount.key}
-              type="linear"
-              fill="hsl(var(--chart-1))"
-              stroke="hsl(var(--chart-1))"
-              fillOpacity={0.6}
             />
             <ChartLegend content={<ChartLegendContent />} />
           </AreaChart>
@@ -65,25 +61,15 @@ export const TotalSuggestionsAndAcceptances = () => {
   );
 };
 
-const chartConfig: Record<
-  DataKey,
-  {
-    label: string;
-    key: DataKey;
-  }
-> = {
-  ["totalAcceptancesCount"]: {
-    label: "Total acceptances",
-    key: "totalAcceptancesCount",
+const chartConfig: Record<DataKey, { label: string; key: DataKey }> = {
+  avgChatRequests: {
+    label: "Requests",
+    key: "avgChatRequests",
   },
-  ["totalSuggestionsCount"]: {
-    label: "Total suggestions",
-    key: "totalSuggestionsCount",
-  },
-  ["timeFrameDisplay"]: {
+  timeFrameDisplay: {
     label: "Time frame display",
     key: "timeFrameDisplay",
   },
 };
 
-type DataKey = keyof SuggestionAcceptanceData;
+type DataKey = keyof AvgChatRequestsPerActiveUserData;

@@ -22,6 +22,16 @@ export const groupByTimeFrame = (
       total_chat_generations: 0,
       total_chats: 0,
       total_accepted_chats: 0,
+      total_user_initiated_chat_requests: 0,
+      chat_requests_ask: 0,
+      chat_requests_inline: 0,
+      chat_requests_edit: 0,
+      chat_requests_agent: 0,
+      chat_requests_custom: 0,
+      code_completion_suggestions: 0,
+      code_completion_acceptances: 0,
+      code_completion_lines_suggested: 0,
+      code_completion_lines_accepted: 0,
     };
 
     groupedByTimeFrame[week].forEach((item) => {
@@ -32,6 +42,16 @@ export const groupByTimeFrame = (
       aggregatedData.total_chats += item.total_chats;
       aggregatedData.total_accepted_chats += item.total_accepted_chats;
       aggregatedData.total_chat_generations! += item.total_chat_generations ?? 0;
+      aggregatedData.total_user_initiated_chat_requests! += item.total_user_initiated_chat_requests ?? 0;
+      aggregatedData.chat_requests_ask! += item.chat_requests_ask ?? 0;
+      aggregatedData.chat_requests_inline! += item.chat_requests_inline ?? 0;
+      aggregatedData.chat_requests_edit! += item.chat_requests_edit ?? 0;
+      aggregatedData.chat_requests_agent! += item.chat_requests_agent ?? 0;
+      aggregatedData.chat_requests_custom! += item.chat_requests_custom ?? 0;
+      aggregatedData.code_completion_suggestions! += item.code_completion_suggestions ?? 0;
+      aggregatedData.code_completion_acceptances! += item.code_completion_acceptances ?? 0;
+      aggregatedData.code_completion_lines_suggested! += item.code_completion_lines_suggested ?? 0;
+      aggregatedData.code_completion_lines_accepted! += item.code_completion_lines_accepted ?? 0;
       // Per-user weekly aggregate: active/ide_engaged/chat_engaged/cli_engaged is binary (0 or 1)
       aggregatedData.total_active_users = Math.min(1, aggregatedData.total_active_users + item.total_active_users);
       aggregatedData.total_ide_engaged_users = Math.min(1, aggregatedData.total_ide_engaged_users + item.total_ide_engaged_users);
