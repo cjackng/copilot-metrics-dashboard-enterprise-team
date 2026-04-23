@@ -5,10 +5,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { stringIsNullOrEmpty } from "@/utils/helpers";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
+import { format } from "date-fns";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 
 interface SeatData {
-    user: string;
+    username: string;
+    userid: string;
     organization: string | null;
     team: string | null;
     createdAt: string;
@@ -38,7 +40,8 @@ const stringIncludes = (row: any, id: string, value: string) => {
 };
 
 const columns: ColumnDef<SeatData>[] = [
-    { accessorKey: "user", title: "User", filter: stringIncludes },
+    { accessorKey: "username", title: "Username", filter: stringIncludes },
+    { accessorKey: "userid", title: "User ID", filter: stringIncludes },
     { accessorKey: "organization", title: "Organization", filter: arrayIncludes },
     { accessorKey: "team", title: "Team", filter: arrayIncludes },
     { accessorKey: "createdAt", title: "Create Date" },
@@ -62,7 +65,7 @@ const columns: ColumnDef<SeatData>[] = [
 }));
 
 export const SeatsList = () => {
-    const { seatsData } = useDashboard();
+    const { seatsData, loginToDisplayNameMap } = useDashboard();
     const hasOrganization = seatsData?.seats.some((seat) => seat.organization);
     const hasTeam = seatsData?.seats.some((seat) => seat.assigning_team);
     return (
@@ -75,15 +78,16 @@ export const SeatsList = () => {
                 <DataTable
                     columns={columns.filter((col) => col.id !== "organization" || hasOrganization)}
                     data={(seatsData?.seats ?? []).map((seat) => ({
-                        user: seat.assignee.login,
+                        username: loginToDisplayNameMap[seat.assignee.login] || "-",
+                        userid: seat.assignee.login,
                         organization: seat.organization?.login,
                         team: seat.assigning_team?.name,
-                        createdAt: new Date(seat.created_at).toLocaleDateString(),
-                        updatedAt: new Date(seat.updated_at).toLocaleDateString(),
-                        lastActivityAt: seat.last_activity_at ? new Date(seat.last_activity_at).toLocaleDateString() : "-",
+                        createdAt: format(new Date(seat.created_at), "dd MMM yyyy"),
+                        updatedAt: format(new Date(seat.updated_at), "dd MMM yyyy"),
+                        lastActivityAt: seat.last_activity_at ? format(new Date(seat.last_activity_at), "dd MMM yyyy") : "-",
                         lastActivityEditor: formatEditorName(seat.last_activity_editor),
                         planType: seat.plan_type,
-                        pendingCancellationDate: seat.pending_cancellation_date ? new Date(seat.pending_cancellation_date).toLocaleDateString() : "N/A",
+                        pendingCancellationDate: seat.pending_cancellation_date ? format(new Date(seat.pending_cancellation_date), "dd MMM yyyy") : "N/A",
                     }))}
                     initialVisibleColumns={{
                         updatedAt: false,

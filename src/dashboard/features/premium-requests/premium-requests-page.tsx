@@ -13,7 +13,7 @@ export interface IProps {
 export default async function Dashboard(props: IProps) {
   const features = getFeatures();
 
-  if (!features.seats) {
+  if (!features.premiumRequests) {
     return <ErrorPage error="Feature not available"></ErrorPage>
   }
 

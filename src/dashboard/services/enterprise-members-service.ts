@@ -7,6 +7,8 @@
 
 import { EnterpriseTeam } from "@/features/common/models";
 import { ensureGitHubEnvConfig } from "./env-service";
+import { ServerActionResponse } from "@/features/common/server-action-response";
+import { unknownResponseError } from "@/features/common/response-error";
 
 
 const QUERY = `
@@ -291,4 +293,26 @@ export async function getAllEnterpriseMembersLookup(): Promise<{memberMap: Map<s
   ]);
 
   return { memberMap: mapMembersLookup(members, memberTeams.memberMap), teams: memberTeams.teams };
+}
+
+export async function getMembers(): Promise<ServerActionResponse<Member[]>> {
+  try {
+    const env = ensureGitHubEnvConfig();
+    if (env.status !== 'OK') {
+      throw new Error("Invalid GitHub environment configuration.", { cause: env.errors[0] });
+    }
+    
+    const { token, enterprise } = env.response;
+
+    const [members] = await Promise.all([
+      fetchMembers(enterprise, token),
+    ]);
+
+    return {
+      status: "OK",
+      response: members,
+    }
+  } catch (e) {
+    return unknownResponseError(e);
+  }
 }

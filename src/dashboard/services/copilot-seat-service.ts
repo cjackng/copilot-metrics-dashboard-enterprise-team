@@ -1,7 +1,7 @@
 import { formatResponseError, unknownResponseError } from "@/features/common/response-error";
 import { ServerActionResponse } from "@/features/common/server-action-response";
 import { ensureGitHubEnvConfig } from "./env-service";
-import { CopilotSeatsData, SeatAssignment, GitHubTeam } from "@/features/common/models";
+import { CopilotSeatsData, SeatAssignment } from "@/features/common/models";
 import { stringIsNullOrEmpty } from "../utils/helpers";
 
 export interface IFilter {
@@ -360,104 +360,4 @@ const aggregateSeatsData = (
   };
 
   return aggregatedData;
-};
-
-export const getAllCopilotSeatsTeams = async (
-  filter: IFilter
-): Promise<ServerActionResponse<GitHubTeam[]>> => {
-  const env = ensureGitHubEnvConfig();
-
-  if (env.status !== "OK") {
-    return env;
-  }
-
-  const { enterprise, organization } = env.response;
-
-  try {
-    switch (process.env.GITHUB_API_SCOPE) {
-      case "enterprise":
-        if (stringIsNullOrEmpty(filter.enterprise)) {
-          filter.enterprise = enterprise;
-        }
-        break;
-      default:
-        if (stringIsNullOrEmpty(filter.organization)) {
-          filter.organization = organization;
-        }
-        break;
-    }
-    
-    const apiResult = await getAllCopilotSeatsTeamsFromApi(filter);
-    if (apiResult.status !== "OK" || !apiResult.response) {
-      return {
-        status: "ERROR",
-        errors: [{ message: "No data found" }],
-      };
-    }
-    return {
-      status: "OK",
-      response: apiResult.response,
-    };
-  } catch (e) {
-    return unknownResponseError(e);
-  }
-};
-
-const getAllCopilotSeatsTeamsFromApi = async (
-  filter: IFilter
-): Promise<ServerActionResponse<GitHubTeam[]>> => {
-  const env = ensureGitHubEnvConfig();
-  if (env.status !== "OK") {
-    return env;
-  }
-  let { token, version } = env.response;
-  try {
-    let url = "";
-    if (filter.enterprise) {
-      url = `https://api.github.com/enterprises/${filter.enterprise}/copilot/billing/seats?per_page=100`;
-    } else {
-      url = `https://api.github.com/orgs/${filter.organization}/copilot/billing/seats?per_page=100`;
-    }
-    let teams: GitHubTeam[] = [];
-    let nextUrl = url;
-    do {
-      const response = await fetch(nextUrl, {
-        cache: "no-store",
-        headers: {
-          Accept: `application/vnd.github+json`,
-          Authorization: `Bearer ${token}`,
-          "X-GitHub-Api-Version": version,
-        },
-      });
-      if (!response.ok) {
-        return formatResponseError(
-          filter.enterprise || filter.organization,
-          response
-        );
-      }
-      const data = await response.json();
-      if (data.seats && Array.isArray(data.seats)) {
-        const pageTeams = data.seats
-          .map((seat: any) => seat.assigning_team)
-          .filter((team: any) => !!team);
-        teams.push(...pageTeams);
-      }
-      const linkHeader = response.headers.get("Link");
-      nextUrl = getNextUrlFromLinkHeader(linkHeader) || "";
-    } while (nextUrl);
-
-    // Remove duplicates based on team id or name
-    const uniqueTeams = teams.filter(
-      (team, index, self) =>
-        index ===
-        self.findIndex((t) => (t.id ? t.id === team.id : t.name === team.name))
-    );
-
-    return {
-      status: "OK",
-      response: uniqueTeams,
-    };
-  } catch (e) {
-    return unknownResponseError(e);
-  }
 };
