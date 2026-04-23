@@ -20,7 +20,7 @@ CREATE TABLE premium_usage_report (
 	team varchar(255) NULL,
 	display_username varchar(255) NULL,
 	update_at timestamptz DEFAULT CURRENT_TIMESTAMP NULL,
-	CONSTRAINT premium_usage_report_uq UNIQUE (date, username, sku, model, unit_type, exceeds_quota, team)
+	CONSTRAINT premium_usage_report_uq1 UNIQUE (date, username, sku, model, unit_type, exceeds_quota, total_monthly_quota)
 );
 CREATE INDEX idx_premium_usage_date ON premium_usage_report USING btree (date);
 CREATE INDEX idx_premium_usage_model ON premium_usage_report USING btree (model);
