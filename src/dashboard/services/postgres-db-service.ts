@@ -101,7 +101,7 @@ class PremiumRequestUsageService {
         exceeds_quota, total_monthly_quota, organization, cost_center_name,
         update_at, display_username, team
       ) VALUES %L
-      ON CONFLICT (date, username, sku, model, unit_type, exceeds_quota, team) 
+      ON CONFLICT (date, username, sku, model, unit_type, exceeds_quota, total_monthly_quota) 
       DO UPDATE SET
         product = EXCLUDED.product,
         model = EXCLUDED.model,
@@ -110,10 +110,10 @@ class PremiumRequestUsageService {
         gross_amount = EXCLUDED.gross_amount,
         discount_amount = EXCLUDED.discount_amount,
         net_amount = EXCLUDED.net_amount,
-        total_monthly_quota = EXCLUDED.total_monthly_quota,
         organization = EXCLUDED.organization,
         cost_center_name = EXCLUDED.cost_center_name,
         display_username = EXCLUDED.display_username,
+        team = EXCLUDED.team,
         update_at = NOW()
     `, values);
 
