@@ -6,6 +6,7 @@
  */
 
 import { EnterpriseTeam } from "@/features/common/models";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { ensureGitHubEnvConfig } from "./env-service";
 
 
@@ -70,6 +71,11 @@ export type Member = {
   login: string;
   display_name: string;
   teamIds: number[];
+};
+
+type EnterpriseMembersLookupResult = {
+  memberMap: Map<string, Member>;
+  teams: EnterpriseTeam[];
 };
 
 type TeamMembershipUser = {
@@ -281,14 +287,29 @@ export async function getAllEnterpriseMembersLookup(): Promise<{memberMap: Map<s
   if (env.status !== 'OK') {
     throw new Error("Invalid GitHub environment configuration.", { cause: env.errors[0] });
   }
-  
+
   const { token, version, enterprise } = env.response;
 
-  // fetchMembers and buildMemberTeamsMap are independent — run in parallel
-  const [members, memberTeams] = await Promise.all([
-    fetchMembers(enterprise, token),
-    buildMemberTeamsMap(enterprise, token, version),
-  ]);
+  return getAllEnterpriseMembersLookupCached(enterprise, version, token);
+}
 
-  return { memberMap: mapMembersLookup(members, memberTeams.memberMap), teams: memberTeams.teams };
+const getAllEnterpriseMembersLookupCached = unstable_cache(
+  async (enterprise: string, version: string, token: string): Promise<EnterpriseMembersLookupResult> => {
+    // fetchMembers and buildMemberTeamsMap are independent — run in parallel
+    const [members, memberTeams] = await Promise.all([
+      fetchMembers(enterprise, token),
+      buildMemberTeamsMap(enterprise, token, version),
+    ]);
+
+    return { memberMap: mapMembersLookup(members, memberTeams.memberMap), teams: memberTeams.teams };
+  },
+  ["enterprise-members-lookup-v1"],
+  {
+    revalidate: 300,
+    tags: ["enterprise-members-lookup"],
+  }
+);
+
+export async function purgeEnterpriseMembersLookupCache(): Promise<void> {
+  revalidateTag("enterprise-members-lookup");
 }
