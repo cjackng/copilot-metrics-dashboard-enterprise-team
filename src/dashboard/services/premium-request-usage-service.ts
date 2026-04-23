@@ -1,7 +1,8 @@
-import { formatResponseError, unknownResponseError } from "@/features/common/response-error";
+import { unknownResponseError } from "@/features/common/response-error";
 import { ServerActionResponse } from "@/features/common/server-action-response";
 import { PremiumRequestUsage } from "@/features/common/models";
 import { format } from "date-fns";
+import { getAllEnterpriseMembersLookup } from "./enterprise-members-service";
 
 export interface IFilter {
   startDate?: Date;
@@ -33,6 +34,14 @@ const getPremiumRequestUsageFromDB = async (filter: IFilter): Promise<ServerActi
 
     const rows = await service.getRowsByDateRange(start, end);
     console.log(`Fetched ${rows.length} premium request usage records from DB for date range ${start} to ${end}`);
+
+    const { memberMap: enterpriseMembers } = await getAllEnterpriseMembersLookup();
+    rows.forEach((row) => {
+      const member = enterpriseMembers.get(row.username);
+      if (member) {
+        row.team = member.teamNames.join(", ");
+      }
+    });
 
     return {
       status: "OK",

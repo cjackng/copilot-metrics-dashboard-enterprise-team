@@ -50,7 +50,6 @@ class DashboardState {
 
   public seatsData: CopilotSeatsData = {} as CopilotSeatsData;
   public memberTeamsData: Map<string, Member> = new Map();
-  private enterpriseTeams: EnterpriseTeam[] = [];
 
   private apiData: Map<string, CopilotUsageOutput[]> = new Map();
   private teamFilteredData: Map<string, CopilotUsageOutput[]> = new Map();
@@ -87,7 +86,6 @@ class DashboardState {
     this.onTimeFrameChange(this.timeFrame);
     this.seatsData = seatsData;
     this.memberTeamsData = memberTeamsData;
-    this.enterpriseTeams = enterpriseTeams;
     this.teams = this.extractUniqueTeams(enterpriseTeams);
     // Store current filter for data refreshing
     if (filter) {
@@ -137,7 +135,7 @@ class DashboardState {
         this.teamFilteredData = new Map();
         this.apiData.forEach((value, key) => {
           if (this.memberTeamsData && this.memberTeamsData.size > 0 && this.memberTeamsData.has(key)) {
-            if (this.memberTeamsData.get(key)?.teamIds.some((teamId) => selectedTeams.includes(this.enterpriseTeams.find((team) => String(team.id) === String(teamId))?.name || ""))) {
+            if (this.memberTeamsData.get(key)?.teamNames.some((teamName) => selectedTeams.includes(teamName))) {
               this.teamFilteredData.set(key, value);
             }
           }

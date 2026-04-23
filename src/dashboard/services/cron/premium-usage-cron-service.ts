@@ -3,7 +3,7 @@ import { requestPremiumUsageReport, getBillingReport, IFilter as BillReportFilte
 import { downloadPremiumUsageCsv } from '@/handlers/premium-usage-csv-handler';
 import { PremiumRequestUsage } from '@/features/common/models';
 import PostgresService from '@/services/postgres-db-service';
-import { getAllEnterpriseMembersLookup, purgeEnterpriseMembersLookupCache } from '../enterprise-members-service';
+import { getAllEnterpriseMembersLookupFresh, purgeEnterpriseMembersLookupCache } from '../enterprise-members-service';
 import EnterpriseTeamService from '../enterprise-team-service';
 
 let premiumUsageTask: ScheduledTask | null = null;
@@ -53,7 +53,7 @@ export async function syncPremiumUsageData() {
     log(`Successfully retrieved Premium Usage report. Download URL: ${downloadUrl}`);
 
     const records: PremiumRequestUsage[] = await downloadPremiumUsageCsv(downloadUrl);
-    const { memberMap: enterpriseMembers, teams: enterpriseTeams } = await getAllEnterpriseMembersLookup();
+    const { memberMap: enterpriseMembers, teams: enterpriseTeams } = await getAllEnterpriseMembersLookupFresh();
     const enrichedRecords: PremiumRequestUsage[] = records.map((record) => {
       const login = record.username;
       const member = enterpriseMembers.get(login);
