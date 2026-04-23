@@ -6,6 +6,7 @@
  */
 
 import { EnterpriseTeam } from "@/features/common/models";
+import { revalidateTag, unstable_cache } from "next/cache";
 import { ensureGitHubEnvConfig } from "./env-service";
 import { ServerActionResponse } from "@/features/common/server-action-response";
 import { unknownResponseError } from "@/features/common/response-error";
@@ -71,7 +72,12 @@ export type Member = {
   id: number | null;
   login: string;
   display_name: string;
-  teamIds: number[];
+  teamNames: string[];
+};
+
+type EnterpriseMembersLookupResult = {
+  memberEntries: Array<[string, Member]>;
+  teams: EnterpriseTeam[];
 };
 
 type TeamMembershipUser = {
@@ -136,7 +142,7 @@ async function fetchMembers(enterprise: string, token: string): Promise<Member[]
         id: dbId,
         login: user.login ?? "",
         display_name: user.name ?? "",
-        teamIds: [],
+        teamNames: [],
       });
     }
 
@@ -207,25 +213,27 @@ async function fetchTeamMembers(
   return logins;
 }
 
-export async function buildMemberTeamsMap(enterprise: string, token: string, version: string): Promise<{memberMap: Map<string, number[]>, teams: EnterpriseTeam[]}> {
+export async function buildMemberTeamsMap(enterprise: string, token: string, version: string): Promise<{memberMap: Map<string, string[]>, teams: EnterpriseTeam[]}> {
   
   console.log("  Fetching enterprise teams ...");
   const teams = await fetchEnterpriseTeams(enterprise, token, version);
   console.log(`  Found ${teams.length} team(s). Fetching memberships in parallel ...`);
 
-  const memberTeams = new Map<string, number[]>();
+  const memberTeams = new Map<string, string[]>();
 
   const teamMemberResults = await Promise.all(
     teams.map(async (team) => ({
-      teamId: team.id,
+      teamName: team.name,
       logins: await fetchTeamMembers(enterprise, token, version, team.slug),
     }))
   );
 
-  for (const { teamId, logins } of teamMemberResults) {
+  for (const { teamName, logins } of teamMemberResults) {
+    if (!teamName) continue;
+
     for (const login of logins) {
       const existing = memberTeams.get(login) ?? [];
-      existing.push(teamId);
+      existing.push(teamName);
       memberTeams.set(login, existing);
     }
   }
@@ -242,13 +250,13 @@ function printTable(members: Member[]): void {
   const colId = Math.max("ID".length, ...members.map((m) => String(m.id ?? "").length));
   const colLogin = Math.max("Login".length, ...members.map((m) => m.login.length));
   const colName = Math.max("Display Name".length, ...members.map((m) => m.display_name.length));
-  const colTeamIds = Math.max("Team IDs".length, ...members.map((m) => m.teamIds.length));
+  const colTeamNames = Math.max("Team Names".length, ...members.map((m) => m.teamNames.length));
 
   const header =
     `${"ID".padEnd(colId)}  ` +
     `${"Login".padEnd(colLogin)}  ` +
     `${"Display Name".padEnd(colName)}  ` +
-    `${"Team IDs".padEnd(colTeamIds)}`;
+    `${"Team Names".padEnd(colTeamNames)}`;
 
   const divider = "-".repeat(header.length);
 
@@ -261,7 +269,7 @@ function printTable(members: Member[]): void {
       `${String(m.id ?? "").padEnd(colId)}  ` +
         `${m.login.padEnd(colLogin)}  ` +
         `${m.display_name.padEnd(colName)}  ` +
-        `${m.teamIds.join(" | ").padEnd(colTeamIds)}`
+        `${m.teamNames.join(" | ").padEnd(colTeamNames)}`
     );
   }
 
@@ -269,30 +277,78 @@ function printTable(members: Member[]): void {
   console.log(`Total: ${members.length} member(s)`);
 }
 
-function mapMembersLookup(members: Member[], memberTeams: Map<string, number[]>): Map<string, Member> {
-  const lookup = new Map<string, Member>();
-  for (const m of members) {
-    const teamIds = memberTeams.get(m.login) ?? [];
-    lookup.set(m.login, { ...m, teamIds });
-  }
-  return lookup;
+/** unstable_cache serializes return values, so this returns plain entries instead of a Map. 
+ * Callers that need keyed lookup can reconstruct a Map from the cached tuples.
+*/
+function mapMembersLookup(members: Member[], memberTeams: Map<string, string[]>): Array<[string, Member]> {
+  return members.map((member) => {
+    const teamNames = memberTeams.get(member.login) ?? [];
+    return [member.login, { ...member, teamNames }];
+  });
 }
 
-export async function getAllEnterpriseMembersLookup(): Promise<{memberMap: Map<string, Member>, teams: EnterpriseTeam[]}> {
-  const env = ensureGitHubEnvConfig();
-  if (env.status !== 'OK') {
-    throw new Error("Invalid GitHub environment configuration.", { cause: env.errors[0] });
-  }
-  
-  const { token, version, enterprise } = env.response;
-
-  // fetchMembers and buildMemberTeamsMap are independent — run in parallel
+async function fetchEnterpriseMembersLookupFresh(
+  enterprise: string,
+  version: string,
+  token: string,
+): Promise<EnterpriseMembersLookupResult> {
+  console.debug("Fetching enterprise members and team memberships in parallel ...");
   const [members, memberTeams] = await Promise.all([
     fetchMembers(enterprise, token),
     buildMemberTeamsMap(enterprise, token, version),
   ]);
 
-  return { memberMap: mapMembersLookup(members, memberTeams.memberMap), teams: memberTeams.teams };
+  return {
+    memberEntries: mapMembersLookup(members, memberTeams.memberMap),
+    teams: memberTeams.teams,
+  };
+}
+
+/** Returns the latest data from GitHub and bypasses Next.js data cache. */
+export async function getAllEnterpriseMembersLookupFresh(): Promise<{memberMap: Map<string, Member>, teams: EnterpriseTeam[]}> {
+  const env = ensureGitHubEnvConfig();
+  if (env.status !== "OK") {
+    throw new Error("Invalid GitHub environment configuration.", { cause: env.errors[0] });
+  }
+
+  const { token, version, enterprise } = env.response;
+  const fresh = await fetchEnterpriseMembersLookupFresh(enterprise, version, token);
+
+  return {
+    memberMap: new Map<string, Member>(fresh.memberEntries),
+    teams: fresh.teams,
+  };
+}
+
+/** Returns cached data when available, with revalidation controlled by unstable_cache. */
+export async function getAllEnterpriseMembersLookup(): Promise<{memberMap: Map<string, Member>, teams: EnterpriseTeam[]}> {
+  const env = ensureGitHubEnvConfig();
+  if (env.status !== 'OK') {
+    throw new Error("Invalid GitHub environment configuration.", { cause: env.errors[0] });
+  }
+
+  const { token, version, enterprise } = env.response;
+
+  const cached = await getAllEnterpriseMembersLookupCached(enterprise, version, token);
+  return {
+    memberMap: new Map<string, Member>(cached.memberEntries),
+    teams: cached.teams,
+  };
+}
+
+const getAllEnterpriseMembersLookupCached = unstable_cache(
+  async (enterprise: string, version: string, token: string): Promise<EnterpriseMembersLookupResult> => {
+    return fetchEnterpriseMembersLookupFresh(enterprise, version, token);
+  },
+  ["enterprise-members-lookup-v1"],
+  {
+    revalidate: 300,
+    tags: ["enterprise-members-lookup"],
+  }
+);
+
+export async function purgeEnterpriseMembersLookupCache(): Promise<void> {
+  revalidateTag("enterprise-members-lookup");
 }
 
 export async function getMembers(): Promise<ServerActionResponse<Member[]>> {

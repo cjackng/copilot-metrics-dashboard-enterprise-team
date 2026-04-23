@@ -3,7 +3,7 @@ import { requestPremiumUsageReport, getBillingReport, IFilter as BillReportFilte
 import { downloadPremiumUsageCsv } from '@/handlers/premium-usage-csv-handler';
 import { PremiumRequestUsage } from '@/features/common/models';
 import PostgresService from '@/services/postgres-db-service';
-import { getAllEnterpriseMembersLookup } from '../enterprise-members-service';
+import { getAllEnterpriseMembersLookupFresh, purgeEnterpriseMembersLookupCache } from '../enterprise-members-service';
 import EnterpriseTeamService from '../enterprise-team-service';
 
 let premiumUsageTask: ScheduledTask | null = null;
@@ -16,6 +16,8 @@ function log(message: string) {
 export async function syncPremiumUsageData() {
   try {
     log('Starting Premium Usage data synchronization...');
+    await purgeEnterpriseMembersLookupCache();
+    log('Enterprise members lookup cache purged before sync');
 
     const dbService = new PostgresService();
     const enterpriseTeamService = new EnterpriseTeamService(dbService);
@@ -51,10 +53,8 @@ export async function syncPremiumUsageData() {
     log(`Successfully retrieved Premium Usage report. Download URL: ${downloadUrl}`);
 
     const records: PremiumRequestUsage[] = await downloadPremiumUsageCsv(downloadUrl);
-    const { memberMap: enterpriseMembers, teams: enterpriseTeams } = await getAllEnterpriseMembersLookup();
-    // Expand records: one record per team.
-    // If user has no team, keep one record with team = ''.
-    const enrichedRecords: PremiumRequestUsage[] = records.flatMap((record) => {
+    const { memberMap: enterpriseMembers, teams: enterpriseTeams } = await getAllEnterpriseMembersLookupFresh();
+    const enrichedRecords: PremiumRequestUsage[] = records.map((record) => {
       const login = record.username;
       const member = enterpriseMembers.get(login);
 
@@ -62,14 +62,11 @@ export async function syncPremiumUsageData() {
         throw new Error(`No member found for username: ${login}`);
       }
 
-      const displayUsername = member.display_name || '';
-      const teamIds = member.teamIds.length > 0 ? member.teamIds : [''];
-
-      return teamIds.map((teamId) => ({
+      return {
         ...record,
-        display_username: displayUsername,
-        team: String(teamId),
-      }));
+        display_username: member.display_name || '',
+        team: '',
+      };
     });
 
     await Promise.all([

@@ -141,22 +141,8 @@ class PremiumRequestUsageService {
         pur.net_amount,
         pur.exceeds_quota,
         pur.display_username,
-        pur.total_monthly_quota,
-        STRING_AGG(
-          DISTINCT 
-            CASE
-              WHEN et.is_deleted IS TRUE THEN NULL
-              ELSE et.name
-            END
-          , ', ' ORDER BY 
-            CASE
-              WHEN et.is_deleted IS TRUE THEN NULL
-              ELSE et.name
-            END
-        ) as team
+        pur.total_monthly_quota
       FROM premium_usage_report pur
-      LEFT JOIN enterprise_teams et
-        ON pur.team = et.team_id::TEXT
       WHERE pur.date >= $1 AND pur.date <= $2
       GROUP BY 
         pur.date,

@@ -41,9 +41,11 @@ export default async function Dashboard(props: IProps) {
     endDate = endOfMonth(today);
   }
   const isCrossMonthRange = differenceInCalendarMonths(endDate, startDate) > 0;
-  const premiumRequestUsagesPromise = getPremiumRequestUsage({ startDate, endDate } as PremiumRequestUsageServiceFilter);
-  const latestUpdateTimePromise = getLatestPremiumRequestUsageUpdateTime();
-  const [premiumRequestUsages, latestUpdateTime] = await Promise.all([premiumRequestUsagesPromise, latestUpdateTimePromise]);
+  const [premiumRequestUsages, latestUpdateTime] = await Promise.all(
+    [
+      getPremiumRequestUsage({ startDate, endDate } as PremiumRequestUsageServiceFilter), 
+      getLatestPremiumRequestUsageUpdateTime()
+    ]);
 
   if (premiumRequestUsages.status !== "OK") {
     return <ErrorPage error={premiumRequestUsages.errors[0].message} />;
