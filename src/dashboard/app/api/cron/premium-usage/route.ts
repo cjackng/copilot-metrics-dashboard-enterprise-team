@@ -3,6 +3,7 @@ import {
   getPremiumUsageTaskStatus,
   syncPremiumUsageData,
 } from '@/services/cron/premium-usage-cron-service';
+import { purgeEnterpriseMembersLookupCache } from '@/services/enterprise-members-service';
 
 // Logging function
 function log(message: string) {
@@ -19,6 +20,8 @@ export async function GET(request: NextRequest) {
       case 'run-now':
         log('Manually triggered immediate execution...');
         try {
+          await purgeEnterpriseMembersLookupCache();
+          log('Enterprise members lookup cache purged before sync');
           await syncPremiumUsageData();
           return NextResponse.json({
             status: 'success',

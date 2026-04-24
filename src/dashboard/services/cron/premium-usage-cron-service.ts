@@ -16,8 +16,6 @@ function log(message: string) {
 export async function syncPremiumUsageData() {
   try {
     log('Starting Premium Usage data synchronization...');
-    await purgeEnterpriseMembersLookupCache();
-    log('Enterprise members lookup cache purged before sync');
 
     const dbService = new PostgresService();
     const enterpriseTeamService = new EnterpriseTeamService(dbService);
