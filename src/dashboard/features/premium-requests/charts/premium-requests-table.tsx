@@ -2,26 +2,19 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { ChartHeader } from "@/features/dashboard/charts/chart-header";
-import { DataTable } from "@/components/ui/data-table";
-import { ColumnDef, FilterFn } from "@tanstack/react-table";
-import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
+import { AgGridTable } from "@/components/ui/ag-grid-table";
+import { AgGridMultiSelectFilter } from "@/components/ui/ag-grid-multi-select-filter";
 import { UserUsageData } from "@/features/common/models";
-import { Column, Row } from "@tanstack/react-table";
 import { useDashboard } from "../premium-requests-state";
 import { format } from "date-fns";
-
-const teamFilterFn: FilterFn<UserUsageData> = (row, columnId, filterValues: string[]) => {
-  if (!filterValues || filterValues.length === 0) return true;
-  const teams = row.getValue(columnId) as string[];
-  return filterValues.some(team => teams.includes(team));
-};
+import { ColDef, GridApi, ValueFormatterParams } from "ag-grid-community";
+import { useMemo, useState } from "react";
 
 const formatPremiumRequestTitle = (latestUpdateTime: Date | null) => {
   if (!latestUpdateTime) {
     return "Premium Request Usage (Latest Update at: N/A)";
   }
 
-  // Safety check
   if (isNaN(latestUpdateTime.getTime())) {
     throw new Error('Invalid latestUpdateTime string provided');
   }
@@ -29,78 +22,69 @@ const formatPremiumRequestTitle = (latestUpdateTime: Date | null) => {
   return `Premium Request Usage (Latest Update at: ${format(latestUpdateTime, "dd MMM yyyy HH:mm")})`;
 }
 
-const userColumns: ColumnDef<UserUsageData>[] = [
+const columnDefs: ColDef<UserUsageData>[] = [
   {
-    accessorKey: "userDisplayName",
-    id: "userDisplayName",
-    meta: { name: "Username" },
-    header: ({ column }: { column: Column<UserUsageData, unknown> }) => (
-      <DataTableColumnHeader column={column} title="Username" />
-    ),
-    cell: ({ row }: { row: Row<UserUsageData> }) => {
-      return <div className="ml-2">{row.original.userDisplayName}</div>;
-    },
+    field: "userDisplayName",
+    headerName: "Username",
+    filter: "agTextColumnFilter",
   },
   {
-    accessorKey: "user",
-    id: "user",
-    meta: { name: "User ID" },
-    header: ({ column }: { column: Column<UserUsageData, unknown> }) => (
-      <DataTableColumnHeader column={column} title="User ID" />
-    ),
-    cell: ({ row }: { row: Row<UserUsageData> }) => {
-      return <div className="ml-2">{row.original.user}</div>;
-    },
+    field: "user",
+    headerName: "User ID",
+    filter: "agTextColumnFilter",
   },
   {
-    accessorKey: "totalRequestQuantity",
-    id: "totalRequestQuantity",
-    meta: { name: "Total Requests" },
-    header: ({ column }: { column: Column<UserUsageData, unknown> }) => (
-      <DataTableColumnHeader column={column} title="Total Requests" />
-    ),
-    cell: ({ row }: { row: Row<UserUsageData> }) => {
-      return <div className="ml-2">{Math.round(row.original.totalRequestQuantity).toLocaleString()}</div>;
-    },
+    field: "totalRequestQuantity",
+    headerName: "Total Requests",
+    filter: "agNumberColumnFilter",
+    valueFormatter: (params: ValueFormatterParams) =>
+      params.value != null ? Math.round(params.value).toLocaleString() : "",
   },
   {
-    accessorKey: "totalRequestQuota",
-    id: "totalRequestQuota",
-    meta: { name: "Request Quota" },
-    header: ({ column }: { column: Column<UserUsageData, unknown> }) => (
-      <DataTableColumnHeader column={column} title="Request Quota" />
-    ),
-    cell: ({ row }: { row: Row<UserUsageData> }) => {
-      return (
-        <div className="ml-2">
-          {row.original.totalRequestQuota === null ? "N/A" : Math.round(row.original.totalRequestQuota).toLocaleString()}
-        </div>
-      )
-    },
+    field: "totalRequestQuota",
+    headerName: "Request Quota",
+    filter: "agNumberColumnFilter",
+    valueFormatter: (params: ValueFormatterParams) =>
+      params.value === null || params.value === undefined
+        ? "N/A"
+        : Math.round(params.value).toLocaleString(),
   },
   {
-    accessorKey: "team",
-    id: "team",
-    meta: { name: "Team" },
-    header: ({ column }: { column: Column<UserUsageData, unknown> }) => (
-      <DataTableColumnHeader column={column} title="Team" />
-    ),
-    cell: ({ row }: { row: Row<UserUsageData> }) => {
-      return <div className="ml-2">{row.original.team.join(", ")}</div>;
-    },
-    filterFn: teamFilterFn,
-  }
-].map((col) => ({
-  accessorKey: col.accessorKey,
-  id: col.id,
-  meta: col.meta,
-  header: col.header,
-  cell: col.cell,
-  filterFn: col.filterFn,
-}));
+    field: "team",
+    headerName: "Team",
+    filter: AgGridMultiSelectFilter,
+    filterParams: { isArrayColumn: true },
+    valueFormatter: (params: ValueFormatterParams) =>
+      Array.isArray(params.value) ? params.value.join(", ") : params.value ?? "",
+    getQuickFilterText: (params) =>
+      Array.isArray(params.value) ? params.value.join(" ") : params.value ?? "",
+  },
+];
 
 export const PremiumRequestsTable = () => {
   const { userUsageData, startDate, endDate, latestUpdateTime } = useDashboard();
+  const [gridApi, setGridApi] = useState<GridApi<UserUsageData> | null>(null);
+
+  const [filterVersion, setFilterVersion] = useState(0);
+
+  const summaryContent = useMemo(() => {
+    if (!gridApi || userUsageData.length === 0) return null;
+    let totalUsers = 0;
+    let totalRequests = 0;
+    gridApi.forEachNodeAfterFilter((node) => {
+      if (node.data) {
+        totalUsers++;
+        totalRequests += node.data.totalRequestQuantity ?? 0;
+      }
+    });
+    return (
+      <>
+        <span>Total Users: {totalUsers.toLocaleString()}</span>
+        <span>Total Requests: {Math.round(totalRequests).toLocaleString()}</span>
+      </>
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gridApi, userUsageData, filterVersion]);
 
   if (userUsageData.length === 0) {
     return (
@@ -125,12 +109,15 @@ export const PremiumRequestsTable = () => {
         description={`Premium request usage by user from ${format(new Date(startDate), "dd MMM yyyy")} to ${format(new Date(endDate), "dd MMM yyyy")}`}
       />
       <CardContent>
-        <DataTable 
-          columns={userColumns} 
-          data={userUsageData}
+        <AgGridTable<UserUsageData>
+          columnDefs={columnDefs}
+          rowData={userUsageData}
+          enableSearch
           enableExport
-          filters={[{ column: "team", label: "Team" }]}
-          summaryField="totalRequestQuantity"
+          enableColumnToggle
+          statusBarContent={summaryContent}
+          onGridReady={(api) => setGridApi(api)}
+          onFilterChanged={() => setFilterVersion((v) => v + 1)}
         />
       </CardContent>
     </Card>
