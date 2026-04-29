@@ -20,7 +20,7 @@ export const ChartHeader = (props: ChartHeaderProps) => {
         <CardTitle>{props.title}</CardTitle>
         {props.tip && (
           <TooltipProvider>
-            <Tooltip>
+            <Tooltip delayDuration={0}>
               <TooltipTrigger>
                 <InfoIcon className="h-4 w-4 text-muted-foreground" />
               </TooltipTrigger>
