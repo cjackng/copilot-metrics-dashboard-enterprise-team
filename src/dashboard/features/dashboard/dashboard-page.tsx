@@ -8,7 +8,7 @@ import { ActiveUsers } from "./charts/active-users";
 import { Stats } from "./charts/stats";
 import { CodeCompletions } from "./charts/code-completions";
 import { DataProvider } from "./dashboard-state";
-import { TimeFrameToggle } from "./filter/time-frame-toggle";
+
 import { Header } from "./header";
 import { getCopilotMetrics, IFilter as MetricsFilter } from "@/services/copilot-metrics-service";
 import { getAllEnterpriseMembersLookup } from "@/services/enterprise-members-service";
@@ -60,9 +60,7 @@ export default async function Dashboard(props: IProps) {
         <div className="mx-auto w-full max-w-6xl container">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <Stats />
-            <div className="flex justify-end col-span-4">
-              <TimeFrameToggle />
-            </div>
+
             <ActiveUsers />
             <AcceptanceRate />
             <ChatAcceptanceRate />

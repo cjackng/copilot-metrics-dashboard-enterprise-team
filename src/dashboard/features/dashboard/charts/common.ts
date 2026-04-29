@@ -1,4 +1,5 @@
 import { CopilotUsageOutput } from "@/features/common/models";
+import { formatDate } from "@/utils/helpers";
 
 export interface AcceptanceRateData {
   acceptanceRate: number;
@@ -29,7 +30,7 @@ export const computeAcceptanceAverage = (
     return {
       acceptanceRate: parseFloat(acceptanceAverage.toFixed(2)),
       acceptanceLinesRate: parseFloat(acceptanceLinesAverage.toFixed(2)),
-      timeFrameDisplay: item.time_frame_display,
+      timeFrameDisplay: formatDate(item.day),
     };
   });
 
@@ -49,7 +50,7 @@ export function getActiveUsers(
     return {
       totalUsers: item.total_active_users,
       totalIdeUsers: item.total_ide_engaged_users,
-      timeFrameDisplay: item.time_frame_display,
+      timeFrameDisplay: formatDate(item.day),
     };
   });
 
@@ -107,7 +108,7 @@ export function codeCompletionSuggestionsAndAcceptances(
   return filteredData.map((item) => ({
     suggestedCompletions: item.code_completion_lines_suggested ?? 0,
     acceptedCompletions: item.code_completion_lines_accepted ?? 0,
-    timeFrameDisplay: item.time_frame_display,
+    timeFrameDisplay: formatDate(item.day),
   }));
 }
 
@@ -128,7 +129,7 @@ export const computeChatAcceptanceAverage = (
 
     return {
       acceptanceChatRate: parseFloat(acceptanceRate.toFixed(2)),
-      timeFrameDisplay: item.time_frame_display
+      timeFrameDisplay: formatDate(item.day)
     };
   });
 
@@ -151,7 +152,7 @@ export function computeAvgChatRequestsPerActiveUser(
         : 0;
     return {
       avgChatRequests: avg,
-      timeFrameDisplay: item.time_frame_display,
+      timeFrameDisplay: formatDate(item.day),
     };
   });
 }
@@ -174,7 +175,7 @@ export function getRequestsPerChatMode(
     edit: item.chat_requests_edit ?? 0,
     agent: item.chat_requests_agent ?? 0,
     custom: item.chat_requests_custom ?? 0,
-    timeFrameDisplay: item.time_frame_display,
+    timeFrameDisplay: formatDate(item.day),
   }));
 }
 
@@ -192,7 +193,7 @@ export function computeCodeCompletionAcceptanceRate(
     const acceptanceRate = suggestions > 0 ? (acceptances / suggestions) * 100 : 0;
     return {
       acceptanceRate: Math.round(acceptanceRate * 10) / 10,
-      timeFrameDisplay: item.time_frame_display,
+      timeFrameDisplay: formatDate(item.day),
     };
   });
 }

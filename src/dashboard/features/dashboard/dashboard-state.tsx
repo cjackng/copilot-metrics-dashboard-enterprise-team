@@ -4,12 +4,10 @@ import { PropsWithChildren } from "react";
 import {
   CopilotUsageOutput, CopilotUsageOutputResponse, EnterpriseTeam
 } from "@/features/common/models";
-import { formatDate } from "@/utils/helpers";
 import { format, parseISO, subDays } from "date-fns";
 
 import { proxy, useSnapshot } from "valtio";
 
-import { groupByTimeFrame } from "@/utils/data-mapper";
 import { CopilotSeatsData } from "../common/models";
 import {
   refreshSeatsData,
@@ -35,13 +33,11 @@ export interface DropdownFilterItem {
   isSelected: boolean;
 }
 
-export type TimeFrame = "daily" | "weekly";
 
 class DashboardState {
   public filteredData: Map<string, CopilotUsageOutput[]> = new Map();
   public displayData: CopilotUsageOutput[] = [];
   public teams: DropdownFilterItem[] = [];
-  public timeFrame: TimeFrame = "daily";
   public hideWeekends: boolean = false;
   public days: number = 28;
   public isLoading: boolean = false;
@@ -83,7 +79,7 @@ class DashboardState {
     this.teamFilteredData = new Map(data.copilotUsages);
     this.reportStartDay = data.report_start_day;
     this.reportEndDay = data.report_end_day;
-    this.onTimeFrameChange(this.timeFrame);
+    this.applyFilters();
     this.seatsData = seatsData;
     this.memberTeamsData = memberTeamsData;
     this.teams = this.extractUniqueTeams(enterpriseTeams);
@@ -178,30 +174,22 @@ class DashboardState {
     }
   }
 
-  public onTimeFrameChange(timeFrame: TimeFrame): void {
-    this.timeFrame = timeFrame;
-    this.applyFilters();
-  }
-
   public onDaysChange(days: number): void {
     this.days = days;
-    this.timeFrame = "daily";
     this.applyFilters();
   }
 
   private applyFilters(): void {
-    this.filteredData = this.aggregatedDataByTimeFrame(this.hideWeekends);
+    this.filteredData = this.filterData(this.hideWeekends);
     this.displayData = this.calculateDisplayData();
   }
 
   private calculateDisplayData(): CopilotUsageOutput[] {
-    // Flatten all users' already-aggregated data into one array
     const allItems: CopilotUsageOutput[] = [];
     this.filteredData.forEach((userItems) => allItems.push(...userItems));
 
-    // Group by time_frame_display (set by aggregatedDataByTimeFrame)
     const grouped = allItems.reduce((acc, item) => {
-      const key = item.time_frame_display || item.day;
+      const key = item.day;
       if (!acc[key]) acc[key] = [];
       acc[key].push(item);
       return acc;
@@ -210,9 +198,7 @@ class DashboardState {
     return Object.entries(grouped)
       .map(([key, items]) => {
         const merged: CopilotUsageOutput = {
-          day: items[0].day,
-          time_frame_week: items[0].time_frame_week,
-          time_frame_display: key,
+          day: key,
           total_active_users: 0,
           total_ide_engaged_users: 0,
           total_chat_engaged_users: 0,
@@ -278,7 +264,7 @@ class DashboardState {
     }));
   }
 
-  private aggregatedDataByTimeFrame(hideWeekends: boolean): Map<string, CopilotUsageOutput[]> {
+  private filterData(hideWeekends: boolean): Map<string, CopilotUsageOutput[]> {
     const result = new Map<string, CopilotUsageOutput[]>();
 
     const endDate = this.reportEndDay !== "" ? parseISO(this.reportEndDay) : new Date();
@@ -290,26 +276,11 @@ class DashboardState {
       if (hideWeekends) {
         items = items.filter((item) => {
           const day = new Date(item.day).getDay();
-          return day !== 0 && day !== 6; // 0 = Sunday, 6 = Saturday
+          return day !== 0 && day !== 6;
         });
       }
 
-      if (this.timeFrame === "daily") {
-        result.set(
-          user,
-          items.map((item) => ({ ...item, time_frame_display: formatDate(item.day) }))
-        );
-        return;
-      }
-
-      const groupedByTimeFrame = items.reduce((acc, item) => {
-        const label = item.time_frame_week;
-        if (!acc[label]) acc[label] = [];
-        acc[label].push(item);
-        return acc;
-      }, {} as Record<string, CopilotUsageOutput[]>);
-
-      result.set(user, groupByTimeFrame(groupedByTimeFrame));
+      result.set(user, items);
     });
 
     return result;

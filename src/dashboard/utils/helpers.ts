@@ -1,5 +1,5 @@
 import { featuresEnvConfig } from "@/services/env-service";
-import { format, startOfWeek, parse, isValid } from "date-fns";
+import { parse, isValid } from "date-fns";
 import { CopilotUsageOutput, CopilotMetricsReportData } from "@/features/common/models";
 
 
@@ -68,8 +68,6 @@ export const transformCopilotMetricsReportData = (
     if (isNaN(date.getTime())) {
       return;
     }
-    const weekStart = startOfWeek(date, { weekStartsOn: 1 });
-    const weekIdentifier = format(weekStart, "MMM dd");
 
     const chatFeatures = item.totals_by_feature || [];
     let totalChats = 0;
@@ -147,8 +145,6 @@ export const transformCopilotMetricsReportData = (
       code_completion_acceptances: codeCompletionAcceptances,
       code_completion_lines_suggested: codeCompletionLinesSuggested,
       code_completion_lines_accepted: codeCompletionLinesAccepted,
-      time_frame_week: weekIdentifier,
-      time_frame_display: weekIdentifier,
     };
     dataUserToUsage.set(item.user_login, [...(dataUserToUsage.get(item.user_login) || []), output]);
   });

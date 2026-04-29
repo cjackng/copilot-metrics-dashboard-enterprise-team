@@ -82,7 +82,7 @@ export interface CopilotUsageOutputResponse {
   copilotUsages: Map<string, CopilotUsageOutput[]>;
 }
 
-export interface CopilotUsage {
+export interface CopilotUsageOutput {
   total_active_users: number;
   total_ide_engaged_users: number;
   total_chat_engaged_users: number;
@@ -112,11 +112,6 @@ export interface CopilotUsage {
   total_accepted_chats: number;
   day: string;
 }
-
-  export interface CopilotUsageOutput extends CopilotUsage {
-    time_frame_week: string;
-    time_frame_display: string;
-  }
 
 export interface CopilotMetricsReportResponse {
   download_links: string[];
