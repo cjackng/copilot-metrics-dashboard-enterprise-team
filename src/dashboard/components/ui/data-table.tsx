@@ -154,10 +154,10 @@ export function DataTable<TData, TValue>({ columns, data, initialVisibleColumns,
             {data.length > 0 && summaryField && isMounted && (
                 <div className="flex justify-end gap-6 text-sm font-medium">
                     <span>Total Users: {table.getFilteredRowModel().rows.length}</span>
-                    <span>Total Requests: {table.getFilteredRowModel().rows.reduce((sum, row) => {
+                    <span>Total Requests: {Math.round(table.getFilteredRowModel().rows.reduce((sum, row) => {
                         const value = (row.original as Record<string, unknown>)[summaryField];
                         return sum + (typeof value === 'number' ? value : 0);
-                    }, 0).toFixed(0).toLocaleString()}</span>
+                    }, 0)).toLocaleString()}</span>
                 </div>
             )}
             <div className="rounded-md border">

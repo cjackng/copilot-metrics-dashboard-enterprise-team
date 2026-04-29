@@ -11,22 +11,22 @@ export const Stats = () => {
       <StatsCard
         title="Total seats"
         description="Total assigned seats"
-        value={seatsData.total_seats > 0 ? seatsData.total_seats.toString() : "0"}
+        value={seatsData.total_seats > 0 ? Math.round(seatsData.total_seats).toLocaleString() : "0"}
       ></StatsCard>
       <StatsCard
         title="Active seats"
         description="Total active seats"
-        value={seatsData.total_active_seats > 0 ? seatsData.total_active_seats.toString() : "0"}
+        value={seatsData.total_active_seats > 0 ? Math.round(seatsData.total_active_seats).toLocaleString() : "0"}
       ></StatsCard>
       <StatsCard
         title="Inactive seats"
         description="Total inactive seats"
-        value={total_inactive_seats > 0 ? total_inactive_seats.toString() : "0"}
+        value={total_inactive_seats > 0 ? Math.round(total_inactive_seats).toLocaleString() : "0"}
       ></StatsCard>
       <StatsCard
         title="Adoption rate"
         description="Adoption rate by total active seats"
-        value={seatsData.total_seats > 0 ? ((seatsData.total_active_seats / seatsData.total_seats) * 100 ).toFixed(0) + "%" : "0%"}
+        value={seatsData.total_seats > 0 ? Math.round((seatsData.total_active_seats / seatsData.total_seats) * 100 ).toLocaleString() + "%" : "0%"}
       ></StatsCard>
     </div>
   );

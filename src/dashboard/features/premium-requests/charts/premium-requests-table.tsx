@@ -60,7 +60,7 @@ const userColumns: ColumnDef<UserUsageData>[] = [
       <DataTableColumnHeader column={column} title="Total Requests" />
     ),
     cell: ({ row }: { row: Row<UserUsageData> }) => {
-      return <div className="ml-2">{row.original.totalRequestQuantity.toFixed(0)}</div>;
+      return <div className="ml-2">{Math.round(row.original.totalRequestQuantity).toLocaleString()}</div>;
     },
   },
   {
@@ -73,7 +73,7 @@ const userColumns: ColumnDef<UserUsageData>[] = [
     cell: ({ row }: { row: Row<UserUsageData> }) => {
       return (
         <div className="ml-2">
-          {row.original.totalRequestQuota === null ? "N/A" : row.original.totalRequestQuota.toFixed(0)}
+          {row.original.totalRequestQuota === null ? "N/A" : Math.round(row.original.totalRequestQuota).toLocaleString()}
         </div>
       )
     },

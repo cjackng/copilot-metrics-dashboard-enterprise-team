@@ -21,13 +21,13 @@ export const Stats = () => {
         title="Acceptance average"
         tip="How often users accept Copilot's code suggestions across all features (inline completions, chat, etc.). Calculated as: total accepted suggestions ÷ total suggestions × 100%, summed across all days in the selected period."
         description="Accepted ÷ suggested code overall"
-        value={isLoading ? "..." : acceptanceAverage.toFixed(0) + "%"}
+        value={isLoading ? "..." : Math.round(acceptanceAverage) + "%"}
       ></StatsCard>
       <StatsCard
         title="Active users"
         tip="Average number of users with any daily Copilot activity over the selected period. Calculated as: sum of daily active users ÷ number of days. Includes passive activity (e.g. receiving a suggestion) and engagement (e.g. accepting a suggestion or prompting chat)."
         description="Average daily active users"
-        value={isLoading ? "..." : averageActiveUsers.toFixed(0) + ""}
+        value={isLoading ? "..." : Math.round(averageActiveUsers).toLocaleString()}
       ></StatsCard>
       <StatsCard
         title="Lines added"
