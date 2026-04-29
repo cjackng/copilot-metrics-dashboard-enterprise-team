@@ -111,6 +111,10 @@ export interface CopilotUsageOutput {
   total_chats: number;
   total_accepted_chats: number;
   day: string;
+  /** Total lines of code added across all Copilot features (top-level loc_added_sum). */
+  total_lines_added: number;
+  /** Total lines of code deleted across all Copilot features (top-level loc_deleted_sum). */
+  total_lines_deleted: number;
 }
 
 export interface CopilotMetricsReportResponse {

@@ -8,15 +8,10 @@ import { format, parseISO, subDays } from "date-fns";
 
 import { proxy, useSnapshot } from "valtio";
 
-import { CopilotSeatsData } from "../common/models";
-import {
-  refreshSeatsData,
-} from "@/services/dashboard-actions";
 import { Member } from "@/services/enterprise-members-service";
 
 interface IProps extends PropsWithChildren {
   copilotUsages: CopilotUsageOutputResponse;
-  seatsData: CopilotSeatsData;
   memberTeamsData: Map<string, Member>;
   enterpriseTeams: EnterpriseTeam[];
   filter?: {
@@ -44,7 +39,6 @@ class DashboardState {
   public reportStartDay: string = "";
   public reportEndDay: string = "";
 
-  public seatsData: CopilotSeatsData = {} as CopilotSeatsData;
   public memberTeamsData: Map<string, Member> = new Map();
 
   private apiData: Map<string, CopilotUsageOutput[]> = new Map();
@@ -57,15 +51,8 @@ class DashboardState {
     organization?: string;
   } = {};
 
-  public get filteredSeatsData(): CopilotSeatsData {
-    // Return the server-filtered seats data directly
-    // The filtering is now done on the server side when team filters are applied
-    return this.seatsData;
-  }
-
   public initData(
     data: CopilotUsageOutputResponse,
-    seatsData: CopilotSeatsData,
     memberTeamsData: Map<string, Member>,
     enterpriseTeams: EnterpriseTeam[],
     filter?: {
@@ -80,7 +67,6 @@ class DashboardState {
     this.reportStartDay = data.report_start_day;
     this.reportEndDay = data.report_end_day;
     this.applyFilters();
-    this.seatsData = seatsData;
     this.memberTeamsData = memberTeamsData;
     this.teams = this.extractUniqueTeams(enterpriseTeams);
     // Store current filter for data refreshing
@@ -117,16 +103,6 @@ class DashboardState {
     this.isLoading = true;
 
     try {
-      // Refresh both metrics data and seats data in parallel
-      const [seatsResult] = await Promise.all([
-        refreshSeatsData({
-          date: this.currentFilter.endDate, // Use endDate for seats filtering
-          enterprise: this.currentFilter.enterprise,
-          organization: this.currentFilter.organization,
-          teams: selectedTeams,
-        }),
-      ]);
-
       if (selectedTeams.length > 0) {
         this.teamFilteredData = new Map();
         this.apiData.forEach((value, key) => {
@@ -140,14 +116,8 @@ class DashboardState {
         this.teamFilteredData = new Map(this.apiData);
       }
       this.applyFilters();
-
-      if (seatsResult.success && seatsResult.data) {
-        // Update the seats data
-        this.seatsData = seatsResult.data;
-      }
     } catch (error) {
       console.error("Failed to refresh data:", error);
-      // Could add error handling UI here
     } finally {
       this.isLoading = false;
     }
@@ -165,7 +135,7 @@ class DashboardState {
     this.hasPendingTeamChanges = false; // Reset pending changes
     this.applyFilters();
 
-    // Refresh both metrics and seats data from server (no URL changes)
+    // Refresh data from server (no URL changes)
     try {
       await this.refreshDataWithTeams([]);
     } catch (error) {
@@ -219,6 +189,8 @@ class DashboardState {
           code_completion_acceptances: 0,
           code_completion_lines_suggested: 0,
           code_completion_lines_accepted: 0,
+          total_lines_added: 0,
+          total_lines_deleted: 0,
         };
         
         items.forEach((item) => {
@@ -242,6 +214,8 @@ class DashboardState {
           merged.code_completion_acceptances! += item.code_completion_acceptances ?? 0;
           merged.code_completion_lines_suggested! += item.code_completion_lines_suggested ?? 0;
           merged.code_completion_lines_accepted! += item.code_completion_lines_accepted ?? 0;
+          merged.total_lines_added += item.total_lines_added ?? 0;
+          merged.total_lines_deleted += item.total_lines_deleted ?? 0;
           if (item.total_chat_generations !== undefined) {
             merged.total_chat_generations =
               (merged.total_chat_generations ?? 0) + item.total_chat_generations;
@@ -296,11 +270,10 @@ export const useDashboard = () => {
 export const DataProvider = ({
   children,
   copilotUsages,
-  seatsData,
   memberTeamsData,
   enterpriseTeams,
   filter,
 }: IProps) => {
-  dashboardStore.initData(copilotUsages, seatsData, memberTeamsData, enterpriseTeams, filter);
+  dashboardStore.initData(copilotUsages, memberTeamsData, enterpriseTeams, filter);
   return <>{children}</>;
 };

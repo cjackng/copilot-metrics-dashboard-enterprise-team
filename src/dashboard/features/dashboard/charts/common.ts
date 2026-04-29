@@ -69,17 +69,6 @@ export const computeActiveUserAverage = (
   return activeUsersSum / filteredData.length;
 };
 
-export const computeAdoptionRate = (seatsData: any) => {
-  if (!seatsData || !seatsData.total_seats || seatsData.total_seats === 0) {
-    return 0;
-  }
-  const adoptionRate =
-    (seatsData.total_active_seats /
-      seatsData.total_seats) *
-    100;
-  return adoptionRate;
-};
-
 export const computeCumulativeAcceptanceAverage = (
   filteredData: CopilotUsageOutput[]
 ) => {
@@ -197,3 +186,21 @@ export function computeCodeCompletionAcceptanceRate(
     };
   });
 }
+
+export const computeTotalLinesAdded = (
+  filteredData: CopilotUsageOutput[]
+): number => {
+  return filteredData.reduce(
+    (sum, item) => sum + (item.total_lines_added ?? 0),
+    0
+  );
+};
+
+export const computeTotalLinesDeleted = (
+  filteredData: CopilotUsageOutput[]
+): number => {
+  return filteredData.reduce(
+    (sum, item) => sum + (item.total_lines_deleted ?? 0),
+    0
+  );
+};

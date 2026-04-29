@@ -145,6 +145,8 @@ export const transformCopilotMetricsReportData = (
       code_completion_acceptances: codeCompletionAcceptances,
       code_completion_lines_suggested: codeCompletionLinesSuggested,
       code_completion_lines_accepted: codeCompletionLinesAccepted,
+      total_lines_added: item.loc_added_sum,
+      total_lines_deleted: item.loc_deleted_sum,
     };
     dataUserToUsage.set(item.user_login, [...(dataUserToUsage.get(item.user_login) || []), output]);
   });
