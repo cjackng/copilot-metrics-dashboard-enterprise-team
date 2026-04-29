@@ -1,11 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { ColumnDef, ColumnFiltersState, SortingState, VisibilityState, flexRender, getCoreRowModel, getFacetedRowModel, getFacetedUniqueValues, getFilteredRowModel, getSortedRowModel, useReactTable, Row, Table as ReactTable } from "@tanstack/react-table";
+import { ColumnDef, ColumnFiltersState, SortingState, VisibilityState, flexRender, getCoreRowModel, getFacetedRowModel, getFacetedUniqueValues, getFilteredRowModel, getSortedRowModel, useReactTable, Row, Table as ReactTable, FilterFnOption } from "@tanstack/react-table";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DataTableToolbar } from "./data-table-toolbar";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "./button";
+import { ColumnFilterType, numberRangeFilterFn, dateRangeFilterFn, multiSelectFilterFn } from "./data-table-column-filter";
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
@@ -62,9 +63,25 @@ export function DataTable<TData, TValue>({ columns, data, initialVisibleColumns,
         }
     }, [expandAll, data, getSubRows]);
 
+    // Auto-assign filterFn from meta.filterType when not already set
+    const enhancedColumns = React.useMemo(() => {
+        return columns.map((col) => {
+            if (col.filterFn) return col;
+            const filterType = (col.meta as { filterType?: ColumnFilterType })?.filterType;
+            if (!filterType) return col;
+            const filterFnMap: Record<ColumnFilterType, FilterFnOption<TData>> = {
+                text: "includesString",
+                number: numberRangeFilterFn as any,
+                date: dateRangeFilterFn as any,
+                multiSelect: multiSelectFilterFn as any,
+            };
+            return { ...col, filterFn: filterFnMap[filterType] };
+        });
+    }, [columns]);
+
     const table = useReactTable({
         data,
-        columns,
+        columns: enhancedColumns,
         state: {
             sorting,
             columnVisibility,

@@ -33,7 +33,7 @@ const userColumns: ColumnDef<UserUsageData>[] = [
   {
     accessorKey: "userDisplayName",
     id: "userDisplayName",
-    meta: { name: "Username" },
+    meta: { name: "Username", filterType: "text" as const },
     header: ({ column }: { column: Column<UserUsageData, unknown> }) => (
       <DataTableColumnHeader column={column} title="Username" />
     ),
@@ -44,7 +44,7 @@ const userColumns: ColumnDef<UserUsageData>[] = [
   {
     accessorKey: "user",
     id: "user",
-    meta: { name: "User ID" },
+    meta: { name: "User ID", filterType: "text" as const },
     header: ({ column }: { column: Column<UserUsageData, unknown> }) => (
       <DataTableColumnHeader column={column} title="User ID" />
     ),
@@ -55,7 +55,7 @@ const userColumns: ColumnDef<UserUsageData>[] = [
   {
     accessorKey: "totalRequestQuantity",
     id: "totalRequestQuantity",
-    meta: { name: "Total Requests" },
+    meta: { name: "Total Requests", filterType: "number" as const },
     header: ({ column }: { column: Column<UserUsageData, unknown> }) => (
       <DataTableColumnHeader column={column} title="Total Requests" />
     ),
@@ -66,7 +66,7 @@ const userColumns: ColumnDef<UserUsageData>[] = [
   {
     accessorKey: "totalRequestQuota",
     id: "totalRequestQuota",
-    meta: { name: "Request Quota" },
+    meta: { name: "Request Quota", filterType: "number" as const },
     header: ({ column }: { column: Column<UserUsageData, unknown> }) => (
       <DataTableColumnHeader column={column} title="Request Quota" />
     ),
@@ -81,7 +81,7 @@ const userColumns: ColumnDef<UserUsageData>[] = [
   {
     accessorKey: "team",
     id: "team",
-    meta: { name: "Team" },
+    meta: { name: "Team", filterType: "multiSelect" as const, isArrayColumn: true },
     header: ({ column }: { column: Column<UserUsageData, unknown> }) => (
       <DataTableColumnHeader column={column} title="Team" />
     ),
@@ -129,7 +129,6 @@ export const PremiumRequestsTable = () => {
           columns={userColumns} 
           data={userUsageData}
           enableExport
-          filters={[{ column: "team", label: "Team" }]}
           summaryField="totalRequestQuantity"
         />
       </CardContent>

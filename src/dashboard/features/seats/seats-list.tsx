@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { stringIsNullOrEmpty } from "@/utils/helpers";
 import { DataTable } from "@/components/ui/data-table";
 import { ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 
 interface SeatData {
@@ -31,43 +31,56 @@ function formatEditorName(editor: string): string {
     return editorName;
 }
 
-const arrayIncludes = (row: any, id: string, value: any[]) => {
-    return value.includes(row.getValue(id));
-};
-
-const stringIncludes = (row: any, id: string, value: string) => {
-    return row.getValue(id).includes(value);
+const formatDisplayDate = (isoStr: string): string => {
+    if (!isoStr || isoStr === "-") return "-";
+    try {
+        return format(parseISO(isoStr), "dd MMM yyyy");
+    } catch {
+        return isoStr;
+    }
 };
 
 const columns: ColumnDef<SeatData>[] = [
-    { accessorKey: "username", title: "Username", filter: stringIncludes },
-    { accessorKey: "userid", title: "User ID", filter: stringIncludes },
-    { accessorKey: "organization", title: "Organization", filter: arrayIncludes },
-    { accessorKey: "team", title: "Team", filter: arrayIncludes },
-    { accessorKey: "createdAt", title: "Create Date" },
-    { accessorKey: "updatedAt", title: "Update Date" },
-    { accessorKey: "lastActivityAt", title: "Last Activity Date" },
-    { accessorKey: "lastActivityEditor", title: "Last Activity Editor" },
-    { accessorKey: "planType", title: "Plan", filter: arrayIncludes },
-    { accessorKey: "pendingCancellationDate", title: "Pending Cancellation" }
+    { accessorKey: "username", title: "Username", meta: { name: "Username", filterType: "text" } },
+    { accessorKey: "userid", title: "User ID", meta: { name: "User ID", filterType: "text" } },
+    { accessorKey: "organization", title: "Organization", meta: { name: "Organization", filterType: "multiSelect" } },
+    { accessorKey: "team", title: "Team", meta: { name: "Team", filterType: "multiSelect" } },
+    { accessorKey: "createdAt", title: "Create Date", meta: { name: "Create Date", filterType: "date" }, cellFormat: formatDisplayDate },
+    { accessorKey: "updatedAt", title: "Update Date", meta: { name: "Update Date", filterType: "date" }, cellFormat: formatDisplayDate },
+    { accessorKey: "lastActivityAt", title: "Last Activity Date", meta: { name: "Last Activity Date", filterType: "date" }, cellFormat: formatDisplayDate },
+    { accessorKey: "lastActivityEditor", title: "Last Activity Editor", meta: { name: "Last Activity Editor", filterType: "text" } },
+    { accessorKey: "planType", title: "Plan", meta: { name: "Plan", filterType: "multiSelect" } },
+    { accessorKey: "pendingCancellationDate", title: "Pending Cancellation", meta: { name: "Pending Cancellation", filterType: "date" }, cellFormat: formatDisplayDate }
 ].map((col) => ({
     accessorKey: col.accessorKey,
     id: col.accessorKey,
-    meta: { name: col.title },
+    meta: col.meta,
     header: ({ column }) => (
         <DataTableColumnHeader
             column={column}
             title={col.title}
         />
     ),
-    cell: ({ row }) => <div className="ml-2">{row.getValue(col.accessorKey)}</div>,
-    filterFn: col.filter,
+    cell: ({ row }) => {
+        const value = row.getValue(col.accessorKey) as string;
+        const display = col.cellFormat ? col.cellFormat(value) : value;
+        return <div className="ml-2">{display}</div>;
+    },
 }));
 
 export const SeatsList = () => {
     const { seatsData, loginToDisplayNameMap } = useDashboard();
-    const hasOrganization = seatsData?.seats.some((seat) => seat.organization);
-    const hasTeam = seatsData?.seats.some((seat) => seat.assigning_team);
+
+    const toISODate = (date: Date | string | null | undefined): string => {
+        if (!date) return "-";
+        try {
+            const d = new Date(date);
+            return isNaN(d.getTime()) ? "-" : d.toISOString().slice(0, 10);
+        } catch {
+            return "-";
+        }
+    };
+
     return (
         <Card className="col-span-4">
             <ChartHeader
@@ -76,33 +89,24 @@ export const SeatsList = () => {
             />
             <CardContent>
                 <DataTable
-                    columns={columns.filter((col) => col.id !== "organization" || hasOrganization)}
+                    columns={columns.filter((col) => col.id !== "organization")}
                     data={(seatsData?.seats ?? []).map((seat) => ({
                         username: loginToDisplayNameMap[seat.assignee.login] || "-",
                         userid: seat.assignee.login,
                         organization: seat.organization?.login,
                         team: seat.assigning_team?.name,
-                        createdAt: format(new Date(seat.created_at), "dd MMM yyyy"),
-                        updatedAt: format(new Date(seat.updated_at), "dd MMM yyyy"),
-                        lastActivityAt: seat.last_activity_at ? format(new Date(seat.last_activity_at), "dd MMM yyyy") : "-",
+                        createdAt: toISODate(seat.created_at),
+                        updatedAt: toISODate(seat.updated_at),
+                        lastActivityAt: seat.last_activity_at ? toISODate(seat.last_activity_at) : "-",
                         lastActivityEditor: formatEditorName(seat.last_activity_editor),
                         planType: seat.plan_type,
-                        pendingCancellationDate: seat.pending_cancellation_date ? format(new Date(seat.pending_cancellation_date), "dd MMM yyyy") : "N/A",
+                        pendingCancellationDate: seat.pending_cancellation_date ? toISODate(seat.pending_cancellation_date) : "-",
                     }))}
                     initialVisibleColumns={{
                         updatedAt: false,
                         planType: false,
                         pendingCancellationDate: false,
                     }}
-                    search={{
-                        column: "user",
-                        placeholder: "Filter seats...",
-                    }}
-                    filters={[
-                        ...(hasOrganization ? [{ column: "organization", label: "Organizations" }] : []), 
-                        ...(hasTeam ? [{ column: "team", label: "Team" }] : []),
-                        { column: "planType", label: "Plan Type" }
-                    ]}
                     enableExport
                 />
             </CardContent>
