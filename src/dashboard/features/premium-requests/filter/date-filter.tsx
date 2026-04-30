@@ -62,23 +62,21 @@ export const DateFilter = ({ limited = false, disabled = false }: DateFilterProp
       router.push(`?${params.toString()}`, {
         scroll: false,
       });
-      router.refresh();
       setIsOpen(false);
     }
   };
 
   const resetFilters = () => {    
+    setDate(undefined);
     router.push(`/premium-requests`, {
       scroll: false,
     });
-    router.refresh();
     setIsOpen(false);
   };
 
   const getDisplayText = () => {
-    const dateRange = getInitialDateRange();
-    if (dateRange?.from && dateRange?.to) {
-      return `${format(dateRange.from, "dd MMM yyyy")} - ${format(dateRange.to, "dd MMM yyyy")}`;
+    if (date?.from && date?.to) {
+      return `${format(date.from, "dd MMM yyyy")} - ${format(date.to, "dd MMM yyyy")}`;
     }
     return "Pick a period";
   };
