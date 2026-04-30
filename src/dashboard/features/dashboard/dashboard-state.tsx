@@ -84,6 +84,29 @@ class DashboardState {
     }
   }
 
+  public selectAllTeams(): void {
+    this.teams.forEach((item) => (item.isSelected = true));
+    this.applyFilters();
+    this.hasPendingTeamChanges = true;
+  }
+
+  public clearAllTeams(): void {
+    this.teams.forEach((item) => (item.isSelected = false));
+    this.applyFilters();
+    this.hasPendingTeamChanges = true;
+  }
+
+  public batchFilterTeams(names: string[], selected: boolean): void {
+    const nameSet = new Set(names);
+    this.teams.forEach((item) => {
+      if (nameSet.has(item.value)) {
+        item.isSelected = selected;
+      }
+    });
+    this.applyFilters();
+    this.hasPendingTeamChanges = true;
+  }
+
   public async refreshTeamDataIfNeeded(): Promise<void> {
     if (this.hasPendingTeamChanges) {
       // Get selected teams for server request
@@ -185,6 +208,7 @@ class DashboardState {
           chat_requests_edit: 0,
           chat_requests_agent: 0,
           chat_requests_custom: 0,
+          chat_requests_plan: 0,
           code_completion_suggestions: 0,
           code_completion_acceptances: 0,
           code_completion_lines_suggested: 0,
@@ -210,6 +234,7 @@ class DashboardState {
           merged.chat_requests_edit! += item.chat_requests_edit ?? 0;
           merged.chat_requests_agent! += item.chat_requests_agent ?? 0;
           merged.chat_requests_custom! += item.chat_requests_custom ?? 0;
+          merged.chat_requests_plan! += item.chat_requests_plan ?? 0;
           merged.code_completion_suggestions! += item.code_completion_suggestions ?? 0;
           merged.code_completion_acceptances! += item.code_completion_acceptances ?? 0;
           merged.code_completion_lines_suggested! += item.code_completion_lines_suggested ?? 0;

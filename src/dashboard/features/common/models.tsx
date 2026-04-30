@@ -102,6 +102,7 @@ export interface CopilotUsageOutput {
   chat_requests_edit?: number;
   chat_requests_agent?: number;
   chat_requests_custom?: number;
+  chat_requests_plan?: number;
   /** Code completion (inline suggestion) activity counts, scoped to the code_completion feature. */
   code_completion_suggestions?: number;
   code_completion_acceptances?: number;

@@ -20,7 +20,7 @@ export const Stats = () => {
       <StatsCard
         title="Acceptance average"
         tip="How often users accept Copilot's code suggestions across all features (inline completions, chat, etc.). Calculated as: total accepted suggestions ÷ total suggestions × 100%, summed across all days in the selected period."
-        description="Accepted ÷ suggested code overall"
+        description="Code suggestions acceptance rate"
         value={isLoading ? "..." : Math.round(acceptanceAverage) + "%"}
       ></StatsCard>
       <StatsCard

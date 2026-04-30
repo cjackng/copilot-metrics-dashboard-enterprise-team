@@ -14,6 +14,7 @@ export function Filters() {
         name={"Team"}
         allItems={allTeams}
         onSelect={(e) => dashboardStore.filterTeam(e)}
+        onBatchSelect={(names, selected) => dashboardStore.batchFilterTeams(names, selected)}
         onClose={() => dashboardStore.refreshTeamDataIfNeeded()}
       />
       <Button

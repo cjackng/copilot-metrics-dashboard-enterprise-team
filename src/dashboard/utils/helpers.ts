@@ -85,6 +85,7 @@ export const transformCopilotMetricsReportData = (
     let chatRequestsEdit = 0;
     let chatRequestsAgent = 0;
     let chatRequestsCustom = 0;
+    let chatRequestsPlan = 0;
     chatFeatures.forEach((featureData) => {
       const f = featureData.feature;
       if (f.includes("chat")) {
@@ -118,6 +119,8 @@ export const transformCopilotMetricsReportData = (
           chatRequestsCustom += count;
         } else if (f === "chat_panel_ask_mode") {
           chatRequestsAsk += count;
+        } else if (f === "chat_panel_plan_mode") {
+          chatRequestsPlan += count;
         }
       }
     });
@@ -141,6 +144,7 @@ export const transformCopilotMetricsReportData = (
       chat_requests_edit: chatRequestsEdit,
       chat_requests_agent: chatRequestsAgent,
       chat_requests_custom: chatRequestsCustom,
+      chat_requests_plan: chatRequestsPlan,
       code_completion_suggestions: codeCompletionSuggestions,
       code_completion_acceptances: codeCompletionAcceptances,
       code_completion_lines_suggested: codeCompletionLinesSuggested,

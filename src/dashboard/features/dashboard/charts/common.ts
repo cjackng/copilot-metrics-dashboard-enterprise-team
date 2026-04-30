@@ -95,8 +95,8 @@ export function codeCompletionSuggestionsAndAcceptances(
   filteredData: CopilotUsageOutput[]
 ): codeCompletionSuggestionAcceptanceData[] {
   return filteredData.map((item) => ({
-    suggestedCompletions: item.code_completion_lines_suggested ?? 0,
-    acceptedCompletions: item.code_completion_lines_accepted ?? 0,
+    suggestedCompletions: item.code_completion_suggestions ?? 0,
+    acceptedCompletions: item.code_completion_acceptances ?? 0,
     timeFrameDisplay: formatDate(item.day),
   }));
 }
@@ -152,6 +152,7 @@ export interface RequestsPerChatModeData {
   edit: number;
   agent: number;
   custom: number;
+  plan: number;
   timeFrameDisplay: string;
 }
 
@@ -164,6 +165,7 @@ export function getRequestsPerChatMode(
     edit: item.chat_requests_edit ?? 0,
     agent: item.chat_requests_agent ?? 0,
     custom: item.chat_requests_custom ?? 0,
+    plan: item.chat_requests_plan ?? 0,
     timeFrameDisplay: formatDate(item.day),
   }));
 }

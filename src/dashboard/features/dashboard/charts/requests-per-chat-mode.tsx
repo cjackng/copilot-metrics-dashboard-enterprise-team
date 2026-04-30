@@ -24,7 +24,6 @@ export const RequestsPerChatMode = () => {
       <ChartHeader
         title="Requests per chat mode"
         description="User-initiated chat requests across all modes."
-        tip="Requests are counted from user_initiated_interaction_count per feature, excluding code completions. Modes are inferred from the feature name returned by the GitHub Copilot Metrics API."
       />
       <CardContent>
         <ChartContainer config={chartConfig} className="h-80 w-full">
@@ -85,6 +84,14 @@ export const RequestsPerChatMode = () => {
               fillOpacity={0.2}
               stackId="chat-modes"
             />
+            <Area
+              dataKey={chartConfig.plan.key}
+              type="linear"
+              fill="hsl(var(--chart-6))"
+              stroke="hsl(var(--chart-6))"
+              fillOpacity={0.2}
+              stackId="chat-modes"
+            />
             <ChartLegend content={<ChartLegendContent />} />
           </AreaChart>
         </ChartContainer>
@@ -93,7 +100,7 @@ export const RequestsPerChatMode = () => {
   );
 };
 
-const chartConfig: Record<DataKey, { label: string; key: DataKey }> = {
+const chartConfig: Record<DataKey, { label: string; key: DataKey; color?: string }> = {
   ask: {
     label: "Ask",
     key: "ask",
@@ -113,6 +120,10 @@ const chartConfig: Record<DataKey, { label: string; key: DataKey }> = {
   custom: {
     label: "Custom",
     key: "custom",
+  },
+  plan: {
+    label: "Plan",
+    key: "plan",
   },
   timeFrameDisplay: {
     label: "Time frame display",
