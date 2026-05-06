@@ -1,5 +1,5 @@
 "use client";
-import { useDashboard } from "./seats-state";
+import { useSeats, seatsStore } from "./seats-state";
 import { ChartHeader } from "@/features/common/chart-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { stringIsNullOrEmpty } from "@/utils/helpers";
@@ -8,26 +8,12 @@ import { AgGridMultiSelectFilter } from "@/components/ui/ag-grid-multi-select-fi
 import { ColDef, ValueFormatterParams } from "ag-grid-community";
 import { format } from "date-fns";
 import { useMemo } from "react";
+import { SeatSnapshotRow } from "@/services/copilot-seat-service";
 
-interface SeatData {
-    username: string;
-    userid: string;
-    organization: string | null;
-    team: string | null;
-    createdAt: string;
-    updatedAt: string;
-    lastActivityAt: string;
-    lastActivityEditor: string;
-    planType: string;
-    pendingCancellationDate: string;
-}
-
-function formatEditorName(editor: string): string {
-    if (stringIsNullOrEmpty(editor)) {
-        return editor;
-    }
+function formatEditorName(editor: string | null): string {
+    if (!editor || stringIsNullOrEmpty(editor)) return "-";
     const editorInfo = editor.split('/');
-    return `${editorInfo[0]} (${editorInfo[1]})`;
+    return editorInfo.length >= 2 ? `${editorInfo[0]} (${editorInfo[1]})` : editor;
 }
 
 const formatDateValue = (params: ValueFormatterParams): string => {
@@ -41,68 +27,64 @@ const formatDateValue = (params: ValueFormatterParams): string => {
     }
 };
 
-const toISODate = (date: Date | string | null | undefined): string => {
-    if (!date) return "-";
-    try {
-        const d = new Date(date);
-        return isNaN(d.getTime()) ? "-" : d.toISOString().slice(0, 10);
-    } catch {
-        return "-";
-    }
-};
-
 export const SeatsList = () => {
-    const { seatsData, loginToDisplayNameMap } = useDashboard();
-    const hasOrganization = seatsData?.seats.some((seat) => seat.organization);
-    const hasTeam = seatsData?.seats.some((seat) => seat.assigning_team);
+    const { filteredSeats, seats } = useSeats();
 
-    const columnDefs = useMemo<ColDef<SeatData>[]>(() => [
-        { field: "username", headerName: "Username", filter: "agTextColumnFilter" },
-        { field: "userid", headerName: "User ID", filter: "agTextColumnFilter" },
+    const hasOrganization = seats.some((s) => s.organization);
+    const hasTeam = seats.some((s) => s.team);
+
+    // Derive available teams from the page-filtered seats so the column filter options stay in sync
+    const availableTeams = useMemo(() => {
+        const set = new Set<string>();
+        for (const seat of filteredSeats) {
+            if (seat.team && seat.team !== "null" && seat.team !== "undefined") set.add(seat.team);
+        }
+        return Array.from(set).sort();
+    }, [filteredSeats]);
+
+    const columnDefs = useMemo<ColDef<SeatSnapshotRow>[]>(() => [
+        {
+            field: "display_username",
+            headerName: "Username",
+            filter: "agTextColumnFilter",
+            valueFormatter: (p: ValueFormatterParams) => p.value ?? "-",
+        },
+        {
+            field: "username",
+            headerName: "User ID",
+            filter: "agTextColumnFilter",
+        },
         ...(hasOrganization ? [{
-            field: "organization" as keyof SeatData,
+            field: "organization" as keyof SeatSnapshotRow,
             headerName: "Organization",
             filter: AgGridMultiSelectFilter,
         }] : []),
         ...(hasTeam ? [{
-            field: "team" as keyof SeatData,
+            field: "team" as keyof SeatSnapshotRow,
             headerName: "Team",
             filter: AgGridMultiSelectFilter,
+            filterParams: { options: availableTeams },
         }] : []),
-        { field: "createdAt", headerName: "Create Date", filter: "agDateColumnFilter", valueFormatter: formatDateValue },
-        { field: "updatedAt", headerName: "Update Date", filter: "agDateColumnFilter", valueFormatter: formatDateValue, hide: true },
-        { field: "lastActivityAt", headerName: "Last Activity Date", filter: "agDateColumnFilter", valueFormatter: formatDateValue },
-        { field: "lastActivityEditor", headerName: "Last Activity Editor", filter: "agTextColumnFilter" },
-        { field: "planType", headerName: "Plan", filter: AgGridMultiSelectFilter, hide: true },
-        { field: "pendingCancellationDate", headerName: "Pending Cancellation", filter: "agDateColumnFilter", valueFormatter: formatDateValue, hide: true },
-    ], [hasOrganization, hasTeam]);
-
-    const rowData = useMemo(() =>
-        (seatsData?.seats ?? []).map((seat) => ({
-            username: loginToDisplayNameMap[seat.assignee.login] || "-",
-            userid: seat.assignee.login,
-            organization: seat.organization?.login ?? null,
-            team: seat.assigning_team?.name ?? null,
-            createdAt: toISODate(seat.created_at),
-            updatedAt: toISODate(seat.updated_at),
-            lastActivityAt: seat.last_activity_at ? toISODate(seat.last_activity_at) : "-",
-            lastActivityEditor: formatEditorName(seat.last_activity_editor),
-            planType: seat.plan_type,
-            pendingCancellationDate: seat.pending_cancellation_date ? toISODate(seat.pending_cancellation_date) : "-",
-        })),
-        [seatsData, loginToDisplayNameMap]
-    );
+        { field: "created_at", headerName: "Create Date", filter: "agDateColumnFilter", valueFormatter: formatDateValue },
+        { field: "updated_at", headerName: "Update Date", filter: "agDateColumnFilter", valueFormatter: formatDateValue, hide: true },
+        { field: "last_activity_at", headerName: "Last Activity Date", filter: "agDateColumnFilter", valueFormatter: formatDateValue },
+        {
+            field: "last_activity_editor",
+            headerName: "Last Activity Editor",
+            filter: "agTextColumnFilter",
+            valueFormatter: (p: ValueFormatterParams) => formatEditorName(p.value),
+        },
+        { field: "plan_type", headerName: "Plan", filter: AgGridMultiSelectFilter, hide: true },
+        { field: "pending_cancellation_date", headerName: "Pending Cancellation", filter: "agDateColumnFilter", valueFormatter: formatDateValue, hide: true },
+    ], [hasOrganization, hasTeam, availableTeams]);
 
     return (
         <Card className="col-span-4">
-            <ChartHeader
-                title="Assigned Seats"
-                description=""
-            />
+            <ChartHeader title="Assigned Seats" description="" />
             <CardContent>
-                <AgGridTable<SeatData>
+                <AgGridTable<SeatSnapshotRow>
                     columnDefs={columnDefs}
-                    rowData={rowData}
+                    rowData={filteredSeats as SeatSnapshotRow[]}
                     enableExport
                     enableSearch
                     enableColumnToggle
@@ -112,3 +94,4 @@ export const SeatsList = () => {
         </Card>
     );
 };
+

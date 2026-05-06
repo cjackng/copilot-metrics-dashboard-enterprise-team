@@ -1,13 +1,11 @@
 import { PageHeader, PageTitle } from "../page-header/page-header";
+import { SeatsHeaderFilter } from "./filter/seats-header-filter";
 
-interface HeaderProps {
-  title: string;
-}
-
-export const Header = ({ title }: HeaderProps) => {
+export const Header = ({ title }: { title: string }) => {
   return (
     <PageHeader>
       <PageTitle>{title}</PageTitle>
+      <SeatsHeaderFilter />
     </PageHeader>
   );
 };
