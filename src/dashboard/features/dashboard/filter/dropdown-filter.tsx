@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { Sliders, Square, SquareCheck, SquareMinus, Loader2 } from "lucide-react";
-import { DropdownFilterItem, useDashboard } from "../dashboard-state";
+import { DropdownFilterItem } from "../dashboard-state";
 
 interface DropdownFilterProps {
   name: string;
@@ -26,11 +26,11 @@ interface DropdownFilterProps {
   onBatchSelect?: (names: string[], selected: boolean) => void;
   onClose?: () => void;
   allItems: DropdownFilterItem[];
+  isLoading?: boolean;
 }
 
 export function DropdownFilter(props: DropdownFilterProps) {
-  const { name, onSelect, onBatchSelect, onClose, allItems } = props;
-  const { isLoading } = useDashboard();
+  const { name, onSelect, onBatchSelect, onClose, allItems, isLoading = false } = props;
   const [searchText, setSearchText] = useState("");
 
   const selectedCount = allItems.filter((x) => x.isSelected).length;

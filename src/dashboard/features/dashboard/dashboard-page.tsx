@@ -10,21 +10,33 @@ import { CodeCompletions } from "./charts/code-completions";
 import { DataProvider } from "./dashboard-state";
 
 import { Header } from "./header";
-import { getCopilotMetrics, IFilter as MetricsFilter } from "@/services/copilot-metrics-service";
+import { getCopilotMetrics, getMetricsLastUpdated, IFilter as MetricsFilter } from "@/services/copilot-metrics-service";
 import { getAllEnterpriseMembersLookup } from "@/services/enterprise-members-service";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 
 export interface IProps {
   searchParams: MetricsFilter;
 }
 
 export default async function Dashboard(props: IProps) {
-  const metricsFilter = props.searchParams;
+  const today = new Date();
+  const startDate = props.searchParams.startDate
+    ? String(props.searchParams.startDate)
+    : format(startOfMonth(today), "yyyy-MM-dd");
+  const endDate = props.searchParams.endDate
+    ? String(props.searchParams.endDate)
+    : format(endOfMonth(today), "yyyy-MM-dd");
+
+  const metricsFilter = { ...props.searchParams, startDate, endDate };
 
   const metricsPromise = getCopilotMetrics(metricsFilter);
   const memberTeamsPromise = getAllEnterpriseMembersLookup();
-  const [metrics, membersToTeams] = await Promise.all([
+  const lastUpdatedPromise = getMetricsLastUpdated();
+
+  const [metrics, membersToTeams, lastUpdated] = await Promise.all([
     metricsPromise,
     memberTeamsPromise,
+    lastUpdatedPromise,
   ]);
 
   if (metrics.status !== "OK") {
@@ -32,25 +44,26 @@ export default async function Dashboard(props: IProps) {
   }
 
   const enterpriseTeams = membersToTeams.teams;
+  const lastUpdatedTime = lastUpdated ? lastUpdated.toISOString() : null;
 
   return (
     <DataProvider
       copilotUsages={metrics.response}
       memberTeamsData={membersToTeams.memberMap}
       enterpriseTeams={enterpriseTeams}
+      lastUpdatedTime={lastUpdatedTime}
       filter={{
-        startDate: props.searchParams.startDate,
-        endDate: props.searchParams.endDate,
+        startDate,
+        endDate,
         enterprise: props.searchParams.enterprise,
         organization: props.searchParams.organization,
       }}
     >
-      <main className="flex flex-1 flex-col gap-4 md:gap-8 pb-8">
+      <main className="flex flex-1 flex-col gap-4 md:gap-4 pb-8">
         <Header />
         <div className="mx-auto w-full max-w-6xl container">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <Stats />
-
             <ActiveUsers />
             <AcceptanceRate />
             <ChatAcceptanceRate />

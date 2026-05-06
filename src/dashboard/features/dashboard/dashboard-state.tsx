@@ -14,9 +14,10 @@ interface IProps extends PropsWithChildren {
   copilotUsages: CopilotUsageOutputResponse;
   memberTeamsData: Map<string, Member>;
   enterpriseTeams: EnterpriseTeam[];
+  lastUpdatedTime?: string | null;
   filter?: {
-    startDate?: Date;
-    endDate?: Date;
+    startDate?: Date | string;
+    endDate?: Date | string;
     date?: string;
     enterprise?: string;
     organization?: string;
@@ -36,8 +37,8 @@ class DashboardState {
   public hideWeekends: boolean = false;
   public days: number = 28;
   public isLoading: boolean = false;
-  public reportStartDay: string = "";
-  public reportEndDay: string = "";
+  public lastUpdatedTime: string | null = null;
+  public isDateRangeMode: boolean = false;
 
   public memberTeamsData: Map<string, Member> = new Map();
 
@@ -45,8 +46,8 @@ class DashboardState {
   private teamFilteredData: Map<string, CopilotUsageOutput[]> = new Map();
   private hasPendingTeamChanges: boolean = false; // Track if teams have changed
   private currentFilter: {
-    startDate?: Date;
-    endDate?: Date;
+    startDate?: Date | string;
+    endDate?: Date | string;
     enterprise?: string;
     organization?: string;
   } = {};
@@ -55,21 +56,21 @@ class DashboardState {
     data: CopilotUsageOutputResponse,
     memberTeamsData: Map<string, Member>,
     enterpriseTeams: EnterpriseTeam[],
+    lastUpdatedTime?: string | null,
     filter?: {
-      startDate?: Date;
-      endDate?: Date;
+      startDate?: Date | string;
+      endDate?: Date | string;
       enterprise?: string;
       organization?: string;
     }
   ): void {
     this.apiData = new Map(data.copilotUsages);
     this.teamFilteredData = new Map(data.copilotUsages);
-    this.reportStartDay = data.report_start_day;
-    this.reportEndDay = data.report_end_day;
+    this.lastUpdatedTime = lastUpdatedTime ?? null;
+    this.isDateRangeMode = !!(filter?.startDate && filter?.endDate);
     this.applyFilters();
     this.memberTeamsData = memberTeamsData;
     this.teams = this.extractUniqueTeams(enterpriseTeams);
-    // Store current filter for data refreshing
     if (filter) {
       this.currentFilter = filter;
     }
@@ -266,12 +267,9 @@ class DashboardState {
   private filterData(hideWeekends: boolean): Map<string, CopilotUsageOutput[]> {
     const result = new Map<string, CopilotUsageOutput[]>();
 
-    const endDate = this.reportEndDay !== "" ? parseISO(this.reportEndDay) : new Date();
-    const cutoffStr = format(subDays(endDate, this.days), "yyyy-MM-dd");
-
     this.teamFilteredData.forEach((userItems, user) => {
-      let items = userItems.filter((item) => item.day >= cutoffStr);
-
+      let items: CopilotUsageOutput[] = [...userItems];
+      
       if (hideWeekends) {
         items = items.filter((item) => {
           const day = new Date(item.day).getDay();
@@ -297,8 +295,9 @@ export const DataProvider = ({
   copilotUsages,
   memberTeamsData,
   enterpriseTeams,
+  lastUpdatedTime,
   filter,
 }: IProps) => {
-  dashboardStore.initData(copilotUsages, memberTeamsData, enterpriseTeams, filter);
+  dashboardStore.initData(copilotUsages, memberTeamsData, enterpriseTeams, lastUpdatedTime, filter);
   return <>{children}</>;
 };

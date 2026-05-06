@@ -1,6 +1,7 @@
+"use client";
+
 import { PageHeader, PageTitle } from "../page-header/page-header";
 import { WeekendFilter } from "./filter/weekend-filter";
-import { DaysFilter } from "./filter/days-filter";
 import { Filters } from "./filter/header-filter";
 
 export const Header = () => {
@@ -11,7 +12,6 @@ export const Header = () => {
         <Filters />
         <div className="flex gap-2">
           <WeekendFilter />
-          <DaysFilter />
         </div>
       </div>
     </PageHeader>
