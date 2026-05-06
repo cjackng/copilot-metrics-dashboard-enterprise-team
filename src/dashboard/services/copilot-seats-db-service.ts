@@ -159,19 +159,25 @@ class CopilotSeatsDbService {
       ),
     ]);
 
+    const toDateOnly = (v: unknown): string | null => {
+      if (!v) return null;
+      try {
+        const d = new Date(v as string);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      } catch { return null; }
+    };
+
     const seats: SeatSnapshotRow[] = seatsResult.rows.map((r) => ({
       username: r.username,
       display_username: r.display_username ?? null,
       organization: r.organization ?? null,
       team: r.team ?? null,
       plan_type: r.plan_type ?? null,
-      created_at: r.created_at ? new Date(r.created_at).toISOString() : null,
-      updated_at: r.updated_at ? new Date(r.updated_at).toISOString() : null,
-      last_activity_at: r.last_activity_at ? new Date(r.last_activity_at).toISOString() : null,
+      created_at: toDateOnly(r.created_at),
+      updated_at: toDateOnly(r.updated_at),
+      last_activity_at: toDateOnly(r.last_activity_at),
       last_activity_editor: r.last_activity_editor ?? null,
-      pending_cancellation_date: r.pending_cancellation_date
-        ? new Date(r.pending_cancellation_date).toISOString().slice(0, 10)
-        : null,
+      pending_cancellation_date: toDateOnly(r.pending_cancellation_date),
     }));
 
     const thirtyDaysBeforeDate = new Date(date);

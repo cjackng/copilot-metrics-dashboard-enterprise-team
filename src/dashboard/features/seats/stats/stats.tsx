@@ -21,7 +21,7 @@ export const Stats = () => {
   const isStaleSnapshot = snapshot_date && selectedDate && snapshot_date !== selectedDate;
 
   return (
-    <div className="col-span-4 flex flex-col gap-2">
+    <div className="col-span-4 flex flex-col gap-4">
       {formattedLastUpdated && (
         <p className="text-xs text-muted-foreground text-right">
           Data last updated: {formattedLastUpdated}

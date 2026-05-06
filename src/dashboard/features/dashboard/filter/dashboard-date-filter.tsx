@@ -3,15 +3,10 @@
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { format } from "date-fns";
 import * as React from "react";
-import { DateRange } from "react-day-picker";
+import { DateRange as RdrDateRange, RangeKeyDict } from "react-date-range";
 import { parseDate } from "@/utils/helpers";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -19,84 +14,86 @@ interface DateFilterProps {
   resetPath?: string;
 }
 
+interface RangeState {
+  startDate: Date;
+  endDate: Date;
+  key: string;
+}
+
 export const DashboardDateFilter = ({ resetPath = "/" }: DateFilterProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  const getInitialDateRange = (): DateRange | undefined => {
-    const startDateParam = searchParams.get("startDate");
-    const endDateParam = searchParams.get("endDate");
-    if (startDateParam && endDateParam) {
-      const startDate = parseDate(startDateParam);
-      const endDate = parseDate(endDateParam);
-      if (startDate && endDate) return { from: startDate, to: endDate };
-    }
-    return undefined;
-  };
-
-  const [date, setDate] = React.useState<DateRange | undefined>(getInitialDateRange);
   const [isOpen, setIsOpen] = React.useState(false);
 
+  const buildRange = (): RangeState => {
+    const start = parseDate(searchParams.get("startDate")) ?? new Date();
+    const end = parseDate(searchParams.get("endDate")) ?? new Date();
+    return { startDate: start, endDate: end, key: "selection" };
+  };
+
+  const [range, setRange] = React.useState<RangeState>(buildRange);
+
   React.useEffect(() => {
-    setDate(getInitialDateRange());
+    setRange(buildRange());
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const applyFilters = () => {
-    if (date?.from && date?.to) {
+  const handleChange = (item: RangeKeyDict) => {
+    const sel = item.selection as RangeState;
+    setRange(sel);
+    // Auto-apply and close once both endpoints differ (complete range selected)
+    if (
+      sel.startDate &&
+      sel.endDate &&
+      sel.startDate.getTime() !== sel.endDate.getTime()
+    ) {
       const params = new URLSearchParams();
-      params.set("startDate", format(date.from, "yyyy-MM-dd"));
-      params.set("endDate", format(date.to, "yyyy-MM-dd"));
+      params.set("startDate", format(sel.startDate, "yyyy-MM-dd"));
+      params.set("endDate", format(sel.endDate, "yyyy-MM-dd"));
       router.push(`?${params.toString()}`, { scroll: false });
       setIsOpen(false);
     }
   };
 
-  const resetFilters = () => {
-    setDate(undefined);
-    router.push(resetPath, { scroll: false });
-    setIsOpen(false);
-  };
-
   const getDisplayText = () => {
-    if (date?.from && date?.to) {
-      return `${format(date.from, "dd MMM yyyy")} – ${format(date.to, "dd MMM yyyy")}`;
+    const startParam = searchParams.get("startDate");
+    const endParam = searchParams.get("endDate");
+    if (startParam && endParam) {
+      const s = parseDate(startParam);
+      const e = parseDate(endParam);
+      if (s && e) return `${format(s, "dd MMM yyyy")} – ${format(e, "dd MMM yyyy")}`;
     }
     return "Pick a period";
   };
 
+  const hasSelection = searchParams.has("startDate");
+
   return (
-    <div className={cn("grid gap-2")}>
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            id="dashboard-date"
-            variant={"outline"}
-            className={cn(
-              "justify-start text-left font-normal",
-              !date && "text-muted-foreground",
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {getDisplayText()}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 flex gap-2 flex-col" align="start">
-          <Calendar
-            initialFocus
-            mode="range"
-            defaultMonth={date?.from}
-            selected={date}
-            onSelect={setDate}
-            numberOfMonths={2}
-          />
-          <div className="flex justify-between m-2 gap-2">
-            <Button onClick={resetFilters} variant="outline">
-              Reset
-            </Button>
-            <Button onClick={applyFilters}>Apply</Button>
-          </div>
-        </PopoverContent>
-      </Popover>
-    </div>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          id="dashboard-date"
+          variant={"outline"}
+          className={cn(
+            "justify-start text-left font-normal",
+            !hasSelection && "text-muted-foreground",
+          )}
+        >
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {getDisplayText()}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <RdrDateRange
+          ranges={[range]}
+          onChange={handleChange}
+          moveRangeOnFirstSelection={false}
+          months={2}
+          direction="horizontal"
+          showDateDisplay={false}
+          maxDate={new Date()}
+        />
+      </PopoverContent>
+    </Popover>
   );
 };

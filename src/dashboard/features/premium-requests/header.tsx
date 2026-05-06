@@ -4,6 +4,7 @@ import { PageHeader, PageTitle } from "../page-header/page-header";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eraser } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import { DashboardMonthFilter } from "@/features/dashboard/filter/dashboard-month-filter";
 import { DashboardDateFilter } from "@/features/dashboard/filter/dashboard-date-filter";
 import { DropdownFilter } from "@/features/dashboard/filter/dropdown-filter";
@@ -14,9 +15,16 @@ export const Header = () => {
   const searchParams = useSearchParams();
   const { teams } = useDashboard();
 
-  const hasDateFilter = searchParams.has("startDate");
+  const today = new Date();
+  const defaultStart = format(startOfMonth(today), "yyyy-MM-dd");
+  const defaultEnd = format(endOfMonth(today), "yyyy-MM-dd");
+
+  const startDate = searchParams.get("startDate") ?? "";
+  const endDate = searchParams.get("endDate") ?? "";
+  const isDefaultDates = startDate === defaultStart && endDate === defaultEnd;
+
   const hasTeamFilter = teams.some((t) => t.isSelected);
-  const isFilterActive = hasDateFilter || hasTeamFilter;
+  const isFilterActive = !isDefaultDates || hasTeamFilter;
 
   const handleReset = () => {
     dashboardStore.resetTeamFilters();

@@ -144,7 +144,9 @@ class CopilotMetricsDbService {
     );
     return result.rows.map((row) => ({
       ...row,
-      day: row.day instanceof Date ? row.day.toISOString().slice(0, 10) : String(row.day),
+      day: row.day instanceof Date
+        ? `${row.day.getFullYear()}-${String(row.day.getMonth() + 1).padStart(2, "0")}-${String(row.day.getDate()).padStart(2, "0")}`
+        : String(row.day),
       totals_by_ide: row.totals_by_ide ?? [],
       totals_by_feature: row.totals_by_feature ?? [],
       totals_by_language_feature: row.totals_by_language_feature ?? [],
