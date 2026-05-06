@@ -5,6 +5,7 @@ import { CopilotSeatsData } from "@/features/common/models";
 import { proxy, useSnapshot } from "valtio";
 import { PremiumRequestUsage } from '@/features/common/models';
 import { UserUsageData } from "@/features/common/models";
+import { DropdownFilterItem } from "@/features/dashboard/dashboard-state";
 
 interface IProps extends PropsWithChildren {
   premiumRequestUsages: PremiumRequestUsage[];
@@ -15,15 +16,14 @@ interface IProps extends PropsWithChildren {
   isCrossMonthRange: boolean;
 }
 
-export interface DropdownFilterItem {
-  value: string;
-  isSelected: boolean;
-}
+export type { DropdownFilterItem };
 
 class PremiumRequestsState {
   public seatsData: CopilotSeatsData = {} as CopilotSeatsData;
   public premiumRequestUsages: PremiumRequestUsage[] = [];
   public userUsageData: UserUsageData[] = [];
+  public filteredUserUsageData: UserUsageData[] = [];
+  public teams: DropdownFilterItem[] = [];
   public startDate: string = "";
   public endDate: string = "";
   public selectedMonth: string = "";
@@ -41,6 +41,8 @@ class PremiumRequestsState {
     this.latestUpdateTime = latestUpdateTime;
     this.selectedMonth = selectedMonth || this.getCurrentMonth();
     this.userUsageData = this.getUserUsageData(premiumRequestUsages, isCrossMonthRange);
+    this.teams = this.extractUniqueTeams(premiumRequestUsages);
+    this.filteredUserUsageData = this.userUsageData;
     this.startDate = startDate;
     this.endDate = endDate;
   }
@@ -54,9 +56,55 @@ class PremiumRequestsState {
     this.selectedMonth = month;
   }
 
+  public filterTeam(team: string): void {
+    const item = this.teams.find((t) => t.value === team);
+    if (item) {
+      item.isSelected = !item.isSelected;
+      this.applyTeamFilter();
+    }
+  }
+
+  public batchFilterTeams(names: string[], selected: boolean): void {
+    const nameSet = new Set(names);
+    this.teams.forEach((item) => {
+      if (nameSet.has(item.value)) item.isSelected = selected;
+    });
+    this.applyTeamFilter();
+  }
+
+  public resetTeamFilters(): void {
+    this.teams.forEach((item) => (item.isSelected = false));
+    this.filteredUserUsageData = this.userUsageData;
+  }
+
+  private applyTeamFilter(): void {
+    const selectedTeams = this.teams.filter((t) => t.isSelected).map((t) => t.value);
+    if (selectedTeams.length === 0) {
+      this.filteredUserUsageData = this.userUsageData;
+    } else {
+      this.filteredUserUsageData = this.userUsageData.filter((user) =>
+        user.team?.some((team) => selectedTeams.includes(team)),
+      );
+    }
+  }
+
+  private extractUniqueTeams(data: PremiumRequestUsage[]): DropdownFilterItem[] {
+    const teamSet = new Set<string>();
+    data.forEach((usage) => {
+      usage.team?.split(',').forEach((team) => {
+        const trimmed = team.trim();
+        if (trimmed) teamSet.add(trimmed);
+      });
+    });
+    return Array.from(teamSet)
+      .sort()
+      .map((name) => ({ value: name, isSelected: false }));
+  }
+
   public updateUsageData(usageData: PremiumRequestUsage[], isCrossMonthRange = false): void {
     this.premiumRequestUsages = usageData;
     this.userUsageData = this.getUserUsageData(usageData, isCrossMonthRange);
+    this.applyTeamFilter();
   }
 
   public getUserUsageData = (usageData: PremiumRequestUsage[], isCrossMonthRange: boolean): UserUsageData[] => {

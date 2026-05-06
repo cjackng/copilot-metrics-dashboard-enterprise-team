@@ -12,6 +12,12 @@ interface MultiSelectFilterProps {
   column: any;
   /** If true, cell values are arrays that should be flattened for filter options */
   isArrayColumn?: boolean;
+  /**
+   * If provided, only these values will appear as options (sourced externally,
+   * e.g. from a page-level filter that has already narrowed the row data).
+   * Changing this prop causes the option list to refresh immediately.
+   */
+  options?: string[];
 }
 
 const UNASSIGNED_LABEL = "(Unassigned)";
@@ -27,7 +33,7 @@ function isNullish(value: unknown): boolean {
 }
 
 export const AgGridMultiSelectFilter = (props: MultiSelectFilterProps) => {
-  const { model, onModelChange, getValue, api, colDef, isArrayColumn } = props;
+  const { model, onModelChange, getValue, api, colDef, isArrayColumn, options: externalOptions } = props;
   const [searchText, setSearchText] = useState("");
 
   const selectedValues = useMemo(() => new Set(model ?? []), [model]);
@@ -56,6 +62,33 @@ export const AgGridMultiSelectFilter = (props: MultiSelectFilterProps) => {
 
   // Compute all unique values from column data
   const allOptions = useMemo(() => {
+    // If external options are provided (e.g. from a page-level filter that already
+    // narrowed rowData), derive counts only for those values and skip api.forEachNode
+    // full-scan. This also ensures the list reacts when `externalOptions` changes.
+    if (externalOptions) {
+      const allowedSet = new Set(externalOptions);
+      const valueCounts = new Map<string, number>();
+      for (const v of externalOptions) valueCounts.set(v, 0);
+      api.forEachNode((node: any) => {
+        if (!node.data) return;
+        const raw = node.data[colDef.field as string];
+        if (isArrayColumn && Array.isArray(raw)) {
+          raw.forEach((item: unknown) => {
+            const label = isNullish(item) ? UNASSIGNED_LABEL : String(item);
+            if (allowedSet.has(label)) valueCounts.set(label, (valueCounts.get(label) || 0) + 1);
+          });
+        } else if (!isNullish(raw)) {
+          const str = String(raw);
+          if (allowedSet.has(str)) valueCounts.set(str, (valueCounts.get(str) || 0) + 1);
+        }
+      });
+      return Array.from(valueCounts.entries()).sort(([a], [b]) => {
+        if (a === UNASSIGNED_LABEL) return 1;
+        if (b === UNASSIGNED_LABEL) return -1;
+        return a.localeCompare(b);
+      });
+    }
+
     const valueCounts = new Map<string, number>();
     api.forEachNode((node: any) => {
       if (!node.data) return;
@@ -81,7 +114,7 @@ export const AgGridMultiSelectFilter = (props: MultiSelectFilterProps) => {
       if (b === UNASSIGNED_LABEL) return -1;
       return a.localeCompare(b);
     });
-  }, [api, colDef.field, isArrayColumn]);
+  }, [api, colDef.field, isArrayColumn, externalOptions]);
 
   const filteredOptions = useMemo(() => {
     if (!searchText) return allOptions;
