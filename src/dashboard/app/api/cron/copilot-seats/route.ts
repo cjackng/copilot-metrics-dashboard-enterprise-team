@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { syncPremiumUsageData } from '@/services/cron/premium-usage-cron-service';
-import { purgeEnterpriseMembersLookupCache } from '@/services/enterprise-members-service';
+import { syncSeatsSnapshot } from '@/services/cron/copilot-seats-cron-service';
 
 function log(message: string) {
   const timestamp = new Date().toISOString();
-  console.log(`[PremiumUsage-Cron] ${timestamp}: ${message}`);
+  console.log(`[CopilotSeats-Cron] ${timestamp}: ${message}`);
 }
 
 export async function GET(request: NextRequest) {
@@ -16,9 +15,7 @@ export async function GET(request: NextRequest) {
       case 'run-now':
         log('Manually triggered immediate execution...');
         try {
-          await purgeEnterpriseMembersLookupCache();
-          log('Enterprise members lookup cache purged before sync');
-          await syncPremiumUsageData();
+          await syncSeatsSnapshot();
           return NextResponse.json({
             status: 'success',
             message: 'Immediate execution completed',
@@ -39,7 +36,7 @@ export async function GET(request: NextRequest) {
           {
             status: 'error',
             message: 'Please specify action parameter: ?action=run-now',
-            availableActions: [{ action: 'run-now', description: 'Execute job immediately' }],
+            availableActions: [{ action: 'run-now', description: 'Execute seats snapshot sync immediately' }],
           },
           { status: 400 },
         );
