@@ -1,10 +1,10 @@
 "use client";
 import { useSeats } from "@/features/seats/seats-state";
 import StatsCard from "./stats-card";
-import { format, parseISO, subDays } from "date-fns";
+import { subDays } from "date-fns";
 
 export const Stats = () => {
-  const { filteredSeats, snapshot_date, snapshot_time, last_update_time, selectedDate } = useSeats();
+  const { filteredSeats, selectedDate } = useSeats();
 
   const thirtyDaysBeforeSelected = subDays(new Date(selectedDate), 30);
   const total_seats = filteredSeats.length;
@@ -13,27 +13,8 @@ export const Stats = () => {
   ).length;
   const total_inactive_seats = total_seats - total_active_seats;
 
-  const fmt = (d: Date | string | null) =>
-    d ? format(d instanceof Date ? d : parseISO(String(d)), "dd MMM yyyy HH:mm") : null;
-
-  const formattedLastUpdated = fmt(last_update_time);
-  const formattedSnapshotTime = fmt(snapshot_time);
-  const isStaleSnapshot = snapshot_date && selectedDate && snapshot_date !== selectedDate;
-
   return (
     <div className="col-span-4 flex flex-col gap-4">
-      {formattedLastUpdated && (
-        <p className="text-xs text-muted-foreground text-right">
-          Data last updated: {formattedLastUpdated}
-        </p>
-      )}
-      {formattedSnapshotTime && (
-        <p className="text-xs text-muted-foreground text-right">
-          {isStaleSnapshot
-            ? `No snapshot for ${selectedDate}. Showing nearest prior snapshot captured at: ${formattedSnapshotTime}`
-            : `Snapshot from: ${formattedSnapshotTime}`}
-        </p>
-      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           title="Total seats"

@@ -6,12 +6,12 @@ import { AgGridTable } from "@/components/ui/ag-grid-table";
 import { AgGridMultiSelectFilter } from "@/components/ui/ag-grid-multi-select-filter";
 import { UserUsageData } from "@/features/common/models";
 import { useDashboard } from "../premium-requests-state";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { ColDef, GridApi, ValueFormatterParams } from "ag-grid-community";
 import { useMemo, useState } from "react";
 
 export const PremiumRequestsTable = () => {
-  const { filteredUserUsageData: userUsageData, startDate, endDate, latestUpdateTime } = useDashboard();
+  const { filteredUserUsageData: userUsageData, startDate, endDate } = useDashboard();
   const [gridApi, setGridApi] = useState<GridApi<UserUsageData> | null>(null);
   const [filterVersion, setFilterVersion] = useState(0);
 
@@ -67,12 +67,6 @@ export const PremiumRequestsTable = () => {
     },
   ], [availableTeams]);
 
-  const formattedLastUpdated = latestUpdateTime
-    ? format(
-        latestUpdateTime instanceof Date ? latestUpdateTime : parseISO(String(latestUpdateTime)),
-        "dd MMM yyyy HH:mm",
-      )
-    : null;
 
   const summaryContent = useMemo(() => {
     if (!gridApi || userUsageData.length === 0) return null;
@@ -111,11 +105,6 @@ export const PremiumRequestsTable = () => {
 
   return (
     <div className="col-span-4 flex flex-col gap-4">
-      {formattedLastUpdated && (
-        <p className="text-xs text-muted-foreground text-right">
-          Data last updated: {formattedLastUpdated}
-        </p>
-      )}
       <Card>
         <ChartHeader
           title="Premium Request Usage"
