@@ -1,7 +1,7 @@
 "use client";
 import { Card, CardContent } from "@/components/ui/card";
 import { useDashboard } from "../dashboard-state";
-import { ChartHeader } from "./chart-header";
+import { ChartHeader } from "@/features/common/chart-header";
 import { getTopModels } from "./common";
 
 const MODEL_NAME_MAP: Record<string, string> = {

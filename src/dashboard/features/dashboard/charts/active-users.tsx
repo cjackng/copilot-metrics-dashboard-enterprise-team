@@ -11,7 +11,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { ChartHeader } from "./chart-header";
+import { ChartHeader } from "@/features/common/chart-header";
 import { ActiveUserData, getActiveUsers } from "./common";
 
 export const ActiveUsers = () => {

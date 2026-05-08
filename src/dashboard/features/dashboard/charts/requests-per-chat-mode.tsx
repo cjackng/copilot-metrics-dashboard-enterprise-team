@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/chart";
 
 import { RequestsPerChatModeData, getRequestsPerChatMode } from "./common";
-import { ChartHeader } from "./chart-header";
+import { ChartHeader } from "@/features/common/chart-header";
 
 export const RequestsPerChatMode = () => {
   const { displayData } = useDashboard();

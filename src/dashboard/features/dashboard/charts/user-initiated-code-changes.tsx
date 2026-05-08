@@ -9,7 +9,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { ChartHeader } from "./chart-header";
+import { ChartHeader } from "@/features/common/chart-header";
 import { CodeChangesByFeatureData, getUserInitiatedCodeChangesByFeature } from "./common";
 
 export const UserInitiatedCodeChanges = () => {

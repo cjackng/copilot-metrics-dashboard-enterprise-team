@@ -16,7 +16,7 @@ import {
   CodeCompletionAcceptanceRateData,
   computeCodeCompletionAcceptanceRate,
 } from "./common";
-import { ChartHeader } from "./chart-header";
+import { ChartHeader } from "@/features/common/chart-header";
 
 export const CodeCompletionsAcceptanceRate = () => {
   const { displayData } = useDashboard();

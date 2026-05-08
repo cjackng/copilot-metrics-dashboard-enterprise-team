@@ -11,7 +11,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { useDashboard } from "../dashboard-state";
-import { ChartHeader } from "./chart-header";
+import { ChartHeader } from "@/features/common/chart-header";
 import {
   codeCompletionSuggestionAcceptanceData,
   codeCompletionSuggestionsAndAcceptances,

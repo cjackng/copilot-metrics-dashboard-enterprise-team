@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { ChartHeader } from "@/features/dashboard/charts/chart-header";
+import { ChartHeader } from "@/features/common/chart-header";
 import { AgGridTable } from "@/components/ui/ag-grid-table";
 import { AgGridMultiSelectFilter } from "@/components/ui/ag-grid-multi-select-filter";
 import { UserUsageData } from "@/features/common/models";
@@ -114,6 +114,7 @@ export const PremiumRequestsTable = () => {
           <AgGridTable<UserUsageData>
             columnDefs={columnDefs}
             rowData={userUsageData}
+            height="430px"
             enableSearch
             enableExport
             enableColumnToggle

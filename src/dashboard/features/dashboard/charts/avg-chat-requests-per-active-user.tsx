@@ -16,7 +16,7 @@ import {
   AvgChatRequestsPerActiveUserData,
   computeAvgChatRequestsPerActiveUser,
 } from "./common";
-import { ChartHeader } from "./chart-header";
+import { ChartHeader } from "@/features/common/chart-header";
 
 export const AvgChatRequestsPerActiveUser = () => {
   const { displayData } = useDashboard();
