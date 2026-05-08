@@ -88,6 +88,8 @@ export interface CopilotUsageOutput {
   total_chat_engaged_users: number;
   total_cli_engaged_users: number;
   total_chat_generations?: number;
+  totals_by_feature?: TotalsByFeature[];
+  totals_by_model_feature?: TotalsByModelFeature[];
   /** Sum of code_generation_activity_count and code_acceptance_activity_count */
   total_code_suggestions: number;
   total_code_acceptances: number;
