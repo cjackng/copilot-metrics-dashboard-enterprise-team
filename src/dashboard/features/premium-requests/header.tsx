@@ -40,7 +40,7 @@ export const Header = () => {
 
   return (
     <PageHeader>
-      <PageTitle>Premium Requests Usage</PageTitle>
+      <PageTitle>Premium Requests</PageTitle>
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2 flex-wrap">
           <DashboardMonthFilter />
