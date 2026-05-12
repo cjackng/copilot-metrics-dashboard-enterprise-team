@@ -17,7 +17,7 @@ export const ChartHeader = (props: ChartHeaderProps) => {
   return (
     <CardHeader className="border-b mb-3 pb-3">
       <div className="flex items-center gap-2">
-        <CardTitle>{props.title}</CardTitle>
+        <CardTitle className="font-bold">{props.title}</CardTitle>
         {props.tip && (
           <TooltipProvider>
             <Tooltip delayDuration={0}>

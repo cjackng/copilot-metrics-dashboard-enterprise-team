@@ -23,7 +23,7 @@ export default function StatsCard(props: StatsCardProps) {
     <Card className="flex flex-col min-h-[140px]">
       <ChartHeader title={props.title} description={props.description} tip={props.tip} />
       <CardContent className="flex items-center justify-center flex-1 py-0">
-        <CardTitle className={`${fontSize} flex-1 tracking-tighter font-bold`}>
+        <CardTitle className={`${fontSize} flex-1 tracking-tighter`}>
           {props.value}
         </CardTitle>
       </CardContent>
