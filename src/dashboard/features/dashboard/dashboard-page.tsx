@@ -13,7 +13,7 @@ import { DataProvider } from "./dashboard-state";
 import { Header } from "./header";
 import { getCopilotMetrics, getMetricsLastUpdated, IFilter as MetricsFilter } from "@/services/copilot-metrics-service";
 import { getAllEnterpriseMembersLookup } from "@/services/enterprise-members-service";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format, startOfMonth, subDays } from "date-fns";
 
 export interface IProps {
   searchParams: MetricsFilter;
@@ -21,12 +21,15 @@ export interface IProps {
 
 export default async function Dashboard(props: IProps) {
   const today = new Date();
+  const maxDate = subDays(today, 2);
+  // If today is the 1st or 2nd of the month, maxDate falls in the previous month — use that month's start
+  const defaultStart = startOfMonth(maxDate);
   const startDate = props.searchParams.startDate
     ? String(props.searchParams.startDate)
-    : format(startOfMonth(today), "yyyy-MM-dd");
+    : format(defaultStart, "yyyy-MM-dd");
   const endDate = props.searchParams.endDate
     ? String(props.searchParams.endDate)
-    : format(endOfMonth(today), "yyyy-MM-dd");
+    : format(maxDate, "yyyy-MM-dd");
 
   const metricsFilter = { ...props.searchParams, startDate, endDate };
 

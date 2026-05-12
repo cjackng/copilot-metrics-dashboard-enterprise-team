@@ -4,7 +4,7 @@ import { PageHeader, PageTitle } from "../page-header/page-header";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eraser } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format, startOfMonth, endOfMonth, parseISO } from "date-fns";
+import { format, startOfMonth, parseISO } from "date-fns";
 import { DashboardMonthFilter } from "@/features/dashboard/filter/dashboard-month-filter";
 import { DashboardDateFilter } from "@/features/dashboard/filter/dashboard-date-filter";
 import { DropdownFilter } from "@/features/dashboard/filter/dropdown-filter";
@@ -17,7 +17,7 @@ export const Header = () => {
 
   const today = new Date();
   const defaultStart = format(startOfMonth(today), "yyyy-MM-dd");
-  const defaultEnd = format(endOfMonth(today), "yyyy-MM-dd");
+  const defaultEnd = format(today, "yyyy-MM-dd");
 
   const startDate = searchParams.get("startDate") ?? "";
   const endDate = searchParams.get("endDate") ?? "";

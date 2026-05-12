@@ -2,7 +2,7 @@ import Dashboard, { IProps } from "@/features/premium-requests/premium-requests-
 import { Suspense } from "react";
 import Loading from "./loading";
 import { Metadata } from 'next';
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format, startOfMonth } from "date-fns";
 import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default function Home(props: IProps) {
   const today = new Date();
   const defaultStart = format(startOfMonth(today), "yyyy-MM-dd");
-  const defaultEnd = format(endOfMonth(today), "yyyy-MM-dd");
+  const defaultEnd = format(today, "yyyy-MM-dd");
 
   if (!props.searchParams.startDate) {
     redirect(`/premium-requests?startDate=${defaultStart}&endDate=${defaultEnd}`);
