@@ -2,21 +2,22 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { ChartHeader } from "@/features/common/chart-header";
-import { AgGridTable } from "@/components/ui/ag-grid-table";
-import { AgGridMultiSelectFilter } from "@/components/ui/ag-grid-multi-select-filter";
+import { MuiDataGridTable, customContainsOperator } from "@/components/ui/mui-data-grid-table";
 import { UserUsageData } from "@/features/common/models";
 import { useDashboard } from "../premium-requests-state";
 import { format } from "date-fns";
-import { ColDef, GridApi, ValueFormatterParams } from "ag-grid-community";
-import { useMemo, useState } from "react";
+import { GridColDef, getGridSingleSelectOperators, getGridNumericOperators } from "@mui/x-data-grid";
+import { useEffect, useMemo, useState } from "react";
 
 export const PremiumRequestsTable = () => {
   const { filteredUserUsageData: userUsageData, startDate, endDate } = useDashboard();
-  const [gridApi, setGridApi] = useState<GridApi<UserUsageData> | null>(null);
-  const [filterVersion, setFilterVersion] = useState(0);
+  const [filteredRows, setFilteredRows] = useState<UserUsageData[]>(userUsageData);
 
-  // Derive available teams from the already page-filtered data so the column
-  // filter options shrink to match the page-level team selection.
+  // Keep summary in sync when the Valtio team filter changes the source data
+  useEffect(() => {
+    setFilteredRows(userUsageData);
+  }, [userUsageData]);
+
   const availableTeams = useMemo(() => {
     const set = new Set<string>();
     for (const row of userUsageData) {
@@ -28,70 +29,69 @@ export const PremiumRequestsTable = () => {
     return Array.from(set).sort();
   }, [userUsageData]);
 
-  const columnDefs = useMemo((): ColDef<UserUsageData>[] => [
-    {
-      field: "userDisplayName",
-      headerName: "Username",
-      filter: "agTextColumnFilter",
-    },
-    {
-      field: "user",
-      headerName: "User ID",
-      filter: "agTextColumnFilter",
-    },
+  const columns = useMemo((): GridColDef<UserUsageData>[] => [
+    { field: "userDisplayName", headerName: "Username", flex: 1, minWidth: 140 },
+    { field: "user", headerName: "User ID", flex: 1, minWidth: 140 },
     {
       field: "totalRequestQuantity",
       headerName: "Total Requests",
-      filter: "agNumberColumnFilter",
-      valueFormatter: (params: ValueFormatterParams) =>
-        params.value != null ? Math.round(params.value).toLocaleString() : "",
+      type: "number",
+      flex: 1,
+      minWidth: 130,
+      filterOperators: [
+        customContainsOperator,
+        ...getGridNumericOperators(),
+      ],
+      valueFormatter: (value: number | null) =>
+        value != null ? Math.round(value).toLocaleString() : "",
     },
     {
       field: "totalRequestQuota",
       headerName: "Request Quota",
-      filter: "agNumberColumnFilter",
-      valueFormatter: (params: ValueFormatterParams) =>
-        params.value === null || params.value === undefined
-          ? "N/A"
-          : Math.round(params.value).toLocaleString(),
+      type: "number",
+      flex: 1,
+      minWidth: 130,
+      filterOperators: [
+        customContainsOperator,
+        ...getGridNumericOperators(),
+      ],
+      valueFormatter: (value: number | null | undefined) =>
+        value === null || value === undefined ? "N/A" : Math.round(value).toLocaleString(),
     },
     {
       field: "team",
       headerName: "Team",
-      filter: AgGridMultiSelectFilter,
-      filterParams: { isArrayColumn: true, options: availableTeams },
-      valueFormatter: (params: ValueFormatterParams) =>
-        Array.isArray(params.value) ? params.value.join(", ") : params.value ?? "",
-      getQuickFilterText: (params) =>
-        Array.isArray(params.value) ? params.value.join(" ") : params.value ?? "",
+      flex: 1,
+      minWidth: 150,
+      type: 'singleSelect',
+      valueOptions: availableTeams,
+      filterOperators: [
+        customContainsOperator,
+        ...getGridSingleSelectOperators(),
+      ],
+      valueGetter: (value: string[] | string | null) =>
+        Array.isArray(value) ? value.join(", ") : (value ?? ""),
     },
   ], [availableTeams]);
 
-
   const summaryContent = useMemo(() => {
-    if (!gridApi || userUsageData.length === 0) return null;
-    let totalUsers = 0;
-    let totalRequests = 0;
-    gridApi.forEachNodeAfterFilter((node) => {
-      if (node.data) {
-        totalUsers++;
-        totalRequests += node.data.totalRequestQuantity ?? 0;
-      }
-    });
+    const totalRequests = filteredRows.reduce(
+      (sum, row) => sum + (row.totalRequestQuantity ?? 0),
+      0
+    );
     return (
       <>
-        <span>Total Users: {totalUsers.toLocaleString()}</span>
+        <span>Total Users: {filteredRows.length.toLocaleString()}</span>
         <span>Total Requests: {Math.round(totalRequests).toLocaleString()}</span>
       </>
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gridApi, userUsageData, filterVersion]);
+  }, [filteredRows]);
 
   if (userUsageData.length === 0) {
     return (
       <Card className="col-span-4">
-        <ChartHeader
-          title="Premium Request Usage"
+        <ChartHeader 
+          title="Premium Request Usage" 
           description="Premium request usage by user"
         />
         <CardContent>
@@ -111,16 +111,17 @@ export const PremiumRequestsTable = () => {
           description={`Premium request usage by user from ${format(new Date(startDate), "dd MMM yyyy")} to ${format(new Date(endDate), "dd MMM yyyy")}`}
         />
         <CardContent>
-          <AgGridTable<UserUsageData>
-            columnDefs={columnDefs}
-            rowData={userUsageData}
-            height="430px"
+          <MuiDataGridTable<UserUsageData>
+            columns={columns}
+            rows={userUsageData}
+            getRowId={(row) => row.user}
+            height={450}
             enableSearch
-            enableExport
+            enableColumnFilter
             enableColumnToggle
+            enableExport
             statusBarContent={summaryContent}
-            onGridReady={(api) => setGridApi(api)}
-            onFilterChanged={() => setFilterVersion((v) => v + 1)}
+            onFilteredRowsChange={setFilteredRows}
           />
         </CardContent>
       </Card>
