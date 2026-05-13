@@ -41,10 +41,18 @@ class PremiumRequestsState {
     this.latestUpdateTime = latestUpdateTime;
     this.selectedMonth = selectedMonth || this.getCurrentMonth();
     this.userUsageData = this.getUserUsageData(premiumRequestUsages, isCrossMonthRange);
-    this.teams = this.extractUniqueTeams(premiumRequestUsages);
-    this.filteredUserUsageData = this.userUsageData;
     this.startDate = startDate;
     this.endDate = endDate;
+
+    // Preserve existing team selections when re-initializing (e.g. date change)
+    const prevSelections = new Map(this.teams.map((t) => [t.value, t.isSelected]));
+    this.teams = this.extractUniqueTeams(premiumRequestUsages).map((t) => ({
+      ...t,
+      isSelected: prevSelections.get(t.value) ?? false,
+    }));
+
+    // Re-apply team filter on new data
+    this.applyTeamFilter();
   }
 
   private getCurrentMonth(): string {

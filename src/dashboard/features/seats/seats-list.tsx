@@ -175,7 +175,7 @@ export const SeatsList = () => {
           columns={columns}
           rows={filteredSeats as SeatSnapshotRow[]}
           getRowId={(row) => row.username}
-          height={350}
+          height={363}
           enableSearch
           enableColumnFilter
           enableColumnToggle
