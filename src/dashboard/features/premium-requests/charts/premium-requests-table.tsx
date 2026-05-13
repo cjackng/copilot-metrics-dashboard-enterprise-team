@@ -7,16 +7,10 @@ import { UserUsageData } from "@/features/common/models";
 import { useDashboard } from "../premium-requests-state";
 import { format } from "date-fns";
 import { GridColDef, getGridSingleSelectOperators, getGridNumericOperators } from "@mui/x-data-grid";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 
 export const PremiumRequestsTable = () => {
   const { filteredUserUsageData: userUsageData, startDate, endDate } = useDashboard();
-  const [filteredRows, setFilteredRows] = useState<UserUsageData[]>(userUsageData);
-
-  // Keep summary in sync when the Valtio team filter changes the source data
-  useEffect(() => {
-    setFilteredRows(userUsageData);
-  }, [userUsageData]);
 
   const availableTeams = useMemo(() => {
     const set = new Set<string>();
@@ -74,19 +68,6 @@ export const PremiumRequestsTable = () => {
     },
   ], [availableTeams]);
 
-  const summaryContent = useMemo(() => {
-    const totalRequests = filteredRows.reduce(
-      (sum, row) => sum + (row.totalRequestQuantity ?? 0),
-      0
-    );
-    return (
-      <>
-        <span>Total Users: {filteredRows.length.toLocaleString()}</span>
-        <span>Total Requests: {Math.round(totalRequests).toLocaleString()}</span>
-      </>
-    );
-  }, [filteredRows]);
-
   if (userUsageData.length === 0) {
     return (
       <Card className="col-span-4">
@@ -115,13 +96,11 @@ export const PremiumRequestsTable = () => {
             columns={columns}
             rows={userUsageData}
             getRowId={(row) => row.user}
-            height={450}
+            height={345}
             enableSearch
             enableColumnFilter
             enableColumnToggle
             enableExport
-            statusBarContent={summaryContent}
-            onFilteredRowsChange={setFilteredRows}
           />
         </CardContent>
       </Card>
