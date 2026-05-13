@@ -85,25 +85,23 @@ export const PremiumRequestsTable = () => {
   }
 
   return (
-    <div className="col-span-4 flex flex-col gap-4">
-      <Card>
-        <ChartHeader
-          title="Premium Request Usage"
-          description={`Premium request usage by user from ${format(new Date(startDate), "dd MMM yyyy")} to ${format(new Date(endDate), "dd MMM yyyy")}`}
+    <Card className="col-span-4 px-4 py-4">
+      {/* <ChartHeader
+        title=""
+        description=""//{`Premium request usage by user from ${format(new Date(startDate), "dd MMM yyyy")} to ${format(new Date(endDate), "dd MMM yyyy")}`}
+      />
+      <CardContent> */}
+        <MuiDataGridTable<UserUsageData>
+          columns={columns}
+          rows={userUsageData}
+          getRowId={(row) => row.user}
+          height={420}
+          enableSearch
+          enableColumnFilter
+          enableColumnToggle
+          enableExport
         />
-        <CardContent>
-          <MuiDataGridTable<UserUsageData>
-            columns={columns}
-            rows={userUsageData}
-            getRowId={(row) => row.user}
-            height={345}
-            enableSearch
-            enableColumnFilter
-            enableColumnToggle
-            enableExport
-          />
-        </CardContent>
-      </Card>
-    </div>
+      {/* </CardContent> */}
+    </Card>
   );
 };
