@@ -3,22 +3,16 @@ import { formatDate } from "@/utils/helpers";
 
 export interface ActiveUserData {
   totalUsers: number;
-  totalIdeUsers: number;
   timeFrameDisplay: string;
 }
 
 export function getActiveUsers(
   filteredData: CopilotUsageOutput[]
 ): ActiveUserData[] {
-  const rates = filteredData.map((item) => {
-    return {
-      totalUsers: item.total_active_users,
-      totalIdeUsers: item.total_ide_engaged_users,
-      timeFrameDisplay: formatDate(item.day),
-    };
-  });
-
-  return rates;
+  return filteredData.map((item) => ({
+    totalUsers: item.total_active_users,
+    timeFrameDisplay: formatDate(item.day),
+  }));
 }
 
 export const computeActiveUserAverage = (
@@ -35,18 +29,29 @@ export const computeActiveUserAverage = (
 
 export const computeCumulativeAcceptanceAverage = (
   filteredData: CopilotUsageOutput[]
-) => {
-  const totalAccepted = filteredData.reduce(
-    (sum, item) => sum + (item.total_code_acceptances || 0),
-    0
-  );
-  const totalSuggested = filteredData.reduce(
-    (sum, item) => sum + (item.total_code_suggestions || 0),
-    0
-  );
+): number => {
+  let totalSuggested = 0;
+  let totalAccepted = 0;
+
+  for (const item of filteredData) {
+    for (const f of item.totals_by_feature ?? []) {
+      if (f.feature === "others") continue;
+      const suggested = f.loc_suggested_to_add_sum + f.loc_suggested_to_delete_sum;
+      const accepted = f.loc_added_sum + f.loc_deleted_sum;
+      if (suggested === 0 && accepted > 0) {
+        // Feature doesn't track suggestions (e.g. copilot_cli, agent_edit) —
+        // count accepted lines as both suggested and accepted
+        totalSuggested += accepted;
+        totalAccepted += accepted;
+      } else {
+        totalSuggested += suggested;
+        totalAccepted += accepted;
+      }
+    }
+  }
 
   if (totalSuggested === 0) return 0;
-  return (totalAccepted / totalSuggested) * 100;
+  return parseFloat(((totalAccepted / totalSuggested) * 100).toFixed(2));
 };
 
 export interface codeCompletionSuggestionAcceptanceData {
@@ -173,6 +178,50 @@ export function getTopModels(
     .slice(0, count);
 }
 
+export function computeAgentAdoptionRate(
+  displayData: CopilotUsageOutput[],
+  endDate: string | null
+): number {
+  if (!endDate) return 0;
+  const item = displayData.find((d) => d.day === endDate);
+  if (!item || item.total_active_users === 0) return 0;
+  return parseFloat(
+    ((item.total_ide_engaged_users / item.total_active_users) * 100).toFixed(2)
+  );
+}
+
+export function computeAgentContributionRate(
+  displayData: CopilotUsageOutput[]
+): number {
+  let agentAdded = 0;
+  let agentDeleted = 0;
+  let totalAdded = 0;
+  let totalDeleted = 0;
+
+  for (const item of displayData) {
+    totalAdded += item.total_lines_added ?? 0;
+    totalDeleted += item.total_lines_deleted ?? 0;
+    for (const f of item.totals_by_feature ?? []) {
+      if (AGENT_INITIATED_FEATURE_KEYS.has(f.feature)) {
+        agentAdded += f.loc_added_sum;
+        agentDeleted += f.loc_deleted_sum;
+      }
+    }
+  }
+
+  const total = totalAdded + totalDeleted;
+  if (total === 0) return 0;
+  return parseFloat(((( agentAdded + agentDeleted) / total) * 100).toFixed(2));
+}
+
+export function getActiveUsersOnDate(
+  displayData: CopilotUsageOutput[],
+  date: string
+): number {
+  const item = displayData.find((d) => d.day === date);
+  return item?.total_active_users ?? 0;
+}
+
 export interface DailyLinesData {
   added: number;
   deleted: number;
@@ -251,4 +300,9 @@ export function getAgentInitiatedCodeChanges(
   }
 
   return [{ feature: "Agent", added: totalAdded, deleted: totalDeleted }];
+}
+export function formatCompact(value: number): string {
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}m`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
+  return value.toLocaleString();
 }

@@ -31,7 +31,7 @@ export const TopThreeModel = () => {
     <Card className="flex flex-col min-h-[140px]">
       <ChartHeader
         title="Top 3 models"
-        description="By user-initiated interactions"
+        description="By user-initiated interactions (requests)"
         tip="The top 3 AI models ranked by total user-initiated interactions (requests sent by users) across all features in the selected period."
       />
       <CardContent className="flex flex-col justify-center flex-1 gap-3 py-0 pb-4">

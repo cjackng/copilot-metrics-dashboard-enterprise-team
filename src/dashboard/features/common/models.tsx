@@ -118,6 +118,8 @@ export interface CopilotUsageOutput {
   total_lines_added: number;
   /** Total lines of code deleted across all Copilot features (top-level loc_deleted_sum). */
   total_lines_deleted: number;
+  /** Whether the user used any agent feature on this day. */
+  used_agent?: boolean;
 }
 
 export interface CopilotMetricsReportResponse {

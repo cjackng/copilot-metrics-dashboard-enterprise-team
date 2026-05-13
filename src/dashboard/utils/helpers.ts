@@ -130,7 +130,7 @@ export const transformCopilotMetricsReportData = (
       total_active_users: 1,
       total_chat_engaged_users: item.used_chat ? 1 : 0,
       total_cli_engaged_users: item.used_cli ? 1 : 0,
-      total_ide_engaged_users: item.totals_by_ide.length > 0 ? 1 : 0,
+      total_ide_engaged_users: item.user_initiated_interaction_count > 0 ? 1 : 0,
       total_code_suggestions: item.code_generation_activity_count,
       total_code_acceptances: item.code_acceptance_activity_count,
       total_code_lines_suggested: totalLinesSuggested,
@@ -151,6 +151,7 @@ export const transformCopilotMetricsReportData = (
       code_completion_lines_accepted: codeCompletionLinesAccepted,
       total_lines_added: item.loc_added_sum,
       total_lines_deleted: item.loc_deleted_sum,
+      used_agent: item.used_agent ?? false,
       totals_by_feature: item.totals_by_feature ?? [],
       totals_by_model_feature: item.totals_by_model_feature ?? [],
     };
