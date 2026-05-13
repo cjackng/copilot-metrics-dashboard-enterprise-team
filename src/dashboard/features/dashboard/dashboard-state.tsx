@@ -9,6 +9,7 @@ import { format, parseISO, subDays } from "date-fns";
 import { proxy, useSnapshot } from "valtio";
 
 import { Member } from "@/services/enterprise-members-service";
+import { TotalsByFeature, TotalsByModelFeature } from "@/features/common/models";
 
 interface IProps extends PropsWithChildren {
   copilotUsages: CopilotUsageOutputResponse;
@@ -39,6 +40,10 @@ class DashboardState {
   public isLoading: boolean = false;
   public lastUpdatedTime: string | null = null;
   public isDateRangeMode: boolean = false;
+  public uniqueActiveUserCount: number = 0;
+  public endDate: string | null = null;
+  public currentMonthIdeActiveUsers: number = 0;
+  public currentMonthAgentUsers: number = 0;
 
   public memberTeamsData: Map<string, Member> = new Map();
 
@@ -65,12 +70,38 @@ class DashboardState {
     }
   ): void {
     this.apiData = new Map(data.copilotUsages);
-    this.teamFilteredData = new Map(data.copilotUsages);
     this.lastUpdatedTime = lastUpdatedTime ?? null;
     this.isDateRangeMode = !!(filter?.startDate && filter?.endDate);
-    this.applyFilters();
+    this.endDate = filter?.endDate ? String(filter.endDate) : null;
+
+    // Set memberTeamsData first so team re-filtering can use it
     this.memberTeamsData = memberTeamsData;
-    this.teams = this.extractUniqueTeams(enterpriseTeams);
+
+    // Preserve existing team selections when re-initializing (e.g. date change)
+    const prevSelections = new Map(this.teams.map((t) => [t.value, t.isSelected]));
+    this.teams = this.extractUniqueTeams(enterpriseTeams).map((t) => ({
+      ...t,
+      isSelected: prevSelections.get(t.value) ?? false,
+    }));
+
+    // Re-apply team filter on new data if any teams are selected
+    const selectedTeams = this.teams.filter((t) => t.isSelected).map((t) => t.value);
+    if (selectedTeams.length > 0) {
+      const selectedSet = new Set(selectedTeams);
+      const filtered = new Map<string, CopilotUsageOutput[]>();
+      this.apiData.forEach((value, key) => {
+        const member = this.memberTeamsData.get(key);
+        if (member && member.teamNames.some((name) => selectedSet.has(name))) {
+          filtered.set(key, value);
+        }
+      });
+      this.teamFilteredData = filtered;
+    } else {
+      this.teamFilteredData = new Map(data.copilotUsages);
+    }
+
+    this.applyFilters();
+
     if (filter) {
       this.currentFilter = filter;
     }
@@ -175,7 +206,28 @@ class DashboardState {
 
   private applyFilters(): void {
     this.filteredData = this.filterData(this.hideWeekends);
+    this.uniqueActiveUserCount = this.filteredData.size;
     this.displayData = this.calculateDisplayData();
+    const monthStats = this.computeCurrentMonthStats();
+    this.currentMonthIdeActiveUsers = monthStats.ideActiveUsers;
+    this.currentMonthAgentUsers = monthStats.agentUsers;
+  }
+
+  private computeCurrentMonthStats(): { ideActiveUsers: number; agentUsers: number } {
+    const ref = this.endDate ? new Date(this.endDate) : new Date();
+    const monthPrefix = `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}-`;
+    let ideActiveUsers = 0;
+    let agentUsers = 0;
+    this.filteredData.forEach((userItems) => {
+      const currentMonthItems = userItems.filter((item) => item.day.startsWith(monthPrefix));
+      if (currentMonthItems.length > 0) {
+        ideActiveUsers++;
+        if (currentMonthItems.some((item) => item.used_agent === true)) {
+          agentUsers++;
+        }
+      }
+    });
+    return { ideActiveUsers, agentUsers };
   }
 
   private calculateDisplayData(): CopilotUsageOutput[] {
@@ -216,6 +268,8 @@ class DashboardState {
           code_completion_lines_accepted: 0,
           total_lines_added: 0,
           total_lines_deleted: 0,
+          totals_by_feature: [],
+          totals_by_model_feature: [],
         };
         
         items.forEach((item) => {
@@ -246,6 +300,43 @@ class DashboardState {
             merged.total_chat_generations =
               (merged.total_chat_generations ?? 0) + item.total_chat_generations;
           }
+
+          // Merge totals_by_feature by feature key
+          const featureMap: Record<string, TotalsByFeature> = {};
+          merged.totals_by_feature!.forEach((f) => { featureMap[f.feature] = f; });
+          (item.totals_by_feature ?? []).forEach((f) => {
+            if (!featureMap[f.feature]) {
+              featureMap[f.feature] = { ...f };
+            } else {
+              featureMap[f.feature].user_initiated_interaction_count += f.user_initiated_interaction_count;
+              featureMap[f.feature].code_generation_activity_count += f.code_generation_activity_count;
+              featureMap[f.feature].code_acceptance_activity_count += f.code_acceptance_activity_count;
+              featureMap[f.feature].loc_suggested_to_add_sum += f.loc_suggested_to_add_sum;
+              featureMap[f.feature].loc_suggested_to_delete_sum += f.loc_suggested_to_delete_sum;
+              featureMap[f.feature].loc_added_sum += f.loc_added_sum;
+              featureMap[f.feature].loc_deleted_sum += f.loc_deleted_sum;
+            }
+          });
+          merged.totals_by_feature = Object.values(featureMap);
+
+          // Merge totals_by_model_feature by model+feature key
+          const modelFeatureMap: Record<string, TotalsByModelFeature> = {};
+          merged.totals_by_model_feature!.forEach((mf) => { modelFeatureMap[`${mf.model}::${mf.feature}`] = mf; });
+          (item.totals_by_model_feature ?? []).forEach((mf) => {
+            const key = `${mf.model}::${mf.feature}`;
+            if (!modelFeatureMap[key]) {
+              modelFeatureMap[key] = { ...mf };
+            } else {
+              modelFeatureMap[key].user_initiated_interaction_count += mf.user_initiated_interaction_count;
+              modelFeatureMap[key].code_generation_activity_count += mf.code_generation_activity_count;
+              modelFeatureMap[key].code_acceptance_activity_count += mf.code_acceptance_activity_count;
+              modelFeatureMap[key].loc_suggested_to_add_sum += mf.loc_suggested_to_add_sum;
+              modelFeatureMap[key].loc_suggested_to_delete_sum += mf.loc_suggested_to_delete_sum;
+              modelFeatureMap[key].loc_added_sum += mf.loc_added_sum;
+              modelFeatureMap[key].loc_deleted_sum += mf.loc_deleted_sum;
+            }
+          });
+          merged.totals_by_model_feature = Object.values(modelFeatureMap);
         });
 
         return merged;

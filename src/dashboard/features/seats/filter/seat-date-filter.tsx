@@ -27,7 +27,7 @@ export const SeatDateFilter = () => {
 
   const handleSelect = (selected: Date) => {
     setDate(selected);
-    const params = new URLSearchParams();
+    const params = new URLSearchParams(searchParams.toString());
     params.set("date", format(selected, "yyyy-MM-dd"));
     router.push(`?${params.toString()}`, { scroll: false });
     setIsOpen(false);

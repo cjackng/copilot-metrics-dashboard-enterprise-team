@@ -1,9 +1,7 @@
 "use client";
 import { Card, CardContent } from "@/components/ui/card";
-
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useDashboard } from "../dashboard-state";
-
 import {
   ChartContainer,
   ChartLegend,
@@ -11,33 +9,30 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-
-import {
-  AvgChatRequestsPerActiveUserData,
-  computeAvgChatRequestsPerActiveUser,
-} from "./common";
 import { ChartHeader } from "@/features/common/chart-header";
+import { DailyLinesData, getDailyLinesAddedDeleted } from "./common";
 
-export const AvgChatRequestsPerActiveUser = () => {
+export const DailyLinesAddedDeleted = () => {
   const { displayData } = useDashboard();
-  const data = computeAvgChatRequestsPerActiveUser(displayData);
+  const data = getDailyLinesAddedDeleted(displayData);
 
   return (
     <Card className="col-span-4">
       <ChartHeader
-        title="Average chat requests per active user"
-        description="User-initiated requests across all chat modes, excluding code completions"
+        title="Daily total of lines added and deleted"
+        description="Total lines of code added to and deleted from the codebase across all modes"
       />
       <CardContent>
-        <ChartContainer config={chartConfig} className="h-80 w-full">
-          <AreaChart accessibilityLayer data={data}>
+        <ChartContainer config={chartConfig} className="w-full h-80">
+          <BarChart accessibilityLayer data={data}>
             <CartesianGrid vertical={false} />
             <YAxis
-              dataKey={chartConfig.avgChatRequests.key}
               tickLine={false}
               axisLine={false}
               tickMargin={8}
               allowDataOverflow
+              tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)}
+              label={{ value: "Lines of code", angle: -90, position: "insideLeft", offset: 10 }}
             />
             <XAxis
               dataKey={chartConfig.timeFrameDisplay.key}
@@ -47,14 +42,10 @@ export const AvgChatRequestsPerActiveUser = () => {
               minTickGap={32}
             />
             <ChartTooltip cursor={true} content={<ChartTooltipContent />} />
-            <Area
-              dataKey={chartConfig.avgChatRequests.key}
-              type="linear"
-              fill="hsl(var(--chart-2))"
-              stroke="hsl(var(--chart-2))"
-            />
+            <Bar dataKey={chartConfig.added.key} fill="hsl(var(--chart-4))" radius={4} />
+            <Bar dataKey={chartConfig.deleted.key} fill="hsl(var(--chart-5))" radius={4} />
             <ChartLegend content={<ChartLegendContent />} />
-          </AreaChart>
+          </BarChart>
         </ChartContainer>
       </CardContent>
     </Card>
@@ -62,14 +53,9 @@ export const AvgChatRequestsPerActiveUser = () => {
 };
 
 const chartConfig: Record<DataKey, { label: string; key: DataKey }> = {
-  avgChatRequests: {
-    label: "Requests",
-    key: "avgChatRequests",
-  },
-  timeFrameDisplay: {
-    label: "Time frame display",
-    key: "timeFrameDisplay",
-  },
+  added: { label: "Added", key: "added" },
+  deleted: { label: "Deleted", key: "deleted" },
+  timeFrameDisplay: { label: "Time frame display", key: "timeFrameDisplay" },
 };
 
-type DataKey = keyof AvgChatRequestsPerActiveUserData;
+type DataKey = keyof DailyLinesData;

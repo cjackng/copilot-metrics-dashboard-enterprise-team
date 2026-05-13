@@ -31,8 +31,10 @@ class SeatsState {
     this.snapshot_time = dbResult.snapshot_time;
     this.last_update_time = dbResult.last_update_time;
     this.selectedDate = selectedDate;
+    // extractUniqueTeams already preserves isSelected via currentSelected
     this.teams = this.extractUniqueTeams(dbResult.seats);
-    this.filteredSeats = dbResult.seats;
+    // Re-apply team filter on new seat data
+    this.applyTeamFilter();
   }
 
   private extractUniqueTeams(seats: SeatSnapshotRow[]): DropdownFilterItem[] {

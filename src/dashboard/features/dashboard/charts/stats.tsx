@@ -1,46 +1,62 @@
 "use client";
 import { useDashboard } from "../dashboard-state";
 import {
-  computeActiveUserAverage,
+  computeAgentContributionRate,
   computeCumulativeAcceptanceAverage,
-  computeTotalLinesAdded,
-  computeTotalLinesDeleted,
 } from "./common";
 import StatsCard from "./stats-card";
+import { TopThreeModel } from "./top-three-model";
+import { LinesAddedDeletedCard } from "./lines-added-deleted-card";
 
 export const Stats = () => {
-  const { displayData, isLoading } = useDashboard();
-  const acceptanceAverage = computeCumulativeAcceptanceAverage(displayData);
-  const averageActiveUsers = computeActiveUserAverage(displayData);
-  const totalLinesAdded = computeTotalLinesAdded(displayData);
-  const totalLinesDeleted = computeTotalLinesDeleted(displayData);
+  const { displayData, isLoading, currentMonthIdeActiveUsers, currentMonthAgentUsers, endDate } = useDashboard();
+
+  const agentAdoptionRate = currentMonthIdeActiveUsers > 0
+    ? parseFloat(((currentMonthAgentUsers / currentMonthIdeActiveUsers) * 100).toFixed(2))
+    : 0;
+  const agentContribRate = computeAgentContributionRate(displayData);
+  const acceptanceRate = computeCumulativeAcceptanceAverage(displayData);
+
+  const date = new Date(endDate ?? Date.now());
+  const formattedDate = new Intl.DateTimeFormat('en', { 
+    month: 'short', 
+    year: 'numeric' 
+  }).format(date);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 col-span-4">
-      <StatsCard
-        title="Acceptance average"
-        tip="Rate at which users accept Copilot's code suggestions across all features. Calculation: total accepted ÷ total suggested × 100%."
-        description="Code suggestions acceptance rate"
-        value={isLoading ? "..." : Math.round(acceptanceAverage) + "%"}
-      ></StatsCard>
-      <StatsCard
-        title="Active users"
-        tip="Average daily users with any Copilot activity in the selected period. Calculation: sum of daily active users ÷ number of days."
-        description="Average daily active users"
-        value={isLoading ? "..." : Math.round(averageActiveUsers).toLocaleString()}
-      ></StatsCard>
-      <StatsCard
-        title="Lines added"
-        tip="Total lines of code added by Copilot across all users and features in the selected period."
-        description="Total lines added by Copilot"
-        value={isLoading ? "..." : totalLinesAdded.toLocaleString()}
-      ></StatsCard>
-      <StatsCard
-        title="Lines deleted"
-        tip="Total lines of code deleted by Copilot across all users and features in the selected period."
-        description="Total lines deleted by Copilot"
-        value={isLoading ? "..." : totalLinesDeleted.toLocaleString()}
-      ></StatsCard>
+    <div className="col-span-4 flex flex-col gap-4">
+      {/* Row 1: Rate metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <StatsCard
+          title="Agent adoption"
+          tip="Active users who used any agent feature in the calendar month of the selected end date. Calculation: users who used agent ÷ IDE active users in that month × 100%."
+          description={`Agent users / IDE active users in month of ${formattedDate}`}
+          value={isLoading ? "..." : `${agentAdoptionRate}%`}
+        />
+        <StatsCard
+          title="Agent Contribution Rate"
+          tip="Percentage of total lines changed (added + deleted) that were produced by agent mode (Edit). Calculation: agent lines changed ÷ total lines changed × 100%."
+          description="Agent lines changed / total lines changed"
+          value={isLoading ? "..." : `${agentContribRate}%`}
+        />
+        <StatsCard
+          title="Acceptance Rate"
+          tip="Rate at which Copilot-suggested lines of code are accepted across all features (except others). Calculation: lines accepted ÷ lines suggested × 100%."
+          description="Lines accepted / lines suggested (all features)"
+          value={isLoading ? "..." : `${acceptanceRate}%`}
+        />
+      </div>
+      {/* Row 2: Activity metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <StatsCard
+          title="IDE active users"
+          tip="Copilot-licensed users who interacted with Copilot in the calendar month of the selected end date."
+          description={`Unique active users in month of ${formattedDate}`}
+          value={isLoading ? "..." : currentMonthIdeActiveUsers.toLocaleString()}
+        />
+        <TopThreeModel />
+        <LinesAddedDeletedCard />
+      </div>
     </div>
   );
 };

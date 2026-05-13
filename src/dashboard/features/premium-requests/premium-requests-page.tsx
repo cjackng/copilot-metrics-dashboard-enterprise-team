@@ -1,5 +1,6 @@
 import { ErrorPage } from "../common/error-page";
 import { PremiumRequestsTable } from "./charts/premium-requests-table";
+import { PremiumRequestsStats } from "./charts/premium-requests-stats";
 import { Header } from "./header";
 import { getFeatures } from "@/utils/helpers";
 import { DataProvider } from "./premium-requests-state";
@@ -32,7 +33,7 @@ export default async function Dashboard(props: IProps) {
     const today = new Date();
     selectedMonth = format(today, "yyyy-MM");
     startDate = startOfMonth(today);
-    endDate = endOfMonth(today);
+    endDate = today;
   }
 
   const isCrossMonthRange = differenceInCalendarMonths(endDate, startDate) > 0;
@@ -63,6 +64,9 @@ export default async function Dashboard(props: IProps) {
         <Header />
         <div className="mx-auto w-full max-w-6xl container">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="col-span-4 grid grid-cols-2 gap-6">
+              <PremiumRequestsStats />
+            </div>
             <PremiumRequestsTable />
           </div>
         </div>

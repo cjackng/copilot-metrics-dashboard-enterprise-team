@@ -11,7 +11,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { ChartHeader } from "./chart-header";
+import { ChartHeader } from "@/features/common/chart-header";
 import { ActiveUserData, getActiveUsers } from "./common";
 
 export const ActiveUsers = () => {
@@ -21,8 +21,8 @@ export const ActiveUsers = () => {
   return (
     <Card className="col-span-4">
       <ChartHeader
-        title="Active Users"
-        description="The total number active users per day using the chat and inline suggestions."
+        title="IDE daily active users"
+        description="Unique users who used Copilot on a given day, either via chat or code completions."
       />
       <CardContent>
         <ChartContainer config={chartConfig} className="w-full h-80">
@@ -46,11 +46,6 @@ export const ActiveUsers = () => {
               dataKey={chartConfig.totalUsers.key}
               fill="hsl(var(--chart-2))"
               radius={4}
-            />{" "}
-            <Bar
-              dataKey={chartConfig.totalIdeUsers.key}
-              fill="hsl(var(--chart-1))"
-              radius={4}
             />
             <ChartLegend content={<ChartLegendContent />} />
           </BarChart>
@@ -68,12 +63,8 @@ const chartConfig: Record<
   }
 > = {
   ["totalUsers"]: {
-    label: "Total active users",
+    label: "IDE active users",
     key: "totalUsers",
-  },
-  ["totalIdeUsers"]: {
-    label: "Total IDE engaged users",
-    key: "totalIdeUsers",
   },
   ["timeFrameDisplay"]: {
     label: "Time frame display",
