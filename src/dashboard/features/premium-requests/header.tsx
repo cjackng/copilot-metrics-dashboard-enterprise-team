@@ -9,6 +9,7 @@ import { DashboardMonthFilter } from "@/features/dashboard/filter/dashboard-mont
 import { DashboardDateFilter } from "@/features/dashboard/filter/dashboard-date-filter";
 import { DropdownFilter } from "@/features/dashboard/filter/dropdown-filter";
 import { dashboardStore, useDashboard } from "./premium-requests-state";
+import { PREMIUM_REQUESTS_MIN_DATE } from "@/config/data-availability";
 
 export const Header = () => {
   const router = useRouter();
@@ -43,8 +44,8 @@ export const Header = () => {
       <PageTitle>Premium Requests</PageTitle>
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2 flex-wrap">
-          <DashboardMonthFilter />
-          <DashboardDateFilter resetPath="/premium-requests" />
+          <DashboardMonthFilter minDate={PREMIUM_REQUESTS_MIN_DATE} />
+          <DashboardDateFilter resetPath="/premium-requests" minDate={PREMIUM_REQUESTS_MIN_DATE} />
           <DropdownFilter
             name={"Team"}
             allItems={teams as { value: string; isSelected: boolean }[]}

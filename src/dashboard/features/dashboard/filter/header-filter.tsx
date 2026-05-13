@@ -8,6 +8,7 @@ import { dashboardStore, useDashboard } from "../dashboard-state";
 import { DropdownFilter } from "./dropdown-filter";
 import { DashboardMonthFilter } from "./dashboard-month-filter";
 import { DashboardDateFilter } from "./dashboard-date-filter";
+import { DASHBOARD_MIN_DATE } from "@/config/data-availability";
 
 export function Filters() {
   const { teams: allTeams, isLoading } = useDashboard();
@@ -33,8 +34,8 @@ export function Filters() {
 
   return (
     <div className="flex gap-2 flex-1 flex-wrap">
-      <DashboardMonthFilter maxDate={maxDate} />
-      <DashboardDateFilter maxDate={maxDate} />
+      <DashboardMonthFilter maxDate={maxDate} minDate={DASHBOARD_MIN_DATE} />
+      <DashboardDateFilter maxDate={maxDate} minDate={DASHBOARD_MIN_DATE} />
       <DropdownFilter
         name={"Team"}
         allItems={allTeams}

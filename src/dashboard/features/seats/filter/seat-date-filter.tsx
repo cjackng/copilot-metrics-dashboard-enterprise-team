@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export const SeatDateFilter = () => {
+export const SeatDateFilter = ({ minDate }: { minDate?: Date }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -58,6 +58,7 @@ export const SeatDateFilter = () => {
           date={date}
           onChange={handleSelect}
           maxDate={new Date()}
+          minDate={minDate}
         />
       </PopoverContent>
     </Popover>

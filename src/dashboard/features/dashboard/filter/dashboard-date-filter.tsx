@@ -14,6 +14,8 @@ interface DateFilterProps {
   resetPath?: string;
   /** Restrict calendar to this date or earlier. Defaults to today (no restriction). */
   maxDate?: Date;
+  /** Restrict calendar to this date or later (earliest available data). */
+  minDate?: Date;
 }
 
 interface RangeState {
@@ -22,7 +24,7 @@ interface RangeState {
   key: string;
 }
 
-export const DashboardDateFilter = ({ resetPath = "/", maxDate = new Date() }: DateFilterProps) => {
+export const DashboardDateFilter = ({ resetPath = "/", maxDate = new Date(), minDate }: DateFilterProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = React.useState(false);
@@ -108,6 +110,7 @@ export const DashboardDateFilter = ({ resetPath = "/", maxDate = new Date() }: D
           direction="horizontal"
           showDateDisplay={false}
           maxDate={maxDate}
+          minDate={minDate}
         />
         {isSingleDatePending && (
           <div className="flex justify-end px-3 pb-3">
