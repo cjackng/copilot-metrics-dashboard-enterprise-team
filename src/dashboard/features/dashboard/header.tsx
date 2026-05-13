@@ -2,8 +2,10 @@
 import { useDashboard } from "./dashboard-state";
 import { format, parseISO } from "date-fns";
 import { PageHeader, PageTitle } from "../page-header/page-header";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { WeekendFilter } from "./filter/weekend-filter";
 import { Filters } from "./filter/header-filter";
+import { InfoIcon } from "lucide-react";
 
 export const Header = () => {
   const { lastUpdatedTime } = useDashboard();
@@ -23,8 +25,21 @@ export const Header = () => {
           </div>
         </div>
         {formattedLastUpdated && (
-          <p className="text-xs text-muted-foreground">Data last updated: {formattedLastUpdated}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-xs text-muted-foreground">Data last updated: {formattedLastUpdated}</p>
+            <TooltipProvider>
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <InfoIcon className="h-4 w-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent className="bg-popover text-popover-foreground p-3 max-w-[320px] border">
+                  <p className="text-sm leading-relaxed">Data with 2 days delay.</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         )}
+        
       </div>
     </PageHeader>
   );

@@ -1,7 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Eraser } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Eraser, InfoIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format, parseISO } from "date-fns";
 import { seatsStore, useSeats } from "../seats-state";
@@ -27,7 +28,8 @@ export function SeatsHeaderFilter() {
 
   const formattedLastUpdated = fmt(last_update_time);
   const formattedSnapshotTime = fmt(snapshot_time);
-  const isStaleSnapshot = snapshot_date && selectedDate && snapshot_date !== selectedDate;
+
+  const snapshotTooltip = `Current snapshot captured at: ${formattedSnapshotTime}`
 
   return (
     <div className="flex flex-col gap-4">
@@ -46,18 +48,23 @@ export function SeatsHeaderFilter() {
           </Button>
         )}
       </div>
-      <div className="flex flex-row gap-10">
-        {formattedLastUpdated && (
+      {formattedLastUpdated && (
+        <div className="flex items-center gap-1.5">
           <p className="text-xs text-muted-foreground">Data last updated: {formattedLastUpdated}</p>
-        )}
-        {formattedSnapshotTime && (
-          <p className="text-xs text-muted-foreground">
-            {isStaleSnapshot
-              ? `No snapshot for ${selectedDate}. Showing nearest prior snapshot captured at: ${formattedSnapshotTime}`
-              : `Snapshot from: ${formattedSnapshotTime}`}
-          </p>
-        )}
-      </div>
+          {snapshotTooltip && (
+            <TooltipProvider>
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <InfoIcon className="h-4 w-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent className="bg-popover text-popover-foreground p-3 max-w-[320px] border">
+                  <p className="text-sm leading-relaxed">{snapshotTooltip}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
+      )}
     </div>
   );
 }
