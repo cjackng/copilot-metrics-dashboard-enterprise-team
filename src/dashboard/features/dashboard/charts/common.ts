@@ -51,7 +51,7 @@ export const computeCumulativeAcceptanceAverage = (
   }
 
   if (totalSuggested === 0) return 0;
-  return parseFloat(((totalAccepted / totalSuggested) * 100).toFixed(2));
+  return parseFloat(((totalAccepted / totalSuggested) * 100).toFixed(0));
 };
 
 export interface codeCompletionSuggestionAcceptanceData {
@@ -178,18 +178,6 @@ export function getTopModels(
     .slice(0, count);
 }
 
-export function computeAgentAdoptionRate(
-  displayData: CopilotUsageOutput[],
-  endDate: string | null
-): number {
-  if (!endDate) return 0;
-  const item = displayData.find((d) => d.day === endDate);
-  if (!item || item.total_active_users === 0) return 0;
-  return parseFloat(
-    ((item.total_ide_engaged_users / item.total_active_users) * 100).toFixed(2)
-  );
-}
-
 export function computeAgentContributionRate(
   displayData: CopilotUsageOutput[]
 ): number {
@@ -211,7 +199,7 @@ export function computeAgentContributionRate(
 
   const total = totalAdded + totalDeleted;
   if (total === 0) return 0;
-  return parseFloat(((( agentAdded + agentDeleted) / total) * 100).toFixed(2));
+  return parseFloat(((( agentAdded + agentDeleted) / total) * 100).toFixed(0));
 }
 
 export function getActiveUsersOnDate(

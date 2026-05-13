@@ -12,7 +12,7 @@ export const Stats = () => {
   const { displayData, isLoading, currentMonthIdeActiveUsers, currentMonthAgentUsers, endDate } = useDashboard();
 
   const agentAdoptionRate = currentMonthIdeActiveUsers > 0
-    ? parseFloat(((currentMonthAgentUsers / currentMonthIdeActiveUsers) * 100).toFixed(2))
+    ? parseFloat(((currentMonthAgentUsers / currentMonthIdeActiveUsers) * 100).toFixed(0))
     : 0;
   const agentContribRate = computeAgentContributionRate(displayData);
   const acceptanceRate = computeCumulativeAcceptanceAverage(displayData);
