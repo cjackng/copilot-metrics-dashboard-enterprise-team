@@ -13,6 +13,7 @@ import { DataProvider } from "./dashboard-state";
 import { Header } from "./header";
 import { getCopilotMetrics, getMetricsLastUpdated, IFilter as MetricsFilter } from "@/services/copilot-metrics-service";
 import { getAllEnterpriseMembersLookup } from "@/services/enterprise-members-service";
+import { getSeatsFromDB } from "@/services/copilot-seat-service";
 import { format, startOfMonth, subDays } from "date-fns";
 
 export interface IProps {
@@ -36,11 +37,13 @@ export default async function Dashboard(props: IProps) {
   const metricsPromise = getCopilotMetrics(metricsFilter);
   const memberTeamsPromise = getAllEnterpriseMembersLookup();
   const lastUpdatedPromise = getMetricsLastUpdated();
+  const seatsPromise = getSeatsFromDB(endDate);
 
-  const [metrics, membersToTeams, lastUpdated] = await Promise.all([
+  const [metrics, membersToTeams, lastUpdated, seatsResult] = await Promise.all([
     metricsPromise,
     memberTeamsPromise,
     lastUpdatedPromise,
+    seatsPromise,
   ]);
 
   if (metrics.status !== "OK") {
@@ -49,6 +52,7 @@ export default async function Dashboard(props: IProps) {
 
   const enterpriseTeams = membersToTeams.teams;
   const lastUpdatedTime = lastUpdated ? lastUpdated.toISOString() : null;
+  const seatRows = seatsResult.status === "OK" ? seatsResult.response.seats : [];
 
   return (
     <DataProvider
@@ -56,6 +60,7 @@ export default async function Dashboard(props: IProps) {
       memberTeamsData={membersToTeams.memberMap}
       enterpriseTeams={enterpriseTeams}
       lastUpdatedTime={lastUpdatedTime}
+      seatRows={seatRows}
       filter={{
         startDate,
         endDate,

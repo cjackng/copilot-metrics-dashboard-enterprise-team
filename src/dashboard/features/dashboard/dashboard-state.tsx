@@ -4,18 +4,19 @@ import { PropsWithChildren } from "react";
 import {
   CopilotUsageOutput, CopilotUsageOutputResponse, EnterpriseTeam
 } from "@/features/common/models";
-import { format, parseISO, subDays } from "date-fns";
 
 import { proxy, useSnapshot } from "valtio";
 
 import { Member } from "@/services/enterprise-members-service";
 import { TotalsByFeature, TotalsByModelFeature } from "@/features/common/models";
+import { SeatSnapshotRow } from "@/services/copilot-seat-service";
 
 interface IProps extends PropsWithChildren {
   copilotUsages: CopilotUsageOutputResponse;
   memberTeamsData: Map<string, Member>;
   enterpriseTeams: EnterpriseTeam[];
   lastUpdatedTime?: string | null;
+  seatRows?: SeatSnapshotRow[];
   filter?: {
     startDate?: Date | string;
     endDate?: Date | string;
@@ -44,12 +45,14 @@ class DashboardState {
   public endDate: string | null = null;
   public currentMonthIdeActiveUsers: number = 0;
   public currentMonthAgentUsers: number = 0;
+  public generalAdoptionRate: number | null = null;
 
   public memberTeamsData: Map<string, Member> = new Map();
 
   private apiData: Map<string, CopilotUsageOutput[]> = new Map();
   private teamFilteredData: Map<string, CopilotUsageOutput[]> = new Map();
-  private hasPendingTeamChanges: boolean = false; // Track if teams have changed
+  private hasPendingTeamChanges: boolean = false;
+  private seatRows: SeatSnapshotRow[] = [];
   private currentFilter: {
     startDate?: Date | string;
     endDate?: Date | string;
@@ -62,6 +65,7 @@ class DashboardState {
     memberTeamsData: Map<string, Member>,
     enterpriseTeams: EnterpriseTeam[],
     lastUpdatedTime?: string | null,
+    seatRows?: SeatSnapshotRow[],
     filter?: {
       startDate?: Date | string;
       endDate?: Date | string;
@@ -73,6 +77,7 @@ class DashboardState {
     this.lastUpdatedTime = lastUpdatedTime ?? null;
     this.isDateRangeMode = !!(filter?.startDate && filter?.endDate);
     this.endDate = filter?.endDate ? String(filter.endDate) : null;
+    this.seatRows = seatRows ?? [];
 
     // Set memberTeamsData first so team re-filtering can use it
     this.memberTeamsData = memberTeamsData;
@@ -211,6 +216,7 @@ class DashboardState {
     const monthStats = this.computeCurrentMonthStats();
     this.currentMonthIdeActiveUsers = monthStats.ideActiveUsers;
     this.currentMonthAgentUsers = monthStats.agentUsers;
+    this.generalAdoptionRate = this.computeGeneralAdoption();
   }
 
   private computeCurrentMonthStats(): { ideActiveUsers: number; agentUsers: number } {
@@ -228,6 +234,32 @@ class DashboardState {
       }
     });
     return { ideActiveUsers, agentUsers };
+  }
+
+  private computeGeneralAdoption(): number | null {
+    if (this.seatRows.length === 0) return null;
+
+    const selectedTeams = this.teams.filter((t) => t.isSelected).map((t) => t.value);
+    const selectedTeamSet = new Set(selectedTeams);
+
+    const filteredSeats =
+      selectedTeams.length > 0
+        ? this.seatRows.filter((s) => s.team && selectedTeamSet.has(s.team))
+        : this.seatRows;
+
+    if (filteredSeats.length === 0) return null;
+
+    const endDate = this.endDate ? new Date(this.endDate) : new Date();
+    // Active threshold: 30 days before endDate
+    const activeThreshold = new Date(endDate);
+    activeThreshold.setDate(activeThreshold.getDate() - 30);
+    const thresholdStr = activeThreshold.toISOString().slice(0, 10); // "YYYY-MM-DD"
+
+    const activeSeats = filteredSeats.filter(
+      (s) => s.last_activity_at != null && s.last_activity_at >= thresholdStr
+    );
+
+    return (activeSeats.length / filteredSeats.length) * 100;
   }
 
   private calculateDisplayData(): CopilotUsageOutput[] {
@@ -387,8 +419,9 @@ export const DataProvider = ({
   memberTeamsData,
   enterpriseTeams,
   lastUpdatedTime,
+  seatRows,
   filter,
 }: IProps) => {
-  dashboardStore.initData(copilotUsages, memberTeamsData, enterpriseTeams, lastUpdatedTime, filter);
+  dashboardStore.initData(copilotUsages, memberTeamsData, enterpriseTeams, lastUpdatedTime, seatRows, filter);
   return <>{children}</>;
 };
