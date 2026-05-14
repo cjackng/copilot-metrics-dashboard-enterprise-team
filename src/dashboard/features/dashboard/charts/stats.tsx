@@ -32,19 +32,31 @@ export const Stats = () => {
 
   return (
     <div className="col-span-4 flex flex-col gap-4">
-      {/* Row 1: Adoption + Rate metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Row 1: All 6 stats cards in one row */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-[1fr_1fr_1.1fr_1.25fr_1fr_0.8fr] gap-4">
         <StatsCard
-          title="Active Seat Adoption "
-          tip={`Licensed seats that were active within 30 days before the end date ÷ total licensed seats from the snapshot ≤ end date. N/A if no seat snapshot is available.`}
-          description={`Active assigned seats`}
+          title="Active Seat Adoption"
+          tip="Licensed seats that were active within 30 days before the end date ÷ total licensed seats from the snapshot ≤ end date. N/A if no seat snapshot is available."
+          description="Active assigned seats"
           value={isLoading ? "..." : generalAdoptionDisplay}
         />
         <StatsCard
-          title="Agent adoption"
+          title="Agent Adoption"
           tip="Users who used agent ÷ IDE active users in calendar month of the selected end date × 100%"
-          description={`Active users used any agent feature`}
+          description="Active users used any agent feature"
           value={isLoading ? "..." : `${agentAdoptionRate}%`}
+        />
+        <StatsCard
+          title="Contribution — Agent"
+          tip="Agent lines changed ÷ total lines changed × 100%"
+          description="LOC added and deleted driven by agent"
+          value={isLoading ? "..." : `${agentContribRate}%`}
+        />
+        <StatsCard
+          title="Contribution — Non-agent"
+          tip="(Total lines changed − agent lines changed) ÷ total lines changed × 100%"
+          description="LOC added and deleted driven by non-agent"
+          value={isLoading ? "..." : `${nonAgentContribRate}%`}
         />
         <StatsCard
           title="Code Completion Acceptance"
@@ -59,22 +71,7 @@ export const Stats = () => {
           value={isLoading ? "..." : `${cliAcceptanceRate}%`}
         />
       </div>
-      {/* Row 2: Feature-specific acceptance rates */}
-      <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-        <StatsCard
-          title="Contribution Rate — Agent"
-          tip="Agent lines changed ÷ total lines changed × 100%"
-          description="LOC added and deleted driven by agent"
-          value={isLoading ? "..." : `${agentContribRate}%`}
-        />
-        <StatsCard
-          title="Contribution Rate — Non-agent"
-          tip="(Total lines changed − agent lines changed) ÷ total lines changed × 100%"
-          description="LOC added and deleted driven by non-agent"
-          value={isLoading ? "..." : `${nonAgentContribRate}%`}
-        />
-      </div>
-      {/* Row 3: Activity metrics */}
+      {/* Row 2: Activity metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatsCard
           title="IDE active users"

@@ -14,7 +14,7 @@ export default function Loading() {
         </div>
       </PageHeader>
 
-      <div className="mx-auto w-full max-w-6xl container">
+      <div className="mx-auto w-full max-w-screen-2xl px-4 md:px-8">
         <div className="grid grid-cols-4 gap-6">
           <Skeleton className="h-28" />
           <Skeleton className="h-28" />

@@ -70,7 +70,7 @@ export default async function Dashboard(props: IProps) {
     >
       <main className="flex flex-1 flex-col gap-4 md:gap-4 pb-8">
         <Header />
-        <div className="mx-auto w-full max-w-6xl container">
+        <div className="mx-auto w-full max-w-screen-2xl px-4 md:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <Stats />
             <ActiveUsers />
