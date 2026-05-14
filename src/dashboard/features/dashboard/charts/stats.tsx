@@ -2,7 +2,9 @@
 import { useDashboard } from "../dashboard-state";
 import {
   computeAgentContributionRate,
-  computeCumulativeAcceptanceAverage,
+  computeNonAgentContributionRate,
+  computeCodeCompletionAcceptanceRateTotal,
+  computeCliAcceptanceRateTotal,
 } from "./common";
 import StatsCard from "./stats-card";
 import { TopThreeModel } from "./top-three-model";
@@ -15,7 +17,9 @@ export const Stats = () => {
     ? Math.round((currentMonthAgentUsers / currentMonthIdeActiveUsers) * 100)
     : 0;
   const agentContribRate = computeAgentContributionRate(displayData);
-  const acceptanceRate = computeCumulativeAcceptanceAverage(displayData);
+  const nonAgentContribRate = computeNonAgentContributionRate(displayData);
+  const codeCompletionAcceptanceRate = computeCodeCompletionAcceptanceRateTotal(displayData);
+  const cliAcceptanceRate = computeCliAcceptanceRateTotal(displayData);
 
   const ref = endDate ? new Date(endDate) : new Date();
   const formattedDate = new Intl.DateTimeFormat('en', {
@@ -31,31 +35,46 @@ export const Stats = () => {
       {/* Row 1: Adoption + Rate metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatsCard
-          title="General adoption"
-          tip={`Licensed seats (filtered by team) that were active within 30 days before the end date ÷ total licensed seats from the snapshot ≤ end date. N/A if no seat snapshot is available.`}
-          description={`Active seats (last 30 days) / total seats as of ${formattedDate}`}
+          title="Active Seat Adoption "
+          tip={`Licensed seats that were active within 30 days before the end date ÷ total licensed seats from the snapshot ≤ end date. N/A if no seat snapshot is available.`}
+          description={`Active assigned seats`}
           value={isLoading ? "..." : generalAdoptionDisplay}
         />
         <StatsCard
           title="Agent adoption"
-          tip="Active users who used any agent feature in the calendar month of the selected end date. Calculation: users who used agent ÷ IDE active users in that month × 100%."
-          description={`Agent users / IDE active users in ${formattedDate}`}
+          tip="Users who used agent ÷ IDE active users in calendar month of the selected end date × 100%"
+          description={`Active users used any agent feature`}
           value={isLoading ? "..." : `${agentAdoptionRate}%`}
         />
         <StatsCard
-          title="Agent Contribution Rate"
-          tip="Percentage of total lines changed (added + deleted) that were produced by agent mode (Edit). Calculation: agent lines changed ÷ total lines changed × 100%."
-          description="Agent lines changed / total lines changed"
+          title="Code Completion Acceptance"
+          tip="Lines accepted ÷ lines suggested × 100% for the code_completion feature"
+          description="LOC-based accepted"
+          value={isLoading ? "..." : `${codeCompletionAcceptanceRate}%`}
+        />
+        <StatsCard
+          title="CLI Acceptance"
+          tip="Acceptance activity counts ÷ generation activity counts × 100% for copilot_cli feature"
+          description="Count-based accepted"
+          value={isLoading ? "..." : `${cliAcceptanceRate}%`}
+        />
+      </div>
+      {/* Row 2: Feature-specific acceptance rates */}
+      <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+        <StatsCard
+          title="Contribution Rate — Agent"
+          tip="Agent lines changed ÷ total lines changed × 100%"
+          description="LOC added and deleted driven by agent"
           value={isLoading ? "..." : `${agentContribRate}%`}
         />
         <StatsCard
-          title="Acceptance Rate"
-          tip="Rate at which Copilot-suggested lines of code are accepted across all features (except others). Calculation: lines accepted ÷ lines suggested × 100%."
-          description="Lines accepted / lines suggested (all features)"
-          value={isLoading ? "..." : `${acceptanceRate}%`}
+          title="Contribution Rate — Non-agent"
+          tip="(Total lines changed − agent lines changed) ÷ total lines changed × 100%"
+          description="LOC added and deleted driven by non-agent"
+          value={isLoading ? "..." : `${nonAgentContribRate}%`}
         />
       </div>
-      {/* Row 2: Activity metrics */}
+      {/* Row 3: Activity metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatsCard
           title="IDE active users"

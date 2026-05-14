@@ -54,6 +54,44 @@ export const computeCumulativeAcceptanceAverage = (
   return parseFloat(((totalAccepted / totalSuggested) * 100).toFixed(0));
 };
 
+/** Cumulative acceptance rate for code_completion feature only (loc-based), returns a single percentage. */
+export const computeCodeCompletionAcceptanceRateTotal = (
+  filteredData: CopilotUsageOutput[]
+): number => {
+  let totalSuggested = 0;
+  let totalAccepted = 0;
+
+  for (const item of filteredData) {
+    for (const f of item.totals_by_feature ?? []) {
+      if (f.feature !== "code_completion") continue;
+      totalSuggested += f.loc_suggested_to_add_sum + f.loc_suggested_to_delete_sum;
+      totalAccepted += f.loc_added_sum + f.loc_deleted_sum;
+    }
+  }
+
+  if (totalSuggested === 0) return 0;
+  return parseFloat(((totalAccepted / totalSuggested) * 100).toFixed(0));
+};
+
+/** Cumulative acceptance rate for copilot_cli feature (activity-count-based), returns a single percentage. */
+export const computeCliAcceptanceRateTotal = (
+  filteredData: CopilotUsageOutput[]
+): number => {
+  let totalGenerated = 0;
+  let totalAccepted = 0;
+
+  for (const item of filteredData) {
+    for (const f of item.totals_by_feature ?? []) {
+      if (f.feature !== "copilot_cli") continue;
+      totalGenerated += f.code_generation_activity_count;
+      totalAccepted += f.code_acceptance_activity_count;
+    }
+  }
+
+  if (totalGenerated === 0) return 0;
+  return parseFloat(((totalAccepted / totalGenerated) * 100).toFixed(0));
+};
+
 export interface codeCompletionSuggestionAcceptanceData {
   acceptedCompletions: number;
   suggestedCompletions: number;
@@ -200,6 +238,31 @@ export function computeAgentContributionRate(
   const total = totalAdded + totalDeleted;
   if (total === 0) return 0;
   return parseFloat(((( agentAdded + agentDeleted) / total) * 100).toFixed(0));
+}
+
+export function computeNonAgentContributionRate(
+  displayData: CopilotUsageOutput[]
+): number {
+  let agentAdded = 0;
+  let agentDeleted = 0;
+  let totalAdded = 0;
+  let totalDeleted = 0;
+
+  for (const item of displayData) {
+    totalAdded += item.total_lines_added ?? 0;
+    totalDeleted += item.total_lines_deleted ?? 0;
+    for (const f of item.totals_by_feature ?? []) {
+      if (AGENT_INITIATED_FEATURE_KEYS.has(f.feature)) {
+        agentAdded += f.loc_added_sum;
+        agentDeleted += f.loc_deleted_sum;
+      }
+    }
+  }
+
+  const total = totalAdded + totalDeleted;
+  if (total === 0) return 0;
+  const nonAgent = total - (agentAdded + agentDeleted);
+  return parseFloat(((nonAgent / total) * 100).toFixed(0));
 }
 
 export function getActiveUsersOnDate(
