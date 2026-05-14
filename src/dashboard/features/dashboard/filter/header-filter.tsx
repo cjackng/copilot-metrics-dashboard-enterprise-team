@@ -42,7 +42,6 @@ export function Filters() {
         isLoading={isLoading}
         onSelect={(e) => dashboardStore.filterTeam(e)}
         onBatchSelect={(names, selected) => dashboardStore.batchFilterTeams(names, selected)}
-        onClose={() => dashboardStore.refreshTeamDataIfNeeded()}
       />
       {isFilterActive && (
         <Button variant="ghost" size="sm" onClick={handleReset}>

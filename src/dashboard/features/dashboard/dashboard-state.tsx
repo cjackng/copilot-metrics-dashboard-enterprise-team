@@ -51,7 +51,6 @@ class DashboardState {
 
   private apiData: Map<string, CopilotUsageOutput[]> = new Map();
   private teamFilteredData: Map<string, CopilotUsageOutput[]> = new Map();
-  private hasPendingTeamChanges: boolean = false;
   private seatRows: SeatSnapshotRow[] = [];
   private currentFilter: {
     startDate?: Date | string;
@@ -116,21 +115,21 @@ class DashboardState {
     const item = this.teams.find((t) => t.value === team);
     if (item) {
       item.isSelected = !item.isSelected;
+      this.rebuildTeamFilteredData();
       this.applyFilters();
-      this.hasPendingTeamChanges = true;
     }
   }
 
   public selectAllTeams(): void {
     this.teams.forEach((item) => (item.isSelected = true));
+    this.rebuildTeamFilteredData();
     this.applyFilters();
-    this.hasPendingTeamChanges = true;
   }
 
   public clearAllTeams(): void {
     this.teams.forEach((item) => (item.isSelected = false));
+    this.rebuildTeamFilteredData();
     this.applyFilters();
-    this.hasPendingTeamChanges = true;
   }
 
   public batchFilterTeams(names: string[], selected: boolean): void {
@@ -140,47 +139,8 @@ class DashboardState {
         item.isSelected = selected;
       }
     });
+    this.rebuildTeamFilteredData();
     this.applyFilters();
-    this.hasPendingTeamChanges = true;
-  }
-
-  public async refreshTeamDataIfNeeded(): Promise<void> {
-    if (this.hasPendingTeamChanges) {
-      // Get selected teams for server request
-      const selectedTeams = this.teams
-        .filter((t) => t.isSelected)
-        .map((t) => t.value);
-
-      // Refresh data from server in the background
-      await this.refreshDataWithTeams(selectedTeams);
-
-      // Reset pending changes flag
-      this.hasPendingTeamChanges = false;
-    }
-  }
-
-  private async refreshDataWithTeams(selectedTeams: string[]): Promise<void> {
-    this.isLoading = true;
-
-    try {
-      if (selectedTeams.length > 0) {
-        this.teamFilteredData = new Map();
-        this.apiData.forEach((value, key) => {
-          if (this.memberTeamsData && this.memberTeamsData.size > 0 && this.memberTeamsData.has(key)) {
-            if (this.memberTeamsData.get(key)?.teamNames.some((teamName) => selectedTeams.includes(teamName))) {
-              this.teamFilteredData.set(key, value);
-            }
-          }
-        });
-      } else {
-        this.teamFilteredData = new Map(this.apiData);
-      }
-      this.applyFilters();
-    } catch (error) {
-      console.error("Failed to refresh data:", error);
-    } finally {
-      this.isLoading = false;
-    }
   }
 
   public toggleWeekendFilter(hide: boolean): void {
@@ -188,19 +148,28 @@ class DashboardState {
     this.applyFilters();
   }
 
-  public async resetAllFilters(): Promise<void> {
+  public resetAllFilters(): void {
     this.teams.forEach((item) => (item.isSelected = false));
     this.hideWeekends = false;
     this.days = 28;
-    this.hasPendingTeamChanges = false; // Reset pending changes
+    this.rebuildTeamFilteredData();
     this.applyFilters();
+  }
 
-    // Refresh data from server (no URL changes)
-    try {
-      await this.refreshDataWithTeams([]);
-    } catch (error) {
-      console.error("Failed to refresh data with teams:", error);
-      // Optionally, notify the user about the error (e.g., set an error state or trigger a UI notification)
+  private rebuildTeamFilteredData(): void {
+    const selectedTeams = this.teams.filter((t) => t.isSelected).map((t) => t.value);
+    if (selectedTeams.length > 0) {
+      const selectedSet = new Set(selectedTeams);
+      const filtered = new Map<string, CopilotUsageOutput[]>();
+      this.apiData.forEach((value, key) => {
+        const member = this.memberTeamsData.get(key);
+        if (member && member.teamNames.some((name) => selectedSet.has(name))) {
+          filtered.set(key, value);
+        }
+      });
+      this.teamFilteredData = filtered;
+    } else {
+      this.teamFilteredData = new Map(this.apiData);
     }
   }
 
