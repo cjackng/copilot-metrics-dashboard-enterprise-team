@@ -8,6 +8,7 @@ import { format, parseISO } from "date-fns";
 import { seatsStore, useSeats } from "../seats-state";
 import { DropdownFilter } from "@/features/dashboard/filter/dropdown-filter";
 import { SeatDateFilter } from "./seat-date-filter";
+import { SEATS_MIN_DATE } from "@/config/data-availability";
 
 export function SeatsHeaderFilter() {
   const { teams, last_update_time, snapshot_time, snapshot_date, selectedDate } = useSeats();
@@ -34,7 +35,7 @@ export function SeatsHeaderFilter() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2 flex-wrap">
-        <SeatDateFilter />
+        <SeatDateFilter minDate={SEATS_MIN_DATE} />
         <DropdownFilter
           name={"Team"}
           allItems={teams as { value: string; isSelected: boolean }[]}

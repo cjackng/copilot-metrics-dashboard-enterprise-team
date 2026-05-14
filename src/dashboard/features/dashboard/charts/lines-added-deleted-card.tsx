@@ -13,7 +13,7 @@ export const LinesAddedDeletedCard = () => {
     <Card className="flex flex-col min-h-[140px]">
       <ChartHeader
         title="Lines added / deleted"
-        description="Total lines of code added and deleted by Copilot"
+        description="LOC added and deleted by Copilot"
         tip="Total lines of code added and deleted by Copilot across all users and features in the selected period."
       />
       <CardContent className="flex flex-row gap-6 flex-1 items-center py-0 pb-4">

@@ -34,7 +34,7 @@ export default async function Dashboard(props: IProps) {
     return (
       <main className="flex flex-1 flex-col gap-4 md:gap-4 pb-8">
         <Header title="Seats" />
-        <div className="mx-auto w-full max-w-6xl container">
+        <div className="mx-auto w-full max-w-screen-2xl px-4 md:px-8">
           <div className="flex flex-col items-center justify-center gap-4 h-64 text-muted-foreground">
             <p className="text-lg font-medium">No seat snapshot available for {selectedDate}.</p>
           </div>
@@ -47,7 +47,7 @@ export default async function Dashboard(props: IProps) {
     <DataProvider dbResult={dbResult} selectedDate={selectedDate}>
       <main className="flex flex-1 flex-col gap-4 md:gap-4 pb-8">
         <Header title="Seats" />
-        <div className="mx-auto w-full max-w-6xl container">
+        <div className="mx-auto w-full max-w-screen-2xl px-4 md:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <Stats />
             <SeatsList />

@@ -25,9 +25,11 @@ export const Header = () => {
           </div>
         </div>
         {formattedLastUpdated && (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-4">
             <p className="text-xs text-muted-foreground">Data last updated: {formattedLastUpdated}</p>
-            <TooltipProvider>
+            <p className="text-xs text-muted-foreground">Data with 2 days delay.</p>
+
+            {/* <TooltipProvider>
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
                   <InfoIcon className="h-4 w-4 text-muted-foreground" />
@@ -36,7 +38,7 @@ export const Header = () => {
                   <p className="text-sm leading-relaxed">Data with 2 days delay.</p>
                 </TooltipContent>
               </Tooltip>
-            </TooltipProvider>
+            </TooltipProvider> */}
           </div>
         )}
         

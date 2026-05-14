@@ -168,21 +168,21 @@ export const SeatsList = () => {
   }), []);
 
   return (
-    <Card className="col-span-4">
-      <ChartHeader title="Assigned Seats" description="" />
-      <CardContent>
+    <Card className="col-span-4 py-4 px-4">
+      {/* <ChartHeader title="Assigned Seats" description="" />
+      <CardContent> */}
         <MuiDataGridTable<SeatSnapshotRow>
           columns={columns}
           rows={filteredSeats as SeatSnapshotRow[]}
           getRowId={(row) => row.username}
-          height={363}
+          height={420}
           enableSearch
           enableColumnFilter
           enableColumnToggle
           enableExport
           initialColumnVisibility={initialColumnVisibility}
         />
-      </CardContent>
+      {/* </CardContent> */}
     </Card>
   );
 };
