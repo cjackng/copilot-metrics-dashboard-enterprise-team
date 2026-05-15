@@ -116,7 +116,7 @@ export function DropdownFilter(props: DropdownFilterProps) {
             <CommandList>
               <CommandEmpty>No results found.</CommandEmpty>
               <CommandGroup>
-                {allItems.map((option) => {
+                {filteredItems.map((option) => {
                   return (
                     <CommandItem
                       key={option.value}
