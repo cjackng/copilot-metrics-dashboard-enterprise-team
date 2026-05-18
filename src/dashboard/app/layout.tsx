@@ -1,4 +1,3 @@
-import { AppHeader } from "@/features/app-header/app-header";
 import { ThemeProvider } from "@/features/common/theme-provider";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
@@ -21,8 +20,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={cn(inter.className)}>
         <ThemeProvider attribute="class" enableSystem disableTransitionOnChange>
-          <div className="flex min-h-screen w-full flex-col bg-muted-foreground/5 ">
-            <AppHeader />
+          <div className="flex min-h-screen w-full flex-col bg-muted-foreground/5">
             {children}
           </div>
         </ThemeProvider>
