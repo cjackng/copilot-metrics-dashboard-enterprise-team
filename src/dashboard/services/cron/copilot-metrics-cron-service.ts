@@ -13,8 +13,8 @@ export async function syncCopilotMetrics() {
 
     const env = ensureGitHubEnvConfig();
     if (env.status !== 'OK') {
-      log(`Failed to get env config: ${env.errors[0].message}`);
-      return;
+      log(`Missing or invalid GitHub environment config: ${env.errors[0].message}`);
+      throw new Error(`Missing or invalid GitHub environment config: ${env.errors[0].message}`);
     }
     const { token, version, enterprise } = env.response;
 

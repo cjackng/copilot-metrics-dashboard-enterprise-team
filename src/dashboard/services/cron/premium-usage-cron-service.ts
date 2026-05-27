@@ -25,8 +25,8 @@ export async function syncPremiumUsageData() {
     };
     const requestResult = await requestPremiumUsageReport(billReportFilter);
     if (requestResult.status !== 'OK') {
-      log(`Failed to request Premium Usage data: ${requestResult.errors[0].message}`);
-      return;
+      log(`Failed to request Premium Usage report: ${requestResult.errors[0].message}`);
+      throw new Error(`Failed to request Premium Usage report: ${requestResult.errors[0].message}`);
     }
 
     const reportId = requestResult.response.id;
@@ -34,13 +34,13 @@ export async function syncPremiumUsageData() {
 
     const reportResult = await getBillingReport(reportId);
     if (reportResult.status !== 'OK') {
-      log(`Failed to get Premium Usage data: ${reportResult.errors[0].message}`);
-      return;
+      log(`Failed to retrieve Premium Usage report: ${reportResult.errors[0].message}`);
+      throw new Error(`Failed to retrieve Premium Usage report: ${reportResult.errors[0].message}`);
     }
 
     if (!reportResult.response.download_urls || reportResult.response.download_urls.length === 0) {
-      log(`No download URLs found in the report response. ${JSON.stringify(reportResult.response)}`);
-      return;
+      log(`Premium Usage report completed but returned no download URLs. Response: ${JSON.stringify(reportResult.response)}`);
+      throw new Error(`Premium Usage report completed but returned no download URLs. Response: ${JSON.stringify(reportResult.response)}`);
     }
 
     const downloadUrl = reportResult.response.download_urls[0];
