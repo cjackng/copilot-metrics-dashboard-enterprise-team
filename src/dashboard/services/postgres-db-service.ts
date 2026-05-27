@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
 import { PremiumRequestUsage } from '@/features/common/models';
 import format from 'pg-format'
 
@@ -58,7 +58,7 @@ class PremiumRequestUsageService {
       for (let i = 0; i < rows.length; i += batchSize) {
         const batch = rows.slice(i, i + batchSize);
         console.log(`[DB Service] Processing batch ${i + 1} - ${i + batch.length}`);
-        await this.processBatch(batch);
+        await this.processBatch(batch, client);
       }
       console.log(`[DB Service] Batch insert/update completed for ${rows.length} records`);
       await client.query('COMMIT');
@@ -71,7 +71,7 @@ class PremiumRequestUsageService {
     }
   }
 
-  private async processBatch(batch: PremiumRequestUsage[]) {
+  private async processBatch(batch: PremiumRequestUsage[], client: PoolClient) {
     // Build parameters array
     const values = batch.map(row => [
       row.date,
@@ -117,7 +117,7 @@ class PremiumRequestUsageService {
         update_at = NOW()
     `, values);
 
-    await this.pool.query(insertStmt);
+    await client.query(insertStmt);
   }
 
   async getAllRows(): Promise<PremiumRequestUsage[]> {

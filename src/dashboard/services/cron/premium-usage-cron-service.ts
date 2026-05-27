@@ -53,12 +53,12 @@ export async function syncPremiumUsageData() {
       const member = enterpriseMembers.get(login);
 
       if (!member) {
-        throw new Error(`No member found for username: ${login}`);
+        log(`Warning: No member found for username: ${login}, continuing with empty enrichment fields`);
       }
 
       return {
         ...record,
-        display_username: member.display_name || '',
+        display_username: member?.display_name || '',
         team: '',
       };
     });
