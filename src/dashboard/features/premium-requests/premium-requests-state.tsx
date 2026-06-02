@@ -118,18 +118,31 @@ class PremiumRequestsState {
   public getUserUsageData = (usageData: PremiumRequestUsage[], isCrossMonthRange: boolean): UserUsageData[] => {
     const userUsageMap = new Map<string, UserUsageData>();
     usageData?.forEach(usage => {
+      const isRequestType = usage.unit_type === 'requests';
+      const isCreditType = usage.unit_type === 'ai-credits';
       if (!userUsageMap.has(usage.username)) {
         userUsageMap.set(usage.username, {
           user: usage.username,
           userDisplayName: usage.display_username || "",
-          totalRequestQuantity: 0,
-          totalRequestQuota: isCrossMonthRange ? null : usage.total_monthly_quota,
+          totalRequestQuantity: null, 
+          totalRequestQuota: null,
+          totalCreditQuantity: null,
+          totalGrossAmount: null,
           team: []
         });
       }
       const userData = userUsageMap.get(usage.username)!;
-      userData.totalRequestQuantity += Number(usage.quantity);
-      if (userData.userDisplayName === "") {
+      if (isRequestType) {
+        userData.totalRequestQuantity = (userData.totalRequestQuantity ?? 0) + Number(usage.quantity);
+        if (!isCrossMonthRange) {
+          userData.totalRequestQuota = usage.total_monthly_quota;
+        }
+      }
+      if (isCreditType) {
+        userData.totalCreditQuantity = (userData.totalCreditQuantity ?? 0) + Number(usage.quantity);
+        userData.totalGrossAmount = (userData.totalGrossAmount ?? 0) + Number(usage.gross_amount);
+      }
+      if (!userData.userDisplayName) {
         userData.userDisplayName = usage.display_username || "";
       }
       usage.team?.split(',').forEach(team => {

@@ -64,9 +64,7 @@ export default async function Dashboard(props: IProps) {
         <Header />
         <div className="mx-auto w-full max-w-screen-2xl px-4 md:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="col-span-4 grid grid-cols-2 gap-6">
-              <PremiumRequestsStats />
-            </div>
+            <PremiumRequestsStats />
             <PremiumRequestsTable />
           </div>
         </div>

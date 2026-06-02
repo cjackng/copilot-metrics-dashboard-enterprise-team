@@ -37,7 +37,7 @@ export const PremiumRequestsTable = () => {
         ...getGridNumericOperators(),
       ],
       valueFormatter: (value: number | null) =>
-        value != null ? Math.round(value).toLocaleString() : "",
+        value === null || value === undefined ? "N/A" : Math.round(value).toLocaleString(),
     },
     {
       field: "totalRequestQuota",
@@ -51,6 +51,32 @@ export const PremiumRequestsTable = () => {
       ],
       valueFormatter: (value: number | null | undefined) =>
         value === null || value === undefined ? "N/A" : Math.round(value).toLocaleString(),
+    },
+    {
+      field: "totalCreditQuantity",
+      headerName: "Total Credits",
+      type: "number",
+      flex: 1,
+      minWidth: 130,
+      filterOperators: [
+        customContainsOperator,
+        ...getGridNumericOperators(),
+      ],
+      valueFormatter: (value: number | null) =>
+        value === null || value === undefined ? "N/A" : Math.round(value).toLocaleString(),
+    },
+    {
+      field: "totalGrossAmount",
+      headerName: "Gross Amount ($)",
+      type: "number",
+      flex: 1,
+      minWidth: 130,
+      filterOperators: [
+        customContainsOperator,
+        ...getGridNumericOperators(),
+      ],
+      valueFormatter: (value: number | null | undefined) =>
+        value === null || value === undefined ? "N/A" : value.toFixed(2).toLocaleString(),
     },
     {
       field: "team",

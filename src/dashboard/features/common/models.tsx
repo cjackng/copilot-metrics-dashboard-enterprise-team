@@ -249,7 +249,9 @@ export interface EnterpriseTeam {
 export interface UserUsageData {
   user: string;
   userDisplayName: string;
-  totalRequestQuantity: number;
+  totalRequestQuantity: number | null;
   totalRequestQuota: number | null;
+  totalCreditQuantity: number | null;
+  totalGrossAmount: number | null;
   team: string[];
 }
