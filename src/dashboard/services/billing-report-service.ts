@@ -4,7 +4,7 @@ import { ensureGitHubEnvConfig } from "./env-service";
 import { stringIsNullOrEmpty } from "../utils/helpers";
 import dayjs from 'dayjs';
 
-const maxRetries = 10;
+const maxRetries = 5;
 const retryDelayMs = 60000; // 60 seconds
 
 export interface BillingReportRequest {
@@ -112,56 +112,61 @@ export const getBillingReport = async (
   }
 
   const { token, version, enterprise } = env.response;
-
+  
   try {
     const reportUrl = `https://api.github.com/enterprises/${enterprise}/settings/billing/reports/${reportId}`;
     let runs = 1;
-    
+
     while (runs <= maxRetries) {
       console.log(`[Get Billing Report] Checking status for report ID: ${reportId}, attempt ${runs} of ${maxRetries}`);
-      
-      const response = await fetch(reportUrl, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/vnd.github+json',
-          'Authorization': `Bearer ${token}`,
-          'X-GitHub-Api-Version': version,
+
+      try {
+        const response = await fetch(reportUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/vnd.github+json',
+            'Authorization': `Bearer ${token}`,
+            'X-GitHub-Api-Version': version,
+          }
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          if (response.status === 401 || response.status === 403 || response.status === 404) {
+            const fatalError = new Error(`Received ${response.status} status. Authentication or resource availability issue. Response: ${errorText}`);
+            console.error(`[Get Billing Report] Fatal error on attempt ${runs}:`, fatalError.message);
+            return unknownResponseError(fatalError);
+          }
+          console.error(`[Get Billing Report] Status check failed (attempt ${runs}/${maxRetries}): ${response.status} - ${errorText}. Retrying...`);
+        } else {
+          const billingReport: BillingReportResponse = await response.json();
+          console.log(`[Get Billing Report] Report ${reportId} status: ${billingReport.status}`);
+          console.debug(`[Get Billing Report] Report ${reportId} full response:`, JSON.stringify(billingReport, null, 2));
+
+          if (billingReport.status === 'completed') {
+            return {
+              status: 'OK',
+              response: billingReport
+            };
+          }
+          console.log(`[Get Billing Report] Report is not completed yet.`);
         }
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[Get Billing Report] API request failed: ${response.status} - ${errorText}`);
-        return formatResponseError("Get BillingReport", response);
+      } catch (innerError) {
+        console.error(`[Get Billing Report] Attempt ${runs}/${maxRetries} threw an unexpected network error:`, innerError);
       }
-
-      const billingReport: BillingReportResponse = await response.json();
-      console.log(`[Get Billing Report] Report ${reportId} status: ${billingReport.status}`);
-      console.debug(`[Get Billing Report] Report ${reportId} full response:`, JSON.stringify(billingReport, null, 2));
-
-      if (billingReport.status === 'completed') {
-        return {
-          status: 'OK',
-          response: billingReport
-        };
-      } else {
+      if (runs < maxRetries) {
         console.log(`[Get Billing Report] Waiting for ${retryDelayMs / 1000} seconds before retrying...`);
-        await new Promise(resolve => setTimeout(resolve, retryDelayMs)); // Wait for retry delay before next attempt
-        runs++;
+        await new Promise(resolve => setTimeout(resolve, retryDelayMs));
       }
+      runs++;
     }
 
-    // Max attempts reached, return error
-    console.error(`[Get Billing Report] Report ${reportId} did not complete after ${maxRetries} attempts.`);
-    return {
-      status: 'ERROR',
-      errors: [{
-        message: `Report ${reportId} did not complete after ${maxRetries} attempts. The report may be taking longer than expected or there might be an issue with the report generation.`
-      }]
-    };
+    const maxAttemptsError = new Error(`Report ${reportId} did not complete after ${maxRetries} attempts. The report may be taking longer than expected.`);
+    console.error(`[Get Billing Report]`, maxAttemptsError.message);
+    return unknownResponseError(maxAttemptsError);
 
-  } catch (error) {
-    console.error(`[Get Billing Report] Error getting billing report status:`, error);
-    return unknownResponseError(error);
+  } catch (outerError) {
+    console.error(`[Get Billing Report] Catastrophic error getting billing report status:`, outerError);
+    return unknownResponseError(outerError);
   }
 };

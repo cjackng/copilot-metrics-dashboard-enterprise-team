@@ -37,43 +37,51 @@ export const fetchRawMetrics = async (
   version: string,
   date?: string,
 ): Promise<CopilotMetricsReportData[]> => {
-  const reportUrl = date
-    ? `https://api.github.com/enterprises/${enterprise}/copilot/metrics/reports/users-1-day?day=${date}`
-    : `https://api.github.com/enterprises/${enterprise}/copilot/metrics/reports/users-28-day/latest`;
+  try {
+    const reportUrl = date
+      ? `https://api.github.com/enterprises/${enterprise}/copilot/metrics/reports/users-1-day?day=${date}`
+      : `https://api.github.com/enterprises/${enterprise}/copilot/metrics/reports/users-28-day/latest`;
+  
+    const reportResponse = await fetch(reportUrl, {
+      cache: "no-store",
+      headers: {
+        Accept: `application/vnd.github+json`,
+        Authorization: `Bearer ${token}`,
+        "X-GitHub-Api-Version": version,
+      },
+    });
+  
+    if (!reportResponse.ok) {
+      console.error(`[fetchRawMetrics] API error ${reportResponse.status}: ${reportResponse.statusText}`);
+      throw new Error(`[Fetch Metrics Report] Failed to fetch metrics report: ${reportResponse.status} ${reportResponse.statusText}`);
+    }
+  
+    const reportData: CopilotMetricsReportResponse | CopilotMetricsDayReportResponse =
+      await reportResponse.json();
+  
+    if (!reportData.download_links || reportData.download_links.length === 0) {
+      throw new Error(`[Fetch Metrics Report] No download links available`);
+    }
+  
+    const downloadPromises = reportData.download_links.map(async (downloadUrl) => {
+      const downloadResponse = await fetch(downloadUrl, { cache: "no-store" });
+      if (!downloadResponse.ok) {
+        throw new Error(`[Fetch Metrics Report] Failed to download metrics data from ${downloadUrl}: ${downloadResponse.status} ${downloadResponse.statusText}`);
+      }
+      const text = await downloadResponse.text();
+      return text
+        .split("\n")
+        .filter((line) => line.trim())
+        .map((line) => JSON.parse(line) as CopilotMetricsReportData);
+    });
+  
+    const allData = await Promise.all(downloadPromises);
+    return allData.flat();
 
-  const reportResponse = await fetch(reportUrl, {
-    cache: "no-store",
-    headers: {
-      Accept: `application/vnd.github+json`,
-      Authorization: `Bearer ${token}`,
-      "X-GitHub-Api-Version": version,
-    },
-  });
-
-  if (!reportResponse.ok) {
-    console.error(`[fetchRawMetrics] API error ${reportResponse.status}: ${reportResponse.statusText}`);
-    return [];
+  } catch (error) {
+    console.error(`[Fetch Metrics Report] Error getting metrics data`, error);
+    throw error instanceof Error ? error : new Error("Unknown error");
   }
-
-  const reportData: CopilotMetricsReportResponse | CopilotMetricsDayReportResponse =
-    await reportResponse.json();
-
-  if (!reportData.download_links || reportData.download_links.length === 0) {
-    return [];
-  }
-
-  const downloadPromises = reportData.download_links.map(async (downloadUrl) => {
-    const downloadResponse = await fetch(downloadUrl, { cache: "no-store" });
-    if (!downloadResponse.ok) return [] as CopilotMetricsReportData[];
-    const text = await downloadResponse.text();
-    return text
-      .split("\n")
-      .filter((line) => line.trim())
-      .map((line) => JSON.parse(line) as CopilotMetricsReportData);
-  });
-
-  const allData = await Promise.all(downloadPromises);
-  return allData.flat();
 };
 
 /** Read metrics from the DB for a date range and return in the same shape as the API path. */
@@ -103,6 +111,7 @@ export const getCopilotMetricsFromDB = async (
 export const getMetricsLastUpdated = async (): Promise<Date | null> => {
   try {
     const db = new CopilotMetricsDbService();
+    await db.init();
     return db.getLatestUpdateTime();
   } catch {
     return null;
