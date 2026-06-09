@@ -132,8 +132,8 @@ export const getBillingReport = async (
 
         if (!response.ok) {
           const errorText = await response.text();
-          if (response.status === 401 || response.status === 403 || response.status === 404) {
-            const fatalError = new Error(`Received ${response.status} status. Authentication or resource availability issue. Response: ${errorText}`);
+          if (response.status === 401 || response.status === 403) {
+            const fatalError = new Error(`Received ${response.status} status. Authentication or forbidden issue. Response: ${errorText}`);
             console.error(`[Get Billing Report] Fatal error on attempt ${runs}:`, fatalError.message);
             return unknownResponseError(fatalError);
           }

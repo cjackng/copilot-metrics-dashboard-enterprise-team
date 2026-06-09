@@ -30,7 +30,7 @@ export async function syncPremiumUsageData() {
     }
 
     const reportId = requestResult.response.id;
-    await new Promise((resolve) => setTimeout(resolve, 30000));
+    await new Promise((resolve) => setTimeout(resolve, 90000));
 
     const reportResult = await getBillingReport(reportId);
     if (reportResult.status !== 'OK') {
