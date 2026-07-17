@@ -4,7 +4,7 @@ import { ensureGitHubEnvConfig } from "./env-service";
 import { stringIsNullOrEmpty } from "../utils/helpers";
 import dayjs from 'dayjs';
 
-const maxRetries = 5;
+const maxRetries = 10;
 const retryDelayMs = 60000; // 60 seconds
 
 export interface BillingReportRequest {
